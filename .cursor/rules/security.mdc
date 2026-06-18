@@ -1,0 +1,50 @@
+---
+description: Требования безопасности проекта «Дизайн Тусовка»
+alwaysApply: true
+---
+
+# Security
+
+## Auth
+
+- Supabase Auth: email+password, Google OAuth, password reset
+- Email confirmed до оплаты и отправки решения
+- Один email — один аккаунт
+
+## Авторизация
+
+- Серверная проверка `AccessGrant` перед контентом глав и приватных файлов
+- RLS на user data; service role — server-only
+- Админ: один владелец; проверка на каждом admin action
+
+## Storage
+
+- Публичные bucket: обложки, публичные изображения
+- Приватные: решения, feedback — **signed URL** только после server-side rights check
+- Не отдавать private paths клиенту без проверки
+
+## Платежи
+
+- Сумма из БД на сервере; snapshot в order
+- Webhook идемпотентен; success URL не подтверждает оплату
+- Крипто: фиксировать курс в `payments` на срок счёта
+- Секреты ЮKassa/crypto — server only; карты не хранить
+
+## Задания
+
+- AI: валидация MIME/размера до Polza; нечитаемые не отправлять
+- 1 AI попытка на (user, assignment); техошибка не списывает
+- Ручная оплата — отдельный checkout, тот же webhook-паттерн
+
+## Данные при удалении аккаунта
+
+- Деактивация; заказы, оплаты, чеки — сохранять (AUTH-06)
+
+## Env
+
+- Примеры в `.env.example` только на этапе 2+
+- `NEXT_PUBLIC_*` — anon key, Metrica ID
+
+## Cookie
+
+- Метрика/Вебвизор только после consent

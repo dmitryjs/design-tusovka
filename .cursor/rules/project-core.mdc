@@ -1,0 +1,55 @@
+---
+description: Базовые правила проекта «Дизайн Тусовка»
+alwaysApply: true
+---
+
+# Project Core
+
+## Продукт
+
+**Дизайн Тусовка** — русскоязычная образовательная платформа для product, UX/UI и digital-дизайнеров (junior, middle, senior).
+
+Товары: **материал**, **задание**, **раздел**. Подробности — `docs/PRODUCT.md`.
+
+## Вне MVP
+
+Подписки, промокоды, избранное, прогресс, чек-ины, стрики — **не реализовывать**.
+
+## Стек
+
+- Next.js App Router, React, TypeScript strict
+- Tailwind, shadcn/ui, **Inter**, primary `#094BF5`
+- Supabase (Auth, PostgreSQL, **Storage**)
+- Vercel, GitHub (git **перед этапом 2**)
+
+## UI-токены
+
+Полная спецификация: `docs/DESIGN_SYSTEM.md`.
+
+- Primary: `#094BF5`; шрифт **Inter**
+- Радиусы: кнопки/поля **8px**, карточки **12px**, панели **16px**, бейджи **full**
+- Светлая тема; минималистичный SaaS-стиль (Notion/Linear); без тяжёлых теней
+- Контейнер: max **1280px**
+
+## Принципы
+
+- Один этап — одна область; docs — источник истины
+- TBD в docs — только: цены контента, криптопровайдер, email-провайдер, юр. тексты, ключи интеграций
+- Миграции Supabase; без моков после подключения сервисов
+- CTA бесплатной корзины: **«Получить бесплатно»**
+
+## Документы
+
+| Область | Файл |
+|---------|------|
+| Продукт | `docs/PRODUCT.md` |
+| MVP | `docs/MVP_SCOPE.md` |
+| Правила | `docs/BUSINESS_RULES.md` |
+| Сценарии | `docs/USER_FLOWS.md` |
+| Данные | `docs/DATA_MODEL.md` |
+| Архитектура | `docs/ARCHITECTURE.md` |
+| ADR | `docs/DECISIONS.md` |
+| Интеграции | `docs/INTEGRATIONS.md` |
+| Админка | `docs/ADMIN_REQUIREMENTS.md` |
+| Аналитика | `docs/ANALYTICS.md` |
+| Дизайн-система | `docs/DESIGN_SYSTEM.md` |

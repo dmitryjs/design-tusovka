@@ -1,0 +1,46 @@
+---
+description: Стандарты качества кода для проекта «Дизайн Тусовка»
+alwaysApply: true
+---
+
+# Code Quality
+
+## TypeScript
+
+- `strict: true`
+- Явные типы; без `any`; `unknown` + narrowing для webhook/API
+
+## React / Next.js
+
+- App Router; Server Components по умолчанию
+- `"use client"` — только для интерактива (корзина гостя, редактор, формы)
+- Блочный редактор материалов — client component с серверным сохранением
+
+## Стили
+
+- Tailwind + shadcn/ui; спецификация — `docs/DESIGN_SYSTEM.md`
+- Primary `#094BF5`, font **Inter** (`next/font/google`)
+- Radius: controls `rounded-lg` (8px), cards `rounded-xl` (12px), badges `rounded-full`
+- `cn()` для условных классов; без тяжёлых теней на карточках
+
+## Локализация
+
+- Интерфейс **русский**; валюта **₽**; форматирование цен на сервере
+
+## UI states
+
+Loading, empty, error, disabled для async UI. Checkout: состояние «Платёж подтверждается».
+
+## Проверки (после этапа 2)
+
+```bash
+npm run typecheck
+npm run lint
+npm run build
+```
+
+## Запрещено
+
+- Доверять клиентской цене или статусу доступа
+- Хардкод секретов
+- Прогресс обучения, промокоды, подписки (вне MVP)
