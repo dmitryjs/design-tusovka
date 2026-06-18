@@ -10,53 +10,46 @@ description: Безопасное внесение изменений в схе�
 1. Docker running → `npm run supabase:start`
 2. `npm run supabase:status` — URL и ключи в `.env.local` (не коммитить)
 3. Новая миграция: `npx supabase migration new <name>`
-4. Применить: `npm run db:reset` или `supabase migration up`
-5. `npm run db:lint` — проверка схемы
-6. `npm run db:types` — обновить `src/types/database.types.ts` (только stdout в файл; telemetry отключена)
-7. Остановка: `npm run supabase:stop`
+4. Применить: `npm run db:reset`
+5. `npm run db:lint`, `npm run db:types`
+6. `npm run supabase:stop`
 
-См. ADR-018, ADR-019, `docs/INTEGRATIONS.md`.
+См. ADR-018–020, `docs/INTEGRATIONS.md`.
 
 ## Сверка
 
-`docs/DATA_MODEL.md`, `docs/BUSINESS_RULES.md`, ADR-009–013, ADR-018, ADR-019.
+`docs/DATA_MODEL.md`, `docs/BUSINESS_RULES.md`, ADR-009–013, ADR-018–020.
 
-## Реализовано (этап 3.2)
+## Реализовано
 
-**Enums:** product_kind, product_status, material_format, designer_level.
+**Каталог (3.2):** products, sections, materials, material_chapters, tasks, task_content, task_ai_criteria, tags, product_tags, section_updates, section_update_materials. RLS enabled, **без policies**.
 
-**Таблицы:** products, sections, materials, material_chapters, tasks, task_content, task_ai_criteria, tags, product_tags, section_updates, section_update_materials.
+**Профили и доступ (3.3.1):**
 
-**Паттерн:** все товары → `products` (kind, slug, price_kopecks, status); расширения 1:1.
+- `profiles` — trigger на `auth.users`; read own; update только `update_my_profile`
+- `admin_users` — RLS, без client policies
+- `entitlements` — read own; insert/update/delete только server-side
+- `has_product_access(product_id)`, `update_my_profile(...)`
 
-**RLS:** включён на всех таблицах каталога; **политик нет** (этап 3.3).
+**Enum:** `entitlement_source_type` (+ каталоговые enums).
+
+## Клиенту запрещено
+
+- Прямой CRUD `profiles`, `entitlements`, `admin_users`
+- Любой доступ к каталогу через anon/authenticated (до 3.3.2)
 
 ## Ещё не в БД
 
-- profiles, cart_items, orders, order_items, payments
-- access_grants, access_grant_errors, webhook_events
-- submissions, ai_reviews, manual_reviews, product_reviews
-- Storage buckets
+cart_items, orders, payments, submissions, product_reviews, Storage buckets, каталоговые RLS policies.
 
 ## Storage (план)
 
-- **public-media** — обложки
-- **private-files** — решения, feedback
-- Signed URL — server-side после AccessGrant
-
-## AccessGrant (план)
-
-- Бессрочный; `ON CONFLICT DO NOTHING` для webhook
-- Отзыв при refund (REF-04)
-
-## Раздел: расчёт (план)
-
-`section price_kopecks - SUM(paid material prices in section for user)`.
+- **public-media**, **private-files**; signed URL после entitlement check.
 
 ## Миграции
 
-`supabase/migrations/`; одна цель на файл; обновить `DATA_MODEL.md` и `db:types` при изменении схемы.
+Одна цель на файл; обновить `DATA_MODEL.md` и `db:types`.
 
 ## Не создавать в MVP
 
-- `learning_progress`, `subscriptions`, `promo_codes`, `audit_history`
+`learning_progress`, `subscriptions`, `promo_codes`, `audit_history`

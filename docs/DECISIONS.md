@@ -232,6 +232,35 @@
 
 ---
 
+## ADR-020: Профили и фундамент доступов (этап 3.3.1)
+
+**Статус:** Принято  
+**Дата:** 2026-06-18
+
+**Контекст:** Нужны профиль пользователя и модель доступа к товарам до заказов и каталоговых RLS.
+
+**Решение:**
+
+| Параметр | Значение |
+|----------|----------|
+| Миграция | `20260618191440_create_profiles_and_access_foundation.sql` |
+| Профиль | `profiles` ← `auth.users`; email не дублируется |
+| Регистрация | Trigger `on_auth_user_created` / `handle_new_user()` (SECURITY DEFINER) |
+| Админ | `admin_users` отдельно от `profiles`; без клиентских policies |
+| Доступ | `entitlements` с `entitlement_source_type`; unique по источнику |
+| Проверка доступа | `has_product_access(product_id)` — только `auth.uid()`, invoker |
+| Профиль RPC | `update_my_profile(...)` — SECURITY DEFINER, только authenticated |
+| Клиент | Прямой insert/update/delete profiles и entitlements **запрещён** |
+
+**Не входит:** каталоговые RLS, публичное чтение, orders, cart, payments, Storage, auth UI.
+
+**Последствия:**
+
+- Этап 3.3.2 — RLS для published каталога.
+- Выдача entitlements — server/webhook на этапах заказов.
+
+---
+
 ## Ожидающие решения (TBD)
 
 | Тема | Когда |

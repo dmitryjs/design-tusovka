@@ -9,6 +9,62 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      admin_users: {
+        Row: {
+          created_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      entitlements: {
+        Row: {
+          granted_at: string
+          id: string
+          metadata: Json
+          product_id: string
+          revoked_at: string | null
+          source_id: string
+          source_type: Database["public"]["Enums"]["entitlement_source_type"]
+          user_id: string
+        }
+        Insert: {
+          granted_at?: string
+          id?: string
+          metadata?: Json
+          product_id: string
+          revoked_at?: string | null
+          source_id: string
+          source_type: Database["public"]["Enums"]["entitlement_source_type"]
+          user_id: string
+        }
+        Update: {
+          granted_at?: string
+          id?: string
+          metadata?: Json
+          product_id?: string
+          revoked_at?: string | null
+          source_id?: string
+          source_type?: Database["public"]["Enums"]["entitlement_source_type"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entitlements_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       material_chapters: {
         Row: {
           content: Json
@@ -160,6 +216,39 @@ export type Database = {
           slug?: string
           status?: Database["public"]["Enums"]["product_status"]
           title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_path: string | null
+          created_at: string
+          deactivated_at: string | null
+          designer_level: Database["public"]["Enums"]["designer_level"]
+          display_name: string | null
+          id: string
+          telegram_username: string | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_path?: string | null
+          created_at?: string
+          deactivated_at?: string | null
+          designer_level?: Database["public"]["Enums"]["designer_level"]
+          display_name?: string | null
+          id: string
+          telegram_username?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_path?: string | null
+          created_at?: string
+          deactivated_at?: string | null
+          designer_level?: Database["public"]["Enums"]["designer_level"]
+          display_name?: string | null
+          id?: string
+          telegram_username?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -408,10 +497,28 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      has_product_access: { Args: { product_id: string }; Returns: boolean }
       is_valid_slug: { Args: { slug: string }; Returns: boolean }
+      update_my_profile: {
+        Args: {
+          avatar_path: string
+          designer_level: Database["public"]["Enums"]["designer_level"]
+          display_name: string
+          telegram_username: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       designer_level: "junior" | "middle" | "senior" | "all"
+      entitlement_source_type:
+        | "direct_order"
+        | "zero_order"
+        | "section_order"
+        | "section_update"
+        | "manual"
+        | "free_task_submission"
+        | "all_materials_owned"
       material_format:
         | "mini_guide"
         | "full_guide"
@@ -551,6 +658,15 @@ export const Constants = {
   public: {
     Enums: {
       designer_level: ["junior", "middle", "senior", "all"],
+      entitlement_source_type: [
+        "direct_order",
+        "zero_order",
+        "section_order",
+        "section_update",
+        "manual",
+        "free_task_submission",
+        "all_materials_owned",
+      ],
       material_format: [
         "mini_guide",
         "full_guide",

@@ -2,108 +2,123 @@
 
 ## Этап
 
-**Этап 3.2.1 — Починить проверки Supabase CLI**
+**Этап 3.3.1 — Profiles и access foundation**
 
 **Статус: завершён**
 
-## Цель
+## Что реализовано
 
-Все команды завершаются с exit code **0**:
+- Enum `entitlement_source_type` (7 значений).
+- Таблицы: `profiles`, `admin_users`, `entitlements`.
+- Trigger `on_auth_user_created` → `handle_new_user()` для email и Google OAuth.
+- RPC `has_product_access(product_id)`, `update_my_profile(...)`.
+- RLS policies на `profiles` и `entitlements` (read own); `admin_users` — RLS без policies.
+- Обновлены `DATA_MODEL.md`, `ARCHITECTURE.md`, `DECISIONS.md` (ADR-020), `database-change` skill.
 
-```bash
-npm run db:lint
-npm run db:types
-npm run typecheck
-npm run lint
-npm run build
-```
+**Не создавалось:** каталоговые RLS, публичное чтение каталога, Storage, orders, cart, payments, reviews, auth UI, Supabase client.
 
-## Причина exit 1 (этап 3.2)
+## Миграция
 
-Supabase CLI **2.107.0** при завершении отправляет события в **PostHog**. При таймауте сети (`Timeout while shutting down PostHog`) CLI:
+| Параметр | Значение |
+|----------|----------|
+| Файл | `supabase/migrations/20260618191440_create_profiles_and_access_foundation.sql` |
+| CLI | `npx supabase migration new create_profiles_and_access_foundation` |
 
-1. возвращал **exit code 1**, хотя `db lint` сообщал `No schema errors found`;
-2. при `db:types` писал JSON ошибки в **stdout**, который через `>` попадал в конец `src/types/database.types.ts` и ломал `typecheck`.
+## Таблицы
 
-Ручное удаление строк из types — симптом, не решение.
+| Таблица | Назначение |
+|---------|------------|
+| `profiles` | Профиль пользователя (без email, без admin-флага) |
+| `admin_users` | Список админов (только service role) |
+| `entitlements` | Доступ user → product с источником |
 
-## Что изменено
+## Enum
 
-| Файл | Изменение |
-|------|-----------|
-| `package.json` | `db:lint` и `db:types` — префикс `cross-env SUPABASE_TELEMETRY_DISABLED=1` |
-| `package-lock.json` | devDependency `cross-env` |
-| `src/types/database.types.ts` | Перегенерирован через `npm run db:types` (без правок вручную) |
-| `.cursor/skills/verify-project/SKILL.md` | Примечание про telemetry |
-| `.cursor/skills/database-change/SKILL.md` | Примечание про `db:types` |
+`entitlement_source_type`: direct_order, zero_order, section_order, section_update, manual, free_task_submission, all_materials_owned.
 
-Схема БД, миграции, RLS policies, Storage — **не менялись**.
+## Функции
 
-## Диагностика (до фикса)
+| Функция | Тип | Назначение |
+|---------|-----|------------|
+| `handle_new_user()` | trigger, SECURITY DEFINER | Создание профиля при регистрации |
+| `has_product_access(uuid)` | SQL, SECURITY INVOKER | Активный entitlement для `auth.uid()` |
+| `update_my_profile(...)` | RPC, SECURITY DEFINER | Обновление своего профиля |
 
-```
-npm run db:lint   → No schema errors found + PostHog timeout → exit 1 (на этапе 3.2)
-npm run db:types  → types + JSON PostHog error в файле → typecheck fail
-```
+## Triggers
 
-## Итоговые проверки
+| Trigger | Таблица | Функция |
+|---------|---------|---------|
+| `profiles_set_updated_at` | profiles | `set_updated_at()` |
+| `on_auth_user_created` | auth.users | `handle_new_user()` |
 
-| Команда | Exit code |
-|---------|-----------|
-| `npm run db:lint` | **0** |
-| `npm run db:types` | **0** |
-| `npm run typecheck` | **0** |
-| `npm run lint` | **0** |
-| `npm run build` | **0** |
+## RLS policies
 
-Supabase CLI: **2.107.0**. Локальный стек: running (`API_URL` `http://127.0.0.1:54321`).
+| Таблица | Policy | Правило |
+|---------|--------|---------|
+| `profiles` | `profiles_select_own` | SELECT для authenticated, `id = auth.uid()` |
+| `entitlements` | `entitlements_select_own` | SELECT для authenticated, `user_id = auth.uid()` |
+| `admin_users` | — | RLS enabled, policies нет |
+| Каталог (3.2) | — | без изменений |
 
-## `database.types.ts`
+## Проверки (до этапа)
 
-- Валидный TypeScript
-- Без telemetry/log JSON в конце файла
-- Сгенерирован из локальной схемы `public`
-- Не редактировался вручную после генерации
+| Команда | Результат | Код |
+|---------|-----------|-----|
+| `git status` | clean | 0 |
+| `npm run db:reset` | Успех | 0 |
+| `npm run db:lint` | Успех | 0 |
+| `npm run db:types` | Успех | 0 |
+| `npm run typecheck` | Успех | 0 |
+| `npm run lint` | Успех | 0 |
+| `npm run build` | Успех | 0 |
+| `npm run supabase:status` | running | 0 |
 
-## Git
+## Проверки (после этапа)
 
-Commit **не создавался** (по инструкции этапа). Незакоммиченные изменения включают этапы 3.2 + 3.2.1.
+| Команда | Код |
+|---------|-----|
+| `npm run db:reset` | 0 |
+| `npm run db:lint` | 0 |
+| `npm run db:types` | 0 |
+| `npm run typecheck` | 0 |
+| `npm run lint` | 0 |
+| `npm run build` | 0 |
 
-```
-git status  → modified package.json, skills, docs; untracked src/types/, supabase/migrations/
-```
+## Изменённые файлы
 
-## Что не проверено
+### Созданы
 
-- Поведение без `cross-env` после `supabase telemetry disable` (альтернатива из документации CLI).
-- CI/Linux/macOS (используется `cross-env` для кроссплатформенности).
-- `db:lint` / `db:types` при остановленном Docker.
+- `supabase/migrations/20260618191440_create_profiles_and_access_foundation.sql`
+
+### Изменены
+
+- `src/types/database.types.ts` (regenerated)
+- `docs/DATA_MODEL.md`, `docs/ARCHITECTURE.md`, `docs/DECISIONS.md`
+- `.cursor/skills/database-change/SKILL.md`
+- `docs/STAGE_REPORT.md`
+
+## Git (после этапа)
+
+Незакоммиченные изменения: миграция, types, docs.
 
 ## Риски
 
-- При обновлении Supabase CLI проверить, что `SUPABASE_TELEMETRY_DISABLED` по-прежнему поддерживается.
-- Shell-редирект `>` в `db:types` перенаправляет только stdout; при сбое генерации stderr остаётся в консоли.
+- `handle_new_user` — SECURITY DEFINER: `search_path = public` зафиксирован; при расширении metadata проверять OAuth-провайдеров.
+- Несколько entitlements на один `product_id` — норма; отзыв одного источника не снимает доступ, если есть другой активный.
+- Пустая миграция `20260618185750` в истории — no-op, можно удалить отдельным chore.
 
 ## Откат
 
-1. Убрать `cross-env SUPABASE_TELEMETRY_DISABLED=1` из scripts.
-2. `npm uninstall cross-env`.
-3. `npm run db:types` и проверить хвост `database.types.ts`.
+1. Удалить файл миграции `20260618191440_...sql`.
+2. `npm run db:reset`.
+3. `npm run db:types`.
 
 ## Следующий этап
 
-**Этап 3.3** — RLS policies (не начинать в рамках 3.2.1).
+**Этап 3.3.2** — RLS policies публичного чтения каталога (не начинать здесь).
 
 ## Рекомендуемый commit
 
-Объединить с этапом 3.2 или отдельно:
-
 ```
-fix(db): disable Supabase CLI telemetry in db scripts
-```
-
-или один коммит:
-
-```
-feat(db): add catalog schema and fix CLI db checks
+feat(db): add profiles and entitlements foundation
 ```
