@@ -1,235 +1,166 @@
 # Data Model
 
-Модель данных платформы «Дизайн Тусовка». Миграции — этап 3.
+Модель данных платформы «Дизайн Тусовка». Миграции — `supabase/migrations/`.
 
 ## Принципы
 
 - PostgreSQL через **Supabase**; миграции в `supabase/migrations/`.
-- `auth.users` — идентичность; `profiles` — расширение.
-- **Supabase Storage**: публичные и приватные bucket; приватные — signed URL после проверки прав на сервере.
+- `auth.users` — идентичность; `profiles` — расширение (**ещё не реализовано**).
+- **Supabase Storage**: публичные и приватные bucket (**ещё не созданы**).
 - Один клиент БД (Supabase JS); Prisma — только по ADR при необходимости.
-- RLS на пользовательских таблицах.
+- RLS включён на пользовательских таблицах; **политики — этап 3.3**.
+- Цены в **копейках** (`price_kopecks integer`); `0` = бесплатно; отдельного `is_free` нет.
+- Обложки — `products.cover_path` (путь в Storage, bucket на будущих этапах).
 
-## Сущности
+## Паттерн `products` (этап 3.2)
 
-### Profile
+Все товары каталога — одна строка в **`products`** с полем `kind` (`product_kind`). Специализированные таблицы (`sections`, `materials`, `tasks`, `section_updates`) ссылаются на `products.id` через `product_id` (1:1, PK или FK).
 
-| Поле | Описание |
+**Зачем:** единый slug, статус публикации, цена, обложка и теги для любого товара; заказы и entitlements на этапах 3.4+ ссылаются на один `product_id`.
+
+| `product_kind` | Таблица расширения |
+|----------------|-------------------|
+| `section` | `sections` |
+| `material` | `materials` |
+| `task` | `tasks` |
+| `section_update` | `section_updates` |
+
+## Enums (реализовано)
+
+| Enum | Значения |
 |------|----------|
-| user_id | FK → auth.users |
-| name | Имя |
-| avatar_url | Аватар (Storage) |
-| telegram | Telegram |
-| designer_level | junior / middle / senior |
-| is_deactivated | Деактивация через поддержку |
-| is_admin | В MVP: один владелец |
+| `product_kind` | material, task, section, section_update |
+| `product_status` | draft, published, hidden |
+| `material_format` | mini_guide, full_guide, notes, checklist, template, cheat_sheet, lesson, practice |
+| `designer_level` | junior, middle, senior, all |
 
-### Material
+## Таблицы каталога (этап 3.2)
 
-| Поле | Описание |
-|------|----------|
-| section_id | FK → Section (ровно один раздел) |
-| title, description, cover_url | Основное |
-| type | enum: mini_guide, full_guide, summary, checklist, template, cheat_sheet, lesson, practice |
-| level | junior / middle / senior |
-| tags | массив или M2M |
-| price_rub | Цена в рублях; 0 = бесплатный |
-| content | Блочный контент (главы на одной странице) |
-| status | draft / published / hidden |
-| has_manual_review | Флаг для фильтра «наличие проверки» (задания) — для материалов N/A |
+### `products`
 
-Вложения: отдельная таблица `material_attachments` (Storage path, имя, mime).
+| Колонка | Тип | Примечание |
+|---------|-----|------------|
+| id | uuid PK | `gen_random_uuid()` |
+| kind | product_kind | |
+| status | product_status | default draft |
+| slug | text unique | lowercase, `[a-z0-9-]+` |
+| title | text | not empty |
+| description | text | default '' |
+| cover_path | text | nullable |
+| price_kopecks | integer | >= 0, default 0 |
+| published_at | timestamptz | nullable |
+| created_at, updated_at | timestamptz | trigger `set_updated_at` |
 
-### Section (раздел)
+Индексы: kind, status, published_at, price_kopecks.
 
-| Поле | Описание |
-|------|----------|
-| title, description, cover_url | Основное |
-| price_rub | Базовая цена набора |
-| status | draft / published / hidden |
-| catalog_order | Порядок в каталоге |
+### `sections`
 
-Связь: Section 1—N Material.
+PK `product_id` → `products`. Поля: `position`, `what_you_get` (jsonb), `for_whom` (jsonb).
 
-### SectionUpdate (обновление раздела)
+**Trigger:** `products.kind` должен быть `section`.
 
-| Поле | Описание |
-|------|----------|
-| section_id | FK |
-| price_rub | Цена обновления |
-| published_at | Дата публикации |
-| material_ids | Материалы, входящие в это обновление (M2M или JSON) |
+### `materials`
 
-### Assignment (задание)
+PK `product_id` → `products`. FK `section_product_id` → `sections`.
 
-Отдельный товар; **не** привязан к разделу.
+Поля: `format`, `level` (default all).
 
-| Поле | Описание |
-|------|----------|
-| title, description, cover_url | Как материал |
-| price_rub | 0 или платно |
-| level, tags | |
-| content | Страница по той же схеме, что материал |
-| ai_criteria | Список критериев (текст, без весов) |
-| manual_review_price_rub | **TBD** — цена ручной проверки |
-| status | draft / published / hidden |
+**Trigger:** `products.kind` = `material`. Индекс `section_product_id`.
 
-### Cart / CartItem
+### `material_chapters`
 
-| CartItem | |
-|----------|--|
-| cart_id | Гостевой (localStorage + server sync) или user_id |
-| item_type | material / assignment / section / section_update |
-| item_id | UUID |
-| user_id | null для гостя до merge |
+Главы материала: `title`, `content` (jsonb blocks), `position`.
 
-### Order / OrderItem
+Unique `(material_product_id, position)`. `position >= 0`.
 
-| Order | |
-|-------|--|
-| user_id | |
-| total_rub | Серверный расчёт |
-| status | pending_payment / paid / cancelled / failed / completed_free |
-| payment_method | yookassa / sbp / crypto / null (0 ₽) |
+### `tasks`
 
-| OrderItem | |
-|-----------|--|
-| order_id | |
-| item_type, item_id | |
-| price_rub | Snapshot на момент заказа |
-| title_snapshot | |
+Задание вне разделов. Поля: `level`, `ai_review_available`, `manual_review_available`, `manual_review_price_kopecks` (nullable, >= 0).
 
-### Payment
+**Trigger:** `products.kind` = `task`.
 
-| Поле | Описание |
-|------|----------|
-| order_id | FK (null для оплаты только ручной проверки — отдельный тип заказа TBD на этапе 13) |
-| provider | yookassa / sbp / crypto |
-| external_id | ID у провайдера |
-| amount_rub | |
-| crypto_usdt_rate | При крипто — зафиксированный курс |
-| status | по API провайдера |
-| idempotency_key | |
+### `task_content`
 
-### AccessGrant
+1:1 с `tasks`: `brief`, `submission_requirements` (jsonb).
 
-| Поле | Описание |
-|------|----------|
-| user_id | |
-| grant_type | material / assignment / section / section_update |
-| grant_id | ID сущности |
-| order_id | Источник доступа |
-| revoked_at | При возврате |
+### `task_ai_criteria`
 
-Unique: (user_id, grant_type, grant_id) — идемпотентность webhook.
+Критерии AI-проверки: `title`, `description`, `position`. Unique `(task_product_id, position)`.
 
-Бессрочный доступ: без `expires_at`.
+### `tags` / `product_tags`
 
-### Submission (отправка решения)
+Теги: `slug` (valid), `name`. M2M `product_tags(product_id, tag_id)`.
 
-| Поле | Описание |
-|------|----------|
-| assignment_id, user_id | |
-| figma_url | |
-| comment | |
-| version | Номер версии (повторная отправка) |
-| files | Storage paths |
+### `section_updates`
 
-Черновики **не** хранятся — только финальные отправки.
+Обновление раздела: FK `section_product_id`, `release_number` > 0, unique `(section_product_id, release_number)`.
 
-### AiReview
+**Trigger:** `products.kind` = `section_update`.
 
-| Поле | Описание |
-|------|----------|
-| submission_id | |
-| criteria_results | JSON по критериям |
-| summary, recommendations | |
-| attempt_consumed | false при техошибке |
+### `section_update_materials`
 
-Один успешный AI-результат на (user_id, assignment_id).
+M2M обновление ↔ материалы. **Trigger:** материал должен принадлежать тому же разделу, что и обновление.
 
-### ManualReview
+## Функции и триггеры (этап 3.2)
 
-| Поле | Описание |
-|------|----------|
-| submission_id | |
-| status | draft / queued / in_review / published / revision_requested |
-| criteria_feedback | JSON |
-| general_comment | |
-| files, screenshots | Storage |
-| version | Версии при редактировании |
-| published_at | |
+| Имя | Назначение |
+|-----|------------|
+| `set_updated_at()` | BEFORE UPDATE → `updated_at = now()` |
+| `is_valid_slug(text)` | Проверка slug в CHECK |
+| `ensure_product_kind()` | BEFORE INSERT/UPDATE на sections, materials, tasks, section_updates |
+| `ensure_section_update_material_same_section()` | BEFORE INSERT/UPDATE на section_update_materials |
 
-### ProductReview (отзыв на товар)
+## RLS (этап 3.2)
 
-| Поле | Описание |
-|------|----------|
-| user_id | |
-| product_type | material / assignment / section |
-| product_id | |
-| rating | 1–5 |
-| text | |
-| is_hidden | Админ |
+На всех 11 таблицах каталога: **`ENABLE ROW LEVEL SECURITY`**, разрешающих политик **нет** — доступ заблокирован для anon/authenticated до этапа 3.3.
 
-Unique: (user_id, product_type, product_id).
-
-### Notification
-
-Внутренние уведомления профиля: покупки, ошибки оплаты, проверки, доработки, обновления разделов.
-
-### WebhookEvent
-
-provider, external_id, payload_hash, processed_at — идемпотентность.
-
-### AccessGrantError
-
-Ошибки выдачи доступа после оплаты — для админки (PAY-06).
-
-### MediaLibrary
-
-Медиа-библиотека админки — ссылки на Storage assets.
-
-## ER-диаграмма
+## ER-диаграмма (каталог, этап 3.2)
 
 ```mermaid
 erDiagram
-  Profile ||--o{ Order : places
-  Profile ||--o{ AccessGrant : has
-  Profile ||--o{ Submission : submits
-  Profile ||--o{ ProductReview : writes
-  Section ||--o{ Material : contains
-  Section ||--o{ SectionUpdate : has
-  Material ||--o{ OrderItem : sold
-  Assignment ||--o{ OrderItem : sold
-  Section ||--o{ OrderItem : sold
-  Order ||--|{ OrderItem : contains
-  Order ||--o{ Payment : has
-  Order ||--o{ AccessGrant : grants
-  Assignment ||--o{ Submission : receives
-  Submission ||--o| AiReview : has
-  Submission ||--o{ ManualReview : has
+  products ||--o| sections : extends
+  products ||--o| materials : extends
+  products ||--o| tasks : extends
+  products ||--o| section_updates : extends
+  sections ||--o{ materials : contains
+  materials ||--o{ material_chapters : has
+  tasks ||--o| task_content : has
+  tasks ||--o{ task_ai_criteria : has
+  products ||--o{ product_tags : tagged
+  tags ||--o{ product_tags : tagged
+  sections ||--o{ section_updates : has
+  section_updates ||--o{ section_update_materials : includes
+  materials ||--o{ section_update_materials : in
 ```
+
+## Ещё не реализовано (следующие этапы)
+
+| Область | Таблицы / сущности |
+|---------|-------------------|
+| Профили | `profiles` |
+| Корзина | `cart_items` |
+| Заказы / оплата | `orders`, `order_items`, `payments`, `webhook_events` |
+| Доступ | `access_grants`, `access_grant_errors` |
+| Отправки / проверки | `submissions`, `ai_reviews`, `manual_reviews` |
+| Отзывы на товары | `product_reviews` |
+| Уведомления | `notifications` |
+| Админ-медиа | `media_library` |
+| Storage | buckets `public-media`, `private-files` |
+
+Продуктовые имена из этапа 1.1 (`Assignment` → **`tasks`**, `Material.type` → **`material_format`**, цены в рублях в документации → **копейки в БД**).
 
 ## Storage buckets (план)
 
 | Bucket | Доступ | Содержимое |
 |--------|--------|------------|
-| public-media | public | Обложки, изображения контента |
-| private-files | private | PDF, вложения материалов, решения, feedback |
+| public-media | public | Обложки, изображения |
+| private-files | private | PDF, решения, feedback |
 
-## RLS
+## TypeScript types
 
-- Пользователь: свои cart, orders, submissions, reviews, notifications.
-- Опубликованный каталог: read для всех.
-- Контент глав: read только при AccessGrant или бесплатный/превью-режим.
-- Админ: service role на сервере.
+`npm run db:types` → `src/types/database.types.ts` (схема `public`).
 
 ## Не в MVP
 
 - История изменений материалов, заказов, цен
 - Прогресс обучения
-
-## TBD на этапе 3
-
-- Точные имена таблиц/колонок и индексы
-- Модель заказа для оплаты только ручной проверки (отдельный mini-order)

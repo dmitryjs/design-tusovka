@@ -5,58 +5,58 @@ description: Безопасное внесение изменений в схе�
 
 # Database Change
 
-## Локальная среда (этап 3.1)
+## Локальная среда
 
 1. Docker running → `npm run supabase:start`
-2. `npm run supabase:status` — скопировать URL и ключи в `.env.local` (не коммитить)
-3. Миграции: `supabase/migrations/` (этап 3.2+)
-4. Сброс БД: `npm run db:reset` (применяет миграции + seed, когда появятся)
-5. Остановка: `npm run supabase:stop`
+2. `npm run supabase:status` — URL и ключи в `.env.local` (не коммитить)
+3. Новая миграция: `npx supabase migration new <name>`
+4. Применить: `npm run db:reset` или `supabase migration up`
+5. `npm run db:lint` — проверка схемы
+6. `npm run db:types` — обновить `src/types/database.types.ts` (только stdout в файл; telemetry отключена)
+7. Остановка: `npm run supabase:stop`
 
-См. `docs/DECISIONS.md` ADR-018, `docs/INTEGRATIONS.md`.
+См. ADR-018, ADR-019, `docs/INTEGRATIONS.md`.
 
 ## Сверка
 
-`docs/DATA_MODEL.md`, `docs/BUSINESS_RULES.md`, `docs/DECISIONS.md` ADR-009–013, ADR-018.
+`docs/DATA_MODEL.md`, `docs/BUSINESS_RULES.md`, ADR-009–013, ADR-018, ADR-019.
 
-## Storage (утверждено)
+## Реализовано (этап 3.2)
 
-- **public-media** — обложки, изображения
-- **private-files** — решения, feedback, приватные вложения
-- Signed URL — только server-side после `AccessGrant`
+**Enums:** product_kind, product_status, material_format, designer_level.
 
-## Ключевые таблицы
+**Таблицы:** products, sections, materials, material_chapters, tasks, task_content, task_ai_criteria, tags, product_tags, section_updates, section_update_materials.
 
-- `materials` (section_id, type enum, price_rub, status)
-- `sections`, `section_updates`
-- `assignments` (без section_id; ai_criteria JSON)
-- `orders`, `order_items` (item_type: material|assignment|section|section_update)
-- `payments`, `access_grants` (unique user+grant)
-- `submissions`, `ai_reviews`, `manual_reviews` (versions)
-- `product_reviews` (unique user+product)
-- `webhook_events`, `access_grant_errors`
-- `cart_items` (guest merge)
+**Паттерн:** все товары → `products` (kind, slug, price_kopecks, status); расширения 1:1.
 
-## AccessGrant
+**RLS:** включён на всех таблицах каталога; **политик нет** (этап 3.3).
 
-- Бессрочный (без expires_at)
-- `ON CONFLICT DO NOTHING` для идемпотентности webhook
+## Ещё не в БД
+
+- profiles, cart_items, orders, order_items, payments
+- access_grants, access_grant_errors, webhook_events
+- submissions, ai_reviews, manual_reviews, product_reviews
+- Storage buckets
+
+## Storage (план)
+
+- **public-media** — обложки
+- **private-files** — решения, feedback
+- Signed URL — server-side после AccessGrant
+
+## AccessGrant (план)
+
+- Бессрочный; `ON CONFLICT DO NOTHING` для webhook
 - Отзыв при refund (REF-04)
 
-## Раздел: расчёт
+## Раздел: расчёт (план)
 
-Функция/SQL: `section_price - SUM(paid material prices in section for user)`.
+`section price_kopecks - SUM(paid material prices in section for user)`.
 
-## RLS
+## Миграции
 
-- Каталог published — public read metadata
-- Главы материала — только с grant или preview fields
-- Admin — service role
+`supabase/migrations/`; одна цель на файл; обновить `DATA_MODEL.md` и `db:types` при изменении схемы.
 
 ## Не создавать в MVP
 
 - `learning_progress`, `subscriptions`, `promo_codes`, `audit_history`
-
-## Миграции
-
-`supabase/migrations/`; одна цель на файл; обновить `DATA_MODEL.md` при изменении схемы.

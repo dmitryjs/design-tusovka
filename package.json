@@ -12,7 +12,9 @@
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop",
     "supabase:status": "supabase status",
-    "db:reset": "supabase db reset"
+    "db:reset": "supabase db reset",
+    "db:lint": "cross-env SUPABASE_TELEMETRY_DISABLED=1 supabase db lint --level error",
+    "db:types": "cross-env SUPABASE_TELEMETRY_DISABLED=1 supabase gen types typescript --local --schema public > src/types/database.types.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
@@ -31,6 +33,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "cross-env": "^10.1.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
     "supabase": "^2.107.0",

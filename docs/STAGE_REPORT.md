@@ -2,178 +2,108 @@
 
 ## Этап
 
-**Этап 3.1 — Локальная инфраструктура Supabase**
+**Этап 3.2.1 — Починить проверки Supabase CLI**
 
 **Статус: завершён**
 
-## Что реализовано
+## Цель
 
-- Проверен Docker: Engine running, WSL2 backend (Docker 29.5.3, Compose v5.1.4).
-- Установлен **Supabase CLI** `^2.107.0` как devDependency.
-- Выполнены `npx supabase init` и `npx supabase start` — локальный стек поднят в Docker.
-- Добавлены npm-скрипты: `supabase:start`, `supabase:stop`, `supabase:status`, `db:reset`.
-- Обновлены `docs/ARCHITECTURE.md`, `docs/DECISIONS.md` (ADR-018), `docs/INTEGRATIONS.md`, `.cursor/skills/database-change/SKILL.md`.
-- В корневой `.gitignore` добавлены `supabase/.branches` и `supabase/.temp`.
-- Проверки проекта и Supabase — успешно.
+Все команды завершаются с exit code **0**:
 
-**Не выполнялось (по scope этапа):** таблицы, миграции, Storage buckets, RLS, авторизация, клиенты `src/lib/supabase/`.
+```bash
+npm run db:lint
+npm run db:types
+npm run typecheck
+npm run lint
+npm run build
+```
 
-## Изменённые файлы
+## Причина exit 1 (этап 3.2)
 
-### Созданы
+Supabase CLI **2.107.0** при завершении отправляет события в **PostHog**. При таймауте сети (`Timeout while shutting down PostHog`) CLI:
 
-| Файл | Назначение |
-|------|------------|
-| `supabase/config.toml` | Конфигурация локального стека (API 54321, DB 54322, PG 17) |
-| `supabase/.gitignore` | Игнор `.branches`, `.temp`, локальных env |
-| `supabase/snippets/` | Пустая папка CLI (шаблоны SQL — на будущее) |
+1. возвращал **exit code 1**, хотя `db lint` сообщал `No schema errors found`;
+2. при `db:types` писал JSON ошибки в **stdout**, который через `>` попадал в конец `src/types/database.types.ts` и ломал `typecheck`.
 
-### Изменены
+Ручное удаление строк из types — симптом, не решение.
+
+## Что изменено
 
 | Файл | Изменение |
 |------|-----------|
-| `package.json` | devDependency `supabase`, npm scripts |
-| `package-lock.json` | Lockfile после установки CLI |
-| `.gitignore` | `supabase/.branches`, `supabase/.temp` |
-| `docs/ARCHITECTURE.md` | Структура `supabase/`, локальные порты и команды |
-| `docs/DECISIONS.md` | ADR-018: локальная инфраструктура |
-| `docs/INTEGRATIONS.md` | Раздел локальной разработки, маппинг env |
-| `.cursor/skills/database-change/SKILL.md` | Чек-лист локальной среды |
+| `package.json` | `db:lint` и `db:types` — префикс `cross-env SUPABASE_TELEMETRY_DISABLED=1` |
+| `package-lock.json` | devDependency `cross-env` |
+| `src/types/database.types.ts` | Перегенерирован через `npm run db:types` (без правок вручную) |
+| `.cursor/skills/verify-project/SKILL.md` | Примечание про telemetry |
+| `.cursor/skills/database-change/SKILL.md` | Примечание про `db:types` |
 
-### Удалены
+Схема БД, миграции, RLS policies, Storage — **не менялись**.
 
-- Нет
+## Диагностика (до фикса)
 
-## База данных
+```
+npm run db:lint   → No schema errors found + PostHog timeout → exit 1 (на этапе 3.2)
+npm run db:types  → types + JSON PostHog error в файле → typecheck fail
+```
 
-Локальный PostgreSQL 17 в Docker (стандартный образ Supabase). Пользовательские таблицы, RLS и миграции **не создавались**.
+## Итоговые проверки
 
-## Переменные окружения
-
-`.env.example` без изменений. Для локальной работы после `supabase start` значения копируются из `npm run supabase:status` в `.env.local`:
-
-| Переменная | Источник в `supabase status` |
-|------------|------------------------------|
-| `NEXT_PUBLIC_SUPABASE_URL` | Project URL / API_URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Publishable key |
-| `SUPABASE_SERVICE_ROLE_KEY` | Secret key |
-
-Ключи, JWT secret, пароли и connection strings **не фиксируются** в этом отчёте и не должны попадать в git.
-
-## Зависимости
-
-| Пакет | Версия | Тип |
-|-------|--------|-----|
-| `supabase` | `^2.107.0` | devDependency |
-
-## Проверки
-
-### Docker
-
-| Команда | Результат | Код |
-|---------|-----------|-----|
-| `docker --version` | 29.5.3 | 0 |
-| `docker compose version` | v5.1.4 | 0 |
-
-### Supabase
-
-| Команда | Результат | Код |
-|---------|-----------|-----|
-| `npx supabase init` | Успех | 0 |
-| `npx supabase start` | Успех (первый запуск, загрузка образов) | 0 |
-| `npx supabase status` | Стек running; Studio на `http://127.0.0.1:54323` | 0 |
-| `npm run supabase:status` | Успех | 0 |
-
-Остановленные по умолчанию сервисы: `imgproxy`, `pooler` (pooler disabled в `config.toml`) — ожидаемо.
-
-### Проект
-
-| Команда | Результат | Код |
-|---------|-----------|-----|
-| `npm run typecheck` | Успех | 0 |
-| `npm run lint` | Успех | 0 |
-| `npm run build` | Успех | 0 |
-
-### Git после этапа
-
-| Команда | Результат |
+| Команда | Exit code |
 |---------|-----------|
-| `git status` | Изменения не закоммичены (см. diff) |
-| `git diff` | 8 изменённых файлов + untracked `supabase/` |
+| `npm run db:lint` | **0** |
+| `npm run db:types` | **0** |
+| `npm run typecheck` | **0** |
+| `npm run lint` | **0** |
+| `npm run build` | **0** |
 
-## Версии среды
+Supabase CLI: **2.107.0**. Локальный стек: running (`API_URL` `http://127.0.0.1:54321`).
 
-| Компонент | Версия |
-|-----------|--------|
-| Node.js | v24.12.0 |
-| npm | 11.6.2 |
-| Docker | 29.5.3 |
-| Docker Compose | v5.1.4 |
-| Supabase CLI | 2.107.0 |
-| PostgreSQL (локально) | 17 |
+## `database.types.ts`
 
-## npm scripts
+- Валидный TypeScript
+- Без telemetry/log JSON в конце файла
+- Сгенерирован из локальной схемы `public`
+- Не редактировался вручную после генерации
 
-| Скрипт | Команда |
-|--------|---------|
-| `supabase:start` | `supabase start` |
-| `supabase:stop` | `supabase stop` |
-| `supabase:status` | `supabase status` |
-| `db:reset` | `supabase db reset` |
+## Git
 
-## Локальные endpoints (без секретов)
+Commit **не создавался** (по инструкции этапа). Незакоммиченные изменения включают этапы 3.2 + 3.2.1.
 
-| Сервис | URL |
-|--------|-----|
-| API | `http://127.0.0.1:54321` |
-| REST | `http://127.0.0.1:54321/rest/v1` |
-| GraphQL | `http://127.0.0.1:54321/graphql/v1` |
-| PostgreSQL | `127.0.0.1:54322` |
-| Studio | `http://127.0.0.1:54323` |
-| Mailpit | `http://127.0.0.1:54324` |
-
-## .gitignore
-
-- `supabase/.branches`, `supabase/.temp` — в корневом `.gitignore` и `supabase/.gitignore`.
-- `supabase/config.toml` — **коммитится**.
-- `supabase/migrations/` — появится на этапе 3.2, коммитится.
-
-## Что проверено вручную
-
-- Docker Engine доступен из PowerShell.
-- `supabase start` завершился без ошибок после загрузки образов.
-- `supabase status` возвращает running-сервисы и локальные URL.
-- `.temp` и `.branches` игнорируются git.
+```
+git status  → modified package.json, skills, docs; untracked src/types/, supabase/migrations/
+```
 
 ## Что не проверено
 
-- `npm run db:reset` (нет миграций и `seed.sql`).
-- `npm run supabase:stop` / повторный `start` после stop.
-- Интеграция Next.js с Supabase (этап 4+).
-- Облачный Supabase-проект.
+- Поведение без `cross-env` после `supabase telemetry disable` (альтернатива из документации CLI).
+- CI/Linux/macOS (используется `cross-env` для кроссплатформенности).
+- `db:lint` / `db:types` при остановленном Docker.
 
 ## Риски
 
-- Первый `supabase start` долгий из‑за pull образов (~6+ GB).
-- `supabase status` может логировать timeout PostHog telemetry — на работу стека не влияет.
-- `build` может падать офлайн из‑за `next/font/google` (Inter) — как на этапе 3.1 (блокер).
-
-## Неопределённости
-
-- Нет.
+- При обновлении Supabase CLI проверить, что `SUPABASE_TELEMETRY_DISABLED` по-прежнему поддерживается.
+- Shell-редирект `>` в `db:types` перенаправляет только stdout; при сбое генерации stderr остаётся в консоли.
 
 ## Откат
 
-1. `npm run supabase:stop` — остановить контейнеры.
-2. Удалить `supabase/`, откатить изменения в `package.json`, docs, `.gitignore`.
-3. `npm uninstall supabase`.
+1. Убрать `cross-env SUPABASE_TELEMETRY_DISABLED=1` из scripts.
+2. `npm uninstall cross-env`.
+3. `npm run db:types` и проверить хвост `database.types.ts`.
 
 ## Следующий этап
 
-**Этап 3.2** — SQL-миграции по `DATA_MODEL.md`, RLS, Storage buckets (`public-media`, `private-files`).
+**Этап 3.3** — RLS policies (не начинать в рамках 3.2.1).
 
-## Рекомендуемый коммит
+## Рекомендуемый commit
+
+Объединить с этапом 3.2 или отдельно:
 
 ```
-chore: add local Supabase CLI and Docker workflow
+fix(db): disable Supabase CLI telemetry in db scripts
+```
+
+или один коммит:
+
+```
+feat(db): add catalog schema and fix CLI db checks
 ```

@@ -47,7 +47,7 @@ flowchart TB
   Crypto -->|webhook| SA
 ```
 
-## Структура репозитория (фактическая, этап 3.1)
+## Структура репозитория (фактическая, этап 3.2)
 
 ```
 src/
@@ -57,35 +57,40 @@ src/
     page.tsx               # Демо дизайн-системы (временная)
   components/
     layout/
-      container.tsx
-      site-header.tsx
-      site-footer.tsx
-    ui/                    # shadcn: button, input, card, badge, separator, skeleton
+    ui/                    # shadcn
   lib/
     utils.ts
+  types/
+    database.types.ts      # supabase gen types (public)
 supabase/
-  config.toml              # Локальная конфигурация CLI (порты, версия PG 17)
-  .gitignore               # .branches, .temp
-components.json            # shadcn config
-docs/                      # Продуктовая документация
-.cursor/                   # Правила и skills
+  config.toml
+  migrations/              # SQL-миграции
+  seed.sql                 # пустой (без seed-данных)
+components.json
+docs/
+.cursor/
 ```
 
-Целевые маршруты `(auth)`, `(app)`, `(admin)`, `api/` — на следующих этапах. См. план ниже.
-
-### Планируемая структура (этапы 3.2+)
+### Планируемая структура (этапы 3.3+)
 
 ```
 src/app/
   (auth)/
   (app)/library|cart|checkout|profile|materials|assignments|sections
   (admin)/
-  support/
-  legal/
   api/webhooks/
 src/lib/supabase|payments|polza|cart|access|storage/
-supabase/migrations/       # SQL-миграции (этап 3.2)
 ```
+
+## Схема БД (этап 3.2)
+
+Первая миграция `create_catalog_content_schema`: таблицы каталога вокруг **`products`**, enums, constraints, RLS без политик.
+
+**Команды:** `db:reset` | `db:lint` | `db:types` | `supabase:*`.
+
+Entitlements, корзина, заказы, платежи, отзывы, profiles, Storage buckets — **не созданы**.
+
+RLS-политики публичного чтения — **этап 3.3**. См. `DATA_MODEL.md`, ADR-019.
 
 ## Локальная разработка Supabase (этап 3.1)
 
@@ -98,7 +103,7 @@ supabase/migrations/       # SQL-миграции (этап 3.2)
 
 **Требования:** Docker Desktop (WSL2 backend на Windows).
 
-**Команды:** `npm run supabase:start` | `supabase:stop` | `supabase:status` | `db:reset`.
+**Команды:** `npm run supabase:start` | `supabase:stop` | `supabase:status` | `db:reset` | `db:lint` | `db:types`.
 
 Ключи и connection string для локальной среды выводятся `supabase status` и копируются в `.env.local` (не коммитятся). Имена переменных — см. `INTEGRATIONS.md` и `.env.example`.
 

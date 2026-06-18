@@ -13,11 +13,16 @@ npm run lint
 npm run build
 ```
 
-Опционально для локальной проверки UI:
+## Команды БД (этап 3.1+)
 
 ```bash
-npm run dev
+npm run supabase:status   # Docker + локальный стек
+npm run db:reset          # миграции + seed
+npm run db:lint           # схема без ошибок (exit 0)
+npm run db:types          # src/types/database.types.ts (exit 0)
 ```
+
+`db:lint` и `db:types` запускаются с `SUPABASE_TELEMETRY_DISABLED=1` (через `cross-env`), чтобы PostHog telemetry не давала exit 1 и не портила stdout при `db:types`.
 
 Тестовый runner **не установлен** — `npm test` не использовать.
 
@@ -30,22 +35,24 @@ npm run dev
 ## После этапа
 
 1. Запустить `typecheck`, `lint`, `build`.
-2. Обновить `docs/STAGE_REPORT.md`.
-3. Проверить diff на секреты.
+2. При изменении схемы: `db:reset`, `db:lint`, `db:types`.
+3. Обновить `docs/STAGE_REPORT.md`.
+4. Проверить diff на секреты (в т.ч. `database.types.ts`, вывод `supabase status`).
 
 ## Документация
 
 - [ ] `PRODUCT.md`, `BUSINESS_RULES.md` актуальны
-- [ ] `DATA_MODEL.md` согласован с миграциями (этап 3+)
-- [ ] `ARCHITECTURE.md` отражает фактическую структуру `src/`
+- [ ] `DATA_MODEL.md` согласован с миграциями
+- [ ] `ARCHITECTURE.md` отражает `src/` и `supabase/`
 
 ## Инварианты
 
 - Email confirmed → оплата и отправка решения
-- Webhook → AccessGrant
+- Webhook → AccessGrant (когда таблицы появятся)
 - Primary `#094BF5`, шрифт Inter
+- Цены в БД — **копейки** (`price_kopecks`)
 - Вне MVP: подписки, промокоды, прогресс, dark mode
 
 ## Production (19–20)
 
-- RLS, webhook idempotency, cookie before Metrica
+- RLS policies, webhook idempotency, cookie before Metrica

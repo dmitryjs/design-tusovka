@@ -200,6 +200,38 @@
 
 ---
 
+## ADR-019: Схема каталога и контента (этап 3.2)
+
+**Статус:** Принято  
+**Дата:** 2026-06-18
+
+**Контекст:** Нужна первая миграция БД без коммерции, auth UI и Storage.
+
+**Решение:**
+
+| Параметр | Значение |
+|----------|----------|
+| Миграция | `20260618185410_create_catalog_content_schema.sql` |
+| Модель товара | Единая таблица **`products`** + расширения по `kind` |
+| Задания | Таблица **`tasks`** (не `assignments`) |
+| Цена | **`price_kopecks`** в `products`; бесплатно = `0` |
+| Контент материала | **`material_chapters`** (jsonb blocks) |
+| Критерии AI | **`task_ai_criteria`** (отдельные строки с position) |
+| Теги | **`tags`** + **`product_tags`** |
+| Slug | lowercase, `[a-z0-9-]+`, unique |
+| RLS | **ENABLED** на всех таблицах каталога; **политики — этап 3.3** |
+| Seed | `supabase/seed.sql` пустой |
+| Types | `npm run db:types` → `src/types/database.types.ts` |
+
+**Не входит:** entitlements, cart, orders, payments, reviews, profiles, admin tables, Storage buckets, RLS policies.
+
+**Последствия:**
+
+- Этап 3.3 добавляет RLS для публичного каталога.
+- Заказы и `access_grants` ссылаются на `products.id` на следующих этапах.
+
+---
+
 ## Ожидающие решения (TBD)
 
 | Тема | Когда |
