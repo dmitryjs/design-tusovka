@@ -64,8 +64,9 @@ src/
     database.types.ts      # supabase gen types (public)
 supabase/
   config.toml
-  migrations/              # SQL-миграции
-  seed.sql                 # пустой (без seed-данных)
+  migrations/
+  tests/database/        # pgTAP RLS tests (этап 3.3.3)
+  seed.sql
 components.json
 docs/
 .cursor/
@@ -101,11 +102,24 @@ src/lib/supabase|payments|polza|cart|access|storage/
 - `task_content` / `task_ai_criteria` — free task или entitlement
 - RPC `get_material_toc` — оглавление без `content`
 
-**Команды:** `db:reset` | `db:lint` | `db:types` | `supabase:*`.
+### RLS tests (этап 3.3.3)
+
+`supabase test db --local` → `npm run db:test`. Файл `supabase/tests/database/01_catalog_rls.test.sql`.
+
+### API grants (этап 3.3.4)
+
+Миграция `20260618195500_grant_api_access_for_rls.sql`:
+
+- `GRANT USAGE ON SCHEMA public` + `SELECT` на каталог для `anon`/`authenticated`
+- `SELECT` на `profiles`, `entitlements`, `material_chapters` — только `authenticated`
+- `admin_users` без client grants; client writes на каталог/profiles/entitlements — нет
+- RPC: `has_product_access` — только `authenticated`; task policies разделены на free/entitled (anon не читает `entitlements` через RLS)
+
+**Команды:** `db:reset` | `db:lint` | `db:types` | `db:test` | `supabase:*`.
 
 Корзина, заказы, платежи, Storage, auth UI, `src/lib/supabase/` — **не созданы**.
 
-См. `DATA_MODEL.md`, ADR-019–021.
+См. `DATA_MODEL.md`, ADR-019–023.
 
 ## Локальная разработка Supabase (этап 3.1)
 

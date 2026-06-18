@@ -285,6 +285,56 @@
 
 ---
 
+## ADR-022: RLS verification tests (этап 3.3.3)
+
+**Статус:** Принято  
+**Дата:** 2026-06-18
+
+**Контекст:** RLS policies из 3.3.2 нужно автоматически проверять на утечки контента.
+
+**Решение:**
+
+| Параметр | Значение |
+|----------|----------|
+| Runner | **Supabase CLI** `supabase test db --local` (pgTAP / pg_prove) |
+| Путь | `supabase/tests/database/*.test.sql` |
+| npm script | `db:test` |
+| Данные | Только внутри `BEGIN…ROLLBACK` теста |
+| Grants в тесте | **Нет** — grants только в миграциях (3.3.4) |
+
+**Покрытые сценарии:** published metadata, draft/hidden deny, toc, chapters entitlement, free/paid tasks, profile/entitlement isolation, catalog write deny.
+
+**Не покрыто:** Storage, admin writes, performance.
+
+---
+
+## ADR-023: API grants для RLS через PostgREST (этап 3.3.4)
+
+**Статус:** Принято  
+**Дата:** 2026-06-18
+
+**Контекст:** RLS policies из 3.3.2 не работают через Supabase API без table-level `GRANT`; тесты 3.3.3 выявили gap (временные grants в setup).
+
+**Решение:**
+
+| Параметр | Значение |
+|----------|----------|
+| Миграция | `20260618195500_grant_api_access_for_rls.sql` |
+| Принцип | Минимальные `SELECT` grants + RLS как второй слой |
+| `anon` + `authenticated` | Каталог metadata + `task_content` / `task_ai_criteria` |
+| `authenticated` only | `profiles`, `entitlements`, `material_chapters` |
+| Без grants | `admin_users`; все client writes |
+| RPC | `has_product_access` — `REVOKE` от `anon` |
+| Policy fix | `task_content` / `task_ai_criteria` — две политики (free vs entitled), чтобы `anon` не вызывал `has_product_access` (нет SELECT на `entitlements`) |
+
+**Почему GRANT + RLS:** PostgREST проверяет privileges роли до RLS; без `GRANT SELECT` клиент получает `permission denied`, а не пустой результат policy.
+
+**Тесты:** setup больше не выдаёт `GRANT SELECT ON ALL TABLES`; `anon` на `material_chapters` — `throws_ok(42501)`.
+
+**Не входит:** Storage, UI, auth pages, cart, orders, payments.
+
+---
+
 ## Ожидающие решения (TBD)
 
 | Тема | Когда |

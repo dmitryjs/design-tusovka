@@ -14,7 +14,8 @@
     "supabase:status": "supabase status",
     "db:reset": "supabase db reset",
     "db:lint": "cross-env SUPABASE_TELEMETRY_DISABLED=1 supabase db lint --level error",
-    "db:types": "cross-env SUPABASE_TELEMETRY_DISABLED=1 supabase gen types typescript --local --schema public > src/types/database.types.ts"
+    "db:types": "cross-env SUPABASE_TELEMETRY_DISABLED=1 supabase gen types typescript --local --schema public > src/types/database.types.ts",
+    "db:test": "cross-env SUPABASE_TELEMETRY_DISABLED=1 supabase test db --local"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",

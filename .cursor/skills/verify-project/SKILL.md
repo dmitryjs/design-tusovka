@@ -20,9 +20,10 @@ npm run supabase:status   # Docker + локальный стек
 npm run db:reset          # миграции + seed
 npm run db:lint           # схема без ошибок (exit 0)
 npm run db:types          # src/types/database.types.ts (exit 0)
+npm run db:test           # pgTAP RLS + grants из миграций (этап 3.3.3+)
 ```
 
-`db:lint` и `db:types` запускаются с `SUPABASE_TELEMETRY_DISABLED=1` (через `cross-env`), чтобы PostHog telemetry не давала exit 1 и не портила stdout при `db:types`.
+`db:lint`, `db:types`, `db:test` — с `SUPABASE_TELEMETRY_DISABLED=1` через `cross-env`.
 
 Тестовый runner **не установлен** — `npm test` не использовать.
 
@@ -36,8 +37,9 @@ npm run db:types          # src/types/database.types.ts (exit 0)
 
 1. Запустить `typecheck`, `lint`, `build`.
 2. При изменении схемы: `db:reset`, `db:lint`, `db:types`.
-3. Обновить `docs/STAGE_REPORT.md`.
-4. Проверить diff на секреты (в т.ч. `database.types.ts`, вывод `supabase status`).
+3. При изменении RLS или grants: `db:test`.
+4. Обновить `docs/STAGE_REPORT.md`.
+5. Проверить diff на секреты.
 
 ## Документация
 

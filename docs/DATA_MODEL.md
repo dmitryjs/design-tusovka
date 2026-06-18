@@ -139,16 +139,43 @@ Draft/hidden **не** читаются клиентом. **INSERT/UPDATE/DELETE*
 
 ### `task_content` / `task_ai_criteria`
 
-SELECT для `anon` и `authenticated`, если task **published** и:
+Две политики на таблицу (этап 3.3.4 — разделение, чтобы `anon` не вызывал `has_product_access`):
 
-- `products.price_kopecks = 0` (бесплатная задача), **или**
-- `has_product_access(task_product_id)` (купленная).
+| Политика | Роли | Условие |
+|----------|------|---------|
+| `*_select_free` | `anon`, `authenticated` | task **published**, `price_kopecks = 0` |
+| `*_select_entitled` | `authenticated` | task **published**, `price_kopecks > 0`, `has_product_access(task_product_id)` |
 
-Платный контент задачи без entitlement **не** открывается.
+Платный контент без entitlement **не** открывается.
 
 ### RPC `get_material_toc(uuid)`
 
 `SECURITY DEFINER`, `search_path = public`. Не принимает `user_id`. Не возвращает `content`. Не показывает draft/hidden.
+
+### RLS verification tests (этап 3.3.3)
+
+pgTAP-тесты: `supabase/tests/database/01_catalog_rls.test.sql`, запуск `npm run db:test` (`supabase test db --local`).
+
+Покрыто: published-only products, toc без content, chapters entitlement, free/paid task content, profile/entitlement isolation, client write denial.
+
+Тесты **не** подменяют grants — проверяют схему после `db:reset` (миграции 3.3.4).
+
+### API grants для PostgREST (этап 3.3.4)
+
+RLS фильтрует строки, но без `GRANT` роль не может обращаться к таблице через PostgREST/API. Миграция `20260618195500_grant_api_access_for_rls.sql`.
+
+| Роль | `GRANT SELECT` |
+|------|----------------|
+| `anon`, `authenticated` | `products`, `sections`, `materials`, `tasks`, `tags`, `product_tags`, `section_updates`, `section_update_materials`, `task_content`, `task_ai_criteria` |
+| `authenticated` only | `profiles`, `entitlements`, `material_chapters` |
+
+**Без client grants:** `admin_users`. **Нет** client `INSERT`/`UPDATE`/`DELETE` на каталог, profiles, entitlements, admin_users.
+
+| RPC | `EXECUTE` |
+|-----|-----------|
+| `get_material_toc(uuid)` | `anon`, `authenticated` (миграция 3.3.2) |
+| `has_product_access(uuid)` | `authenticated` only (`REVOKE` от `anon` в 3.3.4) |
+| `update_my_profile(...)` | `authenticated` only (миграция 3.3.1) |
 
 ## Профили и доступ (этап 3.3.1)
 

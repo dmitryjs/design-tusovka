@@ -12,13 +12,14 @@ description: Безопасное внесение изменений в схе�
 3. Новая миграция: `npx supabase migration new <name>`
 4. Применить: `npm run db:reset`
 5. `npm run db:lint`, `npm run db:types`
-6. `npm run supabase:stop`
+6. `npm run db:test` — pgTAP RLS tests (`supabase test db --local`); grants проверяются из миграций, не из test setup
+7. `npm run supabase:stop`
 
-См. ADR-018–021, `docs/INTEGRATIONS.md`.
+См. ADR-018–023, `docs/INTEGRATIONS.md`.
 
 ## Сверка
 
-`docs/DATA_MODEL.md`, `docs/BUSINESS_RULES.md`, ADR-009–013, ADR-018–021.
+`docs/DATA_MODEL.md`, `docs/BUSINESS_RULES.md`, ADR-009–013, ADR-018–023.
 
 ## Реализовано
 
@@ -33,6 +34,8 @@ description: Безопасное внесение изменений в схе�
 - **Нет** client write policies на каталог
 
 **Профили и доступ (3.3.1):** profiles, admin_users, entitlements, `has_product_access`, `update_my_profile`.
+
+**API grants (3.3.4):** `GRANT SELECT` для PostgREST; `admin_users` без client access; task policies split free/entitled.
 
 ## Клиенту запрещено
 
