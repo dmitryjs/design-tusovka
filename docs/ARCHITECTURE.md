@@ -47,7 +47,7 @@ flowchart TB
   Crypto -->|webhook| SA
 ```
 
-## Структура репозитория (фактическая, этап 3.3.1)
+## Структура репозитория (фактическая, этап 3.3.2)
 
 ```
 src/
@@ -71,7 +71,7 @@ docs/
 .cursor/
 ```
 
-### Планируемая структура (этапы 3.3.2+)
+### Планируемая структура (этапы 4+)
 
 ```
 src/app/
@@ -86,21 +86,26 @@ src/lib/supabase|payments|polza|cart|access|storage/
 
 ### Каталог (этап 3.2)
 
-Миграция `create_catalog_content_schema`: **`products`** + расширения, RLS **без политик**.
+Миграция `create_catalog_content_schema`: **`products`** + расширения, RLS enabled.
 
 ### Профили и доступ (этап 3.3.1)
 
-Миграция `create_profiles_and_access_foundation`:
+`profiles`, `admin_users`, `entitlements`, `has_product_access`, `update_my_profile`, trigger на `auth.users`.
 
-- `profiles`, `admin_users`, `entitlements`
-- trigger `on_auth_user_created` → `handle_new_user()`
-- RPC: `has_product_access`, `update_my_profile`
+### Каталог RLS (этап 3.3.2)
+
+Миграция `create_catalog_read_policies`:
+
+- SELECT policies для published metadata (`products`, `sections`, `materials`, `tasks`, `tags`, …)
+- `material_chapters` — только с `has_product_access` (authenticated)
+- `task_content` / `task_ai_criteria` — free task или entitlement
+- RPC `get_material_toc` — оглавление без `content`
 
 **Команды:** `db:reset` | `db:lint` | `db:types` | `supabase:*`.
 
-Корзина, заказы, платежи, отзывы, Storage buckets, каталоговые RLS policies, auth UI, `src/lib/supabase/` — **не созданы**.
+Корзина, заказы, платежи, Storage, auth UI, `src/lib/supabase/` — **не созданы**.
 
-RLS публичного чтения каталога — **этап 3.3.2**. См. `DATA_MODEL.md`, ADR-019, ADR-020.
+См. `DATA_MODEL.md`, ADR-019–021.
 
 ## Локальная разработка Supabase (этап 3.1)
 

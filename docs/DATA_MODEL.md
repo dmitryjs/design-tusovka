@@ -8,7 +8,7 @@
 - `auth.users` — идентичность; `profiles` — расширение (**этап 3.3.1**).
 - **Supabase Storage**: публичные и приватные bucket (**ещё не созданы**).
 - Один клиент БД (Supabase JS); Prisma — только по ADR при необходимости.
-- RLS включён на пользовательских таблицах; политики каталога — **этап 3.3.2**; профили и entitlements — **этап 3.3.1**.
+- RLS включён; политики каталога — **этап 3.3.2**; профили и entitlements — **этап 3.3.1**.
 - Цены в **копейках** (`price_kopecks integer`); `0` = бесплатно; отдельного `is_free` нет.
 - Обложки — `products.cover_path` (путь в Storage, bucket на будущих этапах).
 
@@ -111,9 +111,44 @@ M2M обновление ↔ материалы. **Trigger:** материал �
 | `ensure_product_kind()` | BEFORE INSERT/UPDATE на sections, materials, tasks, section_updates |
 | `ensure_section_update_material_same_section()` | BEFORE INSERT/UPDATE на section_update_materials |
 
-## RLS (каталог, этап 3.2)
+## RLS каталога (этап 3.3.2)
 
-На всех 11 таблицах каталога: **`ENABLE ROW LEVEL SECURITY`**, разрешающих политик **нет** — публичное чтение на этапе 3.3.2.
+### Публичное чтение metadata (`anon`, `authenticated`)
+
+| Таблица | Условие SELECT |
+|---------|----------------|
+| `products` | `status = published` |
+| `sections` | связанный product published |
+| `materials` | связанный product published |
+| `tasks` | связанный product published |
+| `tags` | связан хотя бы с одним published product |
+| `product_tags` | product published |
+| `section_updates` | update product и section product published |
+| `section_update_materials` | section update product published |
+
+Draft/hidden **не** читаются клиентом. **INSERT/UPDATE/DELETE** для каталога с клиента **не разрешены** (admin/server позже).
+
+### `material_chapters` — почему не публично
+
+Строка содержит поле **`content`**. Public SELECT на таблицу привёл бы к утечке платного контента.
+
+| Доступ | Правило |
+|--------|---------|
+| `authenticated` + entitlement | `has_product_access(material_product_id)` — полная строка включая `content` |
+| Оглавление без content | RPC **`get_material_toc(material_product_id)`** — `id`, `title`, `position`; published material; **без entitlement**; `anon` + `authenticated` |
+
+### `task_content` / `task_ai_criteria`
+
+SELECT для `anon` и `authenticated`, если task **published** и:
+
+- `products.price_kopecks = 0` (бесплатная задача), **или**
+- `has_product_access(task_product_id)` (купленная).
+
+Платный контент задачи без entitlement **не** открывается.
+
+### RPC `get_material_toc(uuid)`
+
+`SECURITY DEFINER`, `search_path = public`. Не принимает `user_id`. Не возвращает `content`. Не показывает draft/hidden.
 
 ## Профили и доступ (этап 3.3.1)
 
@@ -169,7 +204,7 @@ RPC (`SECURITY DEFINER`): меняет только `display_name`, `avatar_path
 | `profiles` | insert, update, delete напрямую |
 | `admin_users` | любой доступ |
 | `entitlements` | insert, update, delete |
-| Каталог (3.2) | read/write (политик нет) |
+| Каталог | insert, update, delete; read только по policies 3.3.2 |
 
 ## ER-диаграмма (каталог + доступ)
 
@@ -198,7 +233,7 @@ erDiagram
 
 | Область | Таблицы / сущности |
 |---------|-------------------|
-| Каталог RLS | политики публичного чтения (этап 3.3.2) |
+| Каталог RLS | политики публичного чтения (**этап 3.3.2**) |
 | Корзина | `cart_items` |
 | Заказы / оплата | `orders`, `order_items`, `payments`, `webhook_events` |
 | Ошибки доступа | `access_grant_errors` |

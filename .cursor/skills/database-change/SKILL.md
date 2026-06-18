@@ -14,37 +14,35 @@ description: Безопасное внесение изменений в схе�
 5. `npm run db:lint`, `npm run db:types`
 6. `npm run supabase:stop`
 
-См. ADR-018–020, `docs/INTEGRATIONS.md`.
+См. ADR-018–021, `docs/INTEGRATIONS.md`.
 
 ## Сверка
 
-`docs/DATA_MODEL.md`, `docs/BUSINESS_RULES.md`, ADR-009–013, ADR-018–020.
+`docs/DATA_MODEL.md`, `docs/BUSINESS_RULES.md`, ADR-009–013, ADR-018–021.
 
 ## Реализовано
 
-**Каталог (3.2):** products, sections, materials, material_chapters, tasks, task_content, task_ai_criteria, tags, product_tags, section_updates, section_update_materials. RLS enabled, **без policies**.
+**Каталог (3.2):** products + расширения, RLS enabled.
 
-**Профили и доступ (3.3.1):**
+**Каталог RLS (3.3.2):**
 
-- `profiles` — trigger на `auth.users`; read own; update только `update_my_profile`
-- `admin_users` — RLS, без client policies
-- `entitlements` — read own; insert/update/delete только server-side
-- `has_product_access(product_id)`, `update_my_profile(...)`
+- Published metadata: SELECT для anon/authenticated
+- `material_chapters`: только authenticated + `has_product_access`
+- `get_material_toc` — оглавление без content
+- `task_content` / `task_ai_criteria`: free или entitled
+- **Нет** client write policies на каталог
 
-**Enum:** `entitlement_source_type` (+ каталоговые enums).
+**Профили и доступ (3.3.1):** profiles, admin_users, entitlements, `has_product_access`, `update_my_profile`.
 
 ## Клиенту запрещено
 
-- Прямой CRUD `profiles`, `entitlements`, `admin_users`
-- Любой доступ к каталогу через anon/authenticated (до 3.3.2)
+- CRUD `profiles`, `entitlements`, `admin_users` (кроме RPC)
+- INSERT/UPDATE/DELETE каталога
+- Чтение `material_chapters.content` без entitlement (использовать `get_material_toc` для preview)
 
 ## Ещё не в БД
 
-cart_items, orders, payments, submissions, product_reviews, Storage buckets, каталоговые RLS policies.
-
-## Storage (план)
-
-- **public-media**, **private-files**; signed URL после entitlement check.
+cart_items, orders, payments, submissions, product_reviews, Storage buckets.
 
 ## Миграции
 

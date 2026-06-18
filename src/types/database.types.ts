@@ -497,6 +497,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_material_toc: {
+        Args: { p_material_product_id: string }
+        Returns: {
+          id: string
+          material_product_id: string
+          position: number
+          title: string
+        }[]
+      }
       has_product_access: { Args: { product_id: string }; Returns: boolean }
       is_valid_slug: { Args: { slug: string }; Returns: boolean }
       update_my_profile: {

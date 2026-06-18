@@ -2,81 +2,63 @@
 
 ## Этап
 
-**Этап 3.3.1 — Profiles и access foundation**
+**Этап 3.3.2 — Catalog RLS и безопасное публичное чтение**
 
 **Статус: завершён**
 
 ## Что реализовано
 
-- Enum `entitlement_source_type` (7 значений).
-- Таблицы: `profiles`, `admin_users`, `entitlements`.
-- Trigger `on_auth_user_created` → `handle_new_user()` для email и Google OAuth.
-- RPC `has_product_access(product_id)`, `update_my_profile(...)`.
-- RLS policies на `profiles` и `entitlements` (read own); `admin_users` — RLS без policies.
-- Обновлены `DATA_MODEL.md`, `ARCHITECTURE.md`, `DECISIONS.md` (ADR-020), `database-change` skill.
+- SELECT RLS policies для published каталога (metadata).
+- Закрытый доступ к `material_chapters` (только entitlement).
+- `task_content` / `task_ai_criteria` — free task или entitlement.
+- RPC `get_material_toc(material_product_id)` — оглавление без `content`.
+- Обновлены docs и ADR-021.
 
-**Не создавалось:** каталоговые RLS, публичное чтение каталога, Storage, orders, cart, payments, reviews, auth UI, Supabase client.
+**Не создавалось:** Storage, cart, orders, payments, reviews, UI, Supabase client, seed, admin panel.
 
 ## Миграция
 
-| Параметр | Значение |
-|----------|----------|
-| Файл | `supabase/migrations/20260618191440_create_profiles_and_access_foundation.sql` |
-| CLI | `npx supabase migration new create_profiles_and_access_foundation` |
+`supabase/migrations/20260618193254_create_catalog_read_policies.sql`
 
-## Таблицы
+## Policies (SELECT)
 
-| Таблица | Назначение |
-|---------|------------|
-| `profiles` | Профиль пользователя (без email, без admin-флага) |
-| `admin_users` | Список админов (только service role) |
-| `entitlements` | Доступ user → product с источником |
-
-## Enum
-
-`entitlement_source_type`: direct_order, zero_order, section_order, section_update, manual, free_task_submission, all_materials_owned.
+| Policy | Таблица | Роли | Условие |
+|--------|---------|------|---------|
+| `products_select_published` | products | anon, authenticated | status = published |
+| `sections_select_published` | sections | anon, authenticated | product published |
+| `materials_select_published` | materials | anon, authenticated | product published |
+| `tasks_select_published` | tasks | anon, authenticated | product published |
+| `tags_select_published` | tags | anon, authenticated | linked to published product |
+| `product_tags_select_published` | product_tags | anon, authenticated | product published |
+| `section_updates_select_published` | section_updates | anon, authenticated | update + section published |
+| `section_update_materials_select_published` | section_update_materials | anon, authenticated | update product published |
+| `material_chapters_select_entitled` | material_chapters | authenticated | has_product_access |
+| `task_content_select_free_or_entitled` | task_content | anon, authenticated | published + (free or entitled) |
+| `task_ai_criteria_select_free_or_entitled` | task_ai_criteria | anon, authenticated | published + (free or entitled) |
 
 ## Функции
 
-| Функция | Тип | Назначение |
-|---------|-----|------------|
-| `handle_new_user()` | trigger, SECURITY DEFINER | Создание профиля при регистрации |
-| `has_product_access(uuid)` | SQL, SECURITY INVOKER | Активный entitlement для `auth.uid()` |
-| `update_my_profile(...)` | RPC, SECURITY DEFINER | Обновление своего профиля |
+| Функция | Назначение |
+|---------|------------|
+| `get_material_toc(uuid)` | id, title, position для published material; SECURITY DEFINER; grant anon + authenticated |
 
-## Triggers
+## Таблицы без write policies
 
-| Trigger | Таблица | Функция |
-|---------|---------|---------|
-| `profiles_set_updated_at` | profiles | `set_updated_at()` |
-| `on_auth_user_created` | auth.users | `handle_new_user()` |
+Все 11 таблиц каталога + profiles, entitlements, admin_users — **нет** client INSERT/UPDATE/DELETE policies.
 
-## RLS policies
+## Риски утечки контента
 
-| Таблица | Policy | Правило |
-|---------|--------|---------|
-| `profiles` | `profiles_select_own` | SELECT для authenticated, `id = auth.uid()` |
-| `entitlements` | `entitlements_select_own` | SELECT для authenticated, `user_id = auth.uid()` |
-| `admin_users` | — | RLS enabled, policies нет |
-| Каталог (3.2) | — | без изменений |
+| Риск | Митигация |
+|------|-----------|
+| `material_chapters.content` при public SELECT | Нет public policy; только entitlement |
+| Preview оглавления | `get_material_toc` не выбирает `content` |
+| Платная задача без покупки | `task_content` требует price=0 или `has_product_access` |
+| Draft/hidden в каталоге | policies фильтруют `status = published` |
 
-## Проверки (до этапа)
+## Проверки
 
-| Команда | Результат | Код |
-|---------|-----------|-----|
-| `git status` | clean | 0 |
-| `npm run db:reset` | Успех | 0 |
-| `npm run db:lint` | Успех | 0 |
-| `npm run db:types` | Успех | 0 |
-| `npm run typecheck` | Успех | 0 |
-| `npm run lint` | Успех | 0 |
-| `npm run build` | Успех | 0 |
-| `npm run supabase:status` | running | 0 |
-
-## Проверки (после этапа)
-
-| Команда | Код |
-|---------|-----|
+| Команда | Exit code |
+|---------|-----------|
 | `npm run db:reset` | 0 |
 | `npm run db:lint` | 0 |
 | `npm run db:types` | 0 |
@@ -88,37 +70,26 @@
 
 ### Созданы
 
-- `supabase/migrations/20260618191440_create_profiles_and_access_foundation.sql`
+- `supabase/migrations/20260618193254_create_catalog_read_policies.sql`
 
 ### Изменены
 
-- `src/types/database.types.ts` (regenerated)
+- `src/types/database.types.ts`
 - `docs/DATA_MODEL.md`, `docs/ARCHITECTURE.md`, `docs/DECISIONS.md`
 - `.cursor/skills/database-change/SKILL.md`
 - `docs/STAGE_REPORT.md`
 
-## Git (после этапа)
+## Git
 
-Незакоммиченные изменения: миграция, types, docs.
-
-## Риски
-
-- `handle_new_user` — SECURITY DEFINER: `search_path = public` зафиксирован; при расширении metadata проверять OAuth-провайдеров.
-- Несколько entitlements на один `product_id` — норма; отзыв одного источника не снимает доступ, если есть другой активный.
-- Пустая миграция `20260618185750` в истории — no-op, можно удалить отдельным chore.
+Незакоммиченные изменения (миграция + docs + types).
 
 ## Откат
 
-1. Удалить файл миграции `20260618191440_...sql`.
-2. `npm run db:reset`.
-3. `npm run db:types`.
-
-## Следующий этап
-
-**Этап 3.3.2** — RLS policies публичного чтения каталога (не начинать здесь).
+1. Удалить миграцию `20260618193254_...sql`.
+2. `npm run db:reset` && `npm run db:types`.
 
 ## Рекомендуемый commit
 
 ```
-feat(db): add profiles and entitlements foundation
+feat(db): add catalog read RLS policies and material toc RPC
 ```

@@ -261,6 +261,30 @@
 
 ---
 
+## ADR-021: Catalog RLS и безопасное публичное чтение (этап 3.3.2)
+
+**Статус:** Принято  
+**Дата:** 2026-06-18
+
+**Контекст:** Каталог заблокирован RLS без policies; нужно публичное чтение metadata без утечки платного контента.
+
+**Решение:**
+
+| Параметр | Значение |
+|----------|----------|
+| Миграция | `20260618193254_create_catalog_read_policies.sql` |
+| Публичный read | `products` и расширения только при `status = published` |
+| `material_chapters` | **Нет** public SELECT; full row только при `has_product_access` |
+| Оглавление | `get_material_toc(uuid)` — без `content`, SECURITY DEFINER |
+| Task content | Free (`price_kopecks = 0`) или `has_product_access` |
+| Client writes | **Нет** INSERT/UPDATE/DELETE policies на каталог |
+
+**Риск утечки:** SELECT на `material_chapters` без entitlement открывает `content` — поэтому отдельная policy и TOC-RPC.
+
+**Не входит:** Storage, orders, cart, UI, seed.
+
+---
+
 ## Ожидающие решения (TBD)
 
 | Тема | Когда |
