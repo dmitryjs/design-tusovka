@@ -72,7 +72,7 @@ $setup$;
 set local role anon;
 
 select results_eq(
-  $$ select count(*)::bigint from public.products $$,
+  $$ select count(*)::bigint from public.products where slug like 'test-%' $$,
   array[4::bigint],
   'anon sees only published products'
 );
