@@ -40,3 +40,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# supabase local state (config and migrations are committed)
+supabase/.branches
+supabase/.temp

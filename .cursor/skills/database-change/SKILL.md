@@ -5,9 +5,19 @@ description: Безопасное внесение изменений в схе�
 
 # Database Change
 
+## Локальная среда (этап 3.1)
+
+1. Docker running → `npm run supabase:start`
+2. `npm run supabase:status` — скопировать URL и ключи в `.env.local` (не коммитить)
+3. Миграции: `supabase/migrations/` (этап 3.2+)
+4. Сброс БД: `npm run db:reset` (применяет миграции + seed, когда появятся)
+5. Остановка: `npm run supabase:stop`
+
+См. `docs/DECISIONS.md` ADR-018, `docs/INTEGRATIONS.md`.
+
 ## Сверка
 
-`docs/DATA_MODEL.md`, `docs/BUSINESS_RULES.md`, `docs/DECISIONS.md` ADR-009–013.
+`docs/DATA_MODEL.md`, `docs/BUSINESS_RULES.md`, `docs/DECISIONS.md` ADR-009–013, ADR-018.
 
 ## Storage (утверждено)
 

@@ -171,6 +171,35 @@
 
 ---
 
+## ADR-018: Локальная инфраструктура Supabase (этап 3.1)
+
+**Статус:** Принято  
+**Дата:** 2026-06-18
+
+**Контекст:** Нужен локальный стек Supabase для миграций, RLS и разработки без облачного проекта на ранних этапах.
+
+**Решение:**
+
+| Параметр | Значение |
+|----------|----------|
+| CLI | **supabase** `^2.107.0` как **devDependency** (вызов через `npx` / npm scripts) |
+| Инициализация | `supabase init` → `config.toml`, `project_id = Design_Tusovka` |
+| Runtime | **Docker** + Docker Compose (локальный стек через `supabase start`) |
+| PostgreSQL | major version **17** (в `config.toml`) |
+| Порты | API **54321**, DB **54322**, Studio **54323**, Mailpit **54324** |
+| npm scripts | `supabase:start`, `supabase:stop`, `supabase:status`, `db:reset` |
+| Git | `supabase/config.toml` в репозитории; `supabase/.branches`, `supabase/.temp` в `.gitignore` |
+| Секреты | Только в `.env.local`; значения из `supabase status`, не в документации и отчётах |
+
+**Не входит в 3.1:** миграции, таблицы, RLS, Storage buckets, клиенты в `src/lib/supabase/`.
+
+**Последствия:**
+
+- Этап 3.2 добавляет `supabase/migrations/` и схему по `DATA_MODEL.md`.
+- Облачный Supabase-проект и Vercel env — на этапе деплоя (этап 20).
+
+---
+
 ## Ожидающие решения (TBD)
 
 | Тема | Когда |

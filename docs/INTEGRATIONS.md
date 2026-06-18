@@ -2,6 +2,27 @@
 
 Внешние интеграции. API-поля фиксируются по **официальной документации** на этапах реализации.
 
+## Локальная разработка (этап 3.1)
+
+| Параметр | Значение |
+|----------|----------|
+| CLI | `supabase` devDependency, npm scripts `supabase:*`, `db:reset` |
+| Запуск | `npm run supabase:start` (Docker должен быть running) |
+| Статус | `npm run supabase:status` |
+| Studio | `http://127.0.0.1:54323` |
+| API URL (локально) | `http://127.0.0.1:54321` |
+| PostgreSQL (локально) | `127.0.0.1:54322` |
+
+После `supabase start` скопировать из вывода `supabase status` в `.env.local`:
+
+- `NEXT_PUBLIC_SUPABASE_URL` — Project URL
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` — Publishable (anon) key
+- `SUPABASE_SERVICE_ROLE_KEY` — Secret (service role) key
+
+**Не публиковать** ключи, JWT secret и connection strings в git, документации или отчётах.
+
+Облачный проект Supabase — при деплое (этап 20); те же имена env.
+
 ## Сводная таблица
 
 | Сервис | Назначение | Этап | Статус |

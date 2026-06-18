@@ -2,209 +2,178 @@
 
 ## Этап
 
-**Этап 2 — Инициализация приложения и базовая дизайн-система**
+**Этап 3.1 — Локальная инфраструктура Supabase**
+
+**Статус: завершён**
 
 ## Что реализовано
 
-- Проверена среда: Node.js 24.12.0, npm 11.6.2, Git 2.52.0.
-- Инициализирован Git-репозиторий (`git init`); commit и push не выполнялись.
-- Создан Next.js 16.2.9 (App Router, TypeScript strict, ESLint, Tailwind v4, `src/`, alias `@/*`) через `create-next-app` во временной папке `next-tmp/` с переносом в корень (прямое создание в `.` невозможно из-за npm naming restrictions для имени «Design Tusovka»).
-- Удалены `README.md`, `AGENTS.md`, `CLAUDE.md` (не переносились из временной папки).
-- Подключён shadcn/ui 4.11.0 (стиль `base-nova`): button, input, card, badge, separator, skeleton.
-- Настроены дизайн-токены: primary `#094BF5`, палитра blue 50–900, нейтрали, радиусы 16/12/full, светлая тема без dark mode.
-- Шрифт Inter через `next/font/google` (latin + cyrillic).
-- Созданы layout-компоненты: Container, SiteHeader, SiteFooter.
-- Root layout: `lang="ru"`, metadata, viewport, header/main/footer.
-- Демо-страница с компонентами дизайн-системы и уведомлением о следующем этапе.
-- Создан `.env.example`; `.gitignore` обновлён (`!.env.example`).
-- Обновлены `docs/ARCHITECTURE.md`, `docs/DECISIONS.md` (ADR-017), `.cursor/skills/verify-project/SKILL.md`, `.cursor/rules/code-quality.mdc`.
-- `/docs` и `.cursor` сохранены без перезаписи.
+- Проверен Docker: Engine running, WSL2 backend (Docker 29.5.3, Compose v5.1.4).
+- Установлен **Supabase CLI** `^2.107.0` как devDependency.
+- Выполнены `npx supabase init` и `npx supabase start` — локальный стек поднят в Docker.
+- Добавлены npm-скрипты: `supabase:start`, `supabase:stop`, `supabase:status`, `db:reset`.
+- Обновлены `docs/ARCHITECTURE.md`, `docs/DECISIONS.md` (ADR-018), `docs/INTEGRATIONS.md`, `.cursor/skills/database-change/SKILL.md`.
+- В корневой `.gitignore` добавлены `supabase/.branches` и `supabase/.temp`.
+- Проверки проекта и Supabase — успешно.
+
+**Не выполнялось (по scope этапа):** таблицы, миграции, Storage buckets, RLS, авторизация, клиенты `src/lib/supabase/`.
 
 ## Изменённые файлы
 
 ### Созданы
 
-- `package.json`
-- `package-lock.json`
-- `tsconfig.json`
-- `next.config.ts`
-- `eslint.config.mjs`
-- `postcss.config.mjs`
-- `components.json`
-- `.gitignore`
-- `.env.example`
-- `src/app/globals.css`
-- `src/app/layout.tsx`
-- `src/app/page.tsx`
-- `src/components/layout/container.tsx`
-- `src/components/layout/site-header.tsx`
-- `src/components/layout/site-footer.tsx`
-- `src/components/ui/button.tsx`
-- `src/components/ui/input.tsx`
-- `src/components/ui/card.tsx`
-- `src/components/ui/badge.tsx`
-- `src/components/ui/separator.tsx`
-- `src/components/ui/skeleton.tsx`
-- `src/lib/utils.ts`
+| Файл | Назначение |
+|------|------------|
+| `supabase/config.toml` | Конфигурация локального стека (API 54321, DB 54322, PG 17) |
+| `supabase/.gitignore` | Игнор `.branches`, `.temp`, локальных env |
+| `supabase/snippets/` | Пустая папка CLI (шаблоны SQL — на будущее) |
 
 ### Изменены
 
-- `docs/ARCHITECTURE.md`
-- `docs/DECISIONS.md`
-- `docs/STAGE_REPORT.md`
-- `.cursor/skills/verify-project/SKILL.md`
-- `.cursor/rules/code-quality.mdc`
+| Файл | Изменение |
+|------|-----------|
+| `package.json` | devDependency `supabase`, npm scripts |
+| `package-lock.json` | Lockfile после установки CLI |
+| `.gitignore` | `supabase/.branches`, `supabase/.temp` |
+| `docs/ARCHITECTURE.md` | Структура `supabase/`, локальные порты и команды |
+| `docs/DECISIONS.md` | ADR-018: локальная инфраструктура |
+| `docs/INTEGRATIONS.md` | Раздел локальной разработки, маппинг env |
+| `.cursor/skills/database-change/SKILL.md` | Чек-лист локальной среды |
 
 ### Удалены
 
-- Нет (временная папка `next-tmp/` удалена после переноса)
+- Нет
 
 ## База данных
 
-Нет
+Локальный PostgreSQL 17 в Docker (стандартный образ Supabase). Пользовательские таблицы, RLS и миграции **не создавались**.
 
 ## Переменные окружения
 
-Создан `.env.example` (без значений):
+`.env.example` без изменений. Для локальной работы после `supabase start` значения копируются из `npm run supabase:status` в `.env.local`:
 
-- `NEXT_PUBLIC_APP_URL`
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY`
-- `NEXT_PUBLIC_YANDEX_METRICA_ID`
+| Переменная | Источник в `supabase status` |
+|------------|------------------------------|
+| `NEXT_PUBLIC_SUPABASE_URL` | Project URL / API_URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Publishable key |
+| `SUPABASE_SERVICE_ROLE_KEY` | Secret key |
+
+Ключи, JWT secret, пароли и connection strings **не фиксируются** в этом отчёте и не должны попадать в git.
 
 ## Зависимости
 
-| Пакет | Версия | Причина |
-|-------|--------|---------|
-| next | 16.2.9 | App Router, SSR |
-| react / react-dom | 19.2.4 | UI |
-| typescript | 5.9.3 | strict typecheck |
-| tailwindcss | 4.3.1 | стили, `@theme` в CSS |
-| @tailwindcss/postcss | 4.3.1 | PostCSS для Tailwind v4 |
-| eslint / eslint-config-next | 9.39.4 / 16.2.9 | lint |
-| shadcn (CLI) | 4.11.0 | инициализация UI |
-| @base-ui/react | 1.6.0 | база компонентов shadcn base-nova |
-| class-variance-authority | 0.7.1 | варианты компонентов |
-| clsx / tailwind-merge | 2.1.1 / 3.6.0 | `cn()` |
-| lucide-react | 1.21.0 | иконки (shadcn) |
-| tw-animate-css | 1.4.0 | анимации shadcn |
+| Пакет | Версия | Тип |
+|-------|--------|-----|
+| `supabase` | `^2.107.0` | devDependency |
 
 ## Проверки
 
-### Среда
+### Docker
 
 | Команда | Результат | Код |
 |---------|-----------|-----|
-| `node --version` | v24.12.0 | 0 |
-| `npm --version` | 11.6.2 | 0 |
-| `git --version` | git version 2.52.0.windows.1 | 0 |
+| `docker --version` | 29.5.3 | 0 |
+| `docker compose version` | v5.1.4 | 0 |
 
-### Инициализация
-
-| Команда | Результат | Код |
-|---------|-----------|-----|
-| `npx create-next-app@latest . ...` | Ошибка: npm naming restrictions для «Design Tusovka» | 1 |
-| `npx create-next-app@latest next-tmp --typescript --eslint --tailwind --app --src-dir --import-alias "@/*" --use-npm --empty --disable-git --yes` | Успех; файлы перенесены в корень | 0 |
-| `npx shadcn@latest init -d -y` | Успех | 0 |
-| `npx shadcn@latest add input card badge separator skeleton -y` | Успех (+ button при init) | 0 |
-
-### Качество
+### Supabase
 
 | Команда | Результат | Код |
 |---------|-----------|-----|
-| `npm run typecheck` | Успех, без ошибок | 0 |
-| `npm run lint` | Успех, без ошибок | 0 |
-| `npm run build` | Успех; Next.js 16.2.9 Turbopack; static `/` | 0 |
-| `npm run dev` | Сервер на http://localhost:3000; GET / 200 | 0 |
+| `npx supabase init` | Успех | 0 |
+| `npx supabase start` | Успех (первый запуск, загрузка образов) | 0 |
+| `npx supabase status` | Стек running; Studio на `http://127.0.0.1:54323` | 0 |
+| `npm run supabase:status` | Успех | 0 |
 
-### Git
+Остановленные по умолчанию сервисы: `imgproxy`, `pooler` (pooler disabled в `config.toml`) — ожидаемо.
+
+### Проект
+
+| Команда | Результат | Код |
+|---------|-----------|-----|
+| `npm run typecheck` | Успех | 0 |
+| `npm run lint` | Успех | 0 |
+| `npm run build` | Успех | 0 |
+
+### Git после этапа
 
 | Команда | Результат |
 |---------|-----------|
-| `git status` | Untracked: src/, package.json, docs/, .cursor/, configs; репозиторий инициализирован |
-| `git diff` | Пусто (нет коммитов) |
+| `git status` | Изменения не закоммичены (см. diff) |
+| `git diff` | 8 изменённых файлов + untracked `supabase/` |
 
-Секреты в diff не обнаружены. `node_modules/`, `.next/` не отслеживаются.
+## Версии среды
+
+| Компонент | Версия |
+|-----------|--------|
+| Node.js | v24.12.0 |
+| npm | 11.6.2 |
+| Docker | 29.5.3 |
+| Docker Compose | v5.1.4 |
+| Supabase CLI | 2.107.0 |
+| PostgreSQL (локально) | 17 |
 
 ## npm scripts
 
-```json
-{
-  "dev": "next dev",
-  "build": "next build",
-  "start": "next start",
-  "lint": "eslint .",
-  "lint:fix": "eslint . --fix",
-  "typecheck": "tsc --noEmit"
-}
-```
+| Скрипт | Команда |
+|--------|---------|
+| `supabase:start` | `supabase start` |
+| `supabase:stop` | `supabase stop` |
+| `supabase:status` | `supabase status` |
+| `db:reset` | `supabase db reset` |
 
-## Структура `src/`
+## Локальные endpoints (без секретов)
 
-```text
-src/
-  app/
-    globals.css
-    layout.tsx
-    page.tsx
-  components/
-    layout/
-      container.tsx
-      site-header.tsx
-      site-footer.tsx
-    ui/
-      button.tsx
-      input.tsx
-      card.tsx
-      badge.tsx
-      separator.tsx
-      skeleton.tsx
-  lib/
-    utils.ts
-```
+| Сервис | URL |
+|--------|-----|
+| API | `http://127.0.0.1:54321` |
+| REST | `http://127.0.0.1:54321/rest/v1` |
+| GraphQL | `http://127.0.0.1:54321/graphql/v1` |
+| PostgreSQL | `127.0.0.1:54322` |
+| Studio | `http://127.0.0.1:54323` |
+| Mailpit | `http://127.0.0.1:54324` |
 
-## Компоненты shadcn
+## .gitignore
 
-button, input, card, badge, separator, skeleton
+- `supabase/.branches`, `supabase/.temp` — в корневом `.gitignore` и `supabase/.gitignore`.
+- `supabase/config.toml` — **коммитится**.
+- `supabase/migrations/` — появится на этапе 3.2, коммитится.
 
 ## Что проверено вручную
 
-- HTTP GET `/` → 200.
-- HTML: `lang="ru"`, title «Дизайн Тусовка», `theme-color` `#094BF5`, класс шрифта Inter (`inter_*__variable`).
-- Текст демо-страницы и «Базовая дизайн-система настроена…» присутствуют в ответе.
-- Dev-сервер: без ошибок в терминале после запросов.
-- `docs/` и `.cursor/` на месте.
+- Docker Engine доступен из PowerShell.
+- `supabase start` завершился без ошибок после загрузки образов.
+- `supabase status` возвращает running-сервисы и локальные URL.
+- `.temp` и `.branches` игнорируются git.
 
 ## Что не проверено
 
-- Браузерная консоль и гидрация визуально (нет доступа к браузеру агента); косвенно: SSR HTML корректен, build и typecheck успешны.
-- Узкий экран визуально (разметка адаптивная: `sm:`/`lg:` breakpoints, `flex-wrap`, grid токенов).
-- Точное визуальное совпадение primary с `#094BF5` на экране (в CSS задано `--primary: #094bf5`).
+- `npm run db:reset` (нет миграций и `seed.sql`).
+- `npm run supabase:stop` / повторный `start` после stop.
+- Интеграция Next.js с Supabase (этап 4+).
+- Облачный Supabase-проект.
 
 ## Риски
 
-- shadcn `base-nova` использует `@base-ui/react` — отличается от классического Radix; команда должна следовать документации shadcn v4.
-- В компонентах shadcn остались классы `dark:*` (неактивны без `.dark`; dark mode не подключён).
-- `next-env.d.ts` в `.gitignore` (шаблон create-next-app) — может потребовать корректировки на CI.
-- npm audit: 2 moderate vulnerabilities в зависимостях (не исправлялись на этом этапе).
+- Первый `supabase start` долгий из‑за pull образов (~6+ GB).
+- `supabase status` может логировать timeout PostHog telemetry — на работу стека не влияет.
+- `build` может падать офлайн из‑за `next/font/google` (Inter) — как на этапе 3.1 (блокер).
 
 ## Неопределённости
 
-Без изменений относительно этапа 1.1 (цены, криптопровайдер, email, юр. тексты, ключи).
+- Нет.
 
 ## Откат
 
-1. Удалить `node_modules/`, `.next/`, `src/`, `package.json`, `package-lock.json`, конфиги Next/ESLint/Tailwind/postcss, `components.json`, `.env.example`.
-2. Откатить изменения в `docs/ARCHITECTURE.md`, `docs/DECISIONS.md`, `.cursor/` к коммиту этапа 1.1 (после первого commit) или из бэкапа.
-3. `rm -rf .git` — только если нужно убрать инициализацию Git.
+1. `npm run supabase:stop` — остановить контейнеры.
+2. Удалить `supabase/`, откатить изменения в `package.json`, docs, `.gitignore`.
+3. `npm uninstall supabase`.
 
 ## Следующий этап
 
-**Этап 3 — База данных и модель доступов:** Supabase project, миграции, RLS, Storage buckets, типы.
+**Этап 3.2** — SQL-миграции по `DATA_MODEL.md`, RLS, Storage buckets (`public-media`, `private-files`).
 
 ## Рекомендуемый коммит
 
 ```
-feat: initialize Next.js app and design system (stage 2)
+chore: add local Supabase CLI and Docker workflow
 ```

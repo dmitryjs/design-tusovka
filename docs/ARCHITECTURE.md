@@ -47,7 +47,7 @@ flowchart TB
   Crypto -->|webhook| SA
 ```
 
-## Структура репозитория (фактическая, этап 2)
+## Структура репозитория (фактическая, этап 3.1)
 
 ```
 src/
@@ -63,6 +63,9 @@ src/
     ui/                    # shadcn: button, input, card, badge, separator, skeleton
   lib/
     utils.ts
+supabase/
+  config.toml              # Локальная конфигурация CLI (порты, версия PG 17)
+  .gitignore               # .branches, .temp
 components.json            # shadcn config
 docs/                      # Продуктовая документация
 .cursor/                   # Правила и skills
@@ -70,7 +73,7 @@ docs/                      # Продуктовая документация
 
 Целевые маршруты `(auth)`, `(app)`, `(admin)`, `api/` — на следующих этапах. См. план ниже.
 
-### Планируемая структура (этапы 3+)
+### Планируемая структура (этапы 3.2+)
 
 ```
 src/app/
@@ -81,8 +84,25 @@ src/app/
   legal/
   api/webhooks/
 src/lib/supabase|payments|polza|cart|access|storage/
-supabase/migrations/
+supabase/migrations/       # SQL-миграции (этап 3.2)
 ```
+
+## Локальная разработка Supabase (этап 3.1)
+
+| Компонент | Локальный адрес |
+|-----------|-----------------|
+| API (Project URL) | `http://127.0.0.1:54321` |
+| PostgreSQL | `127.0.0.1:54322` |
+| Studio | `http://127.0.0.1:54323` |
+| Mailpit (Auth email) | `http://127.0.0.1:54324` |
+
+**Требования:** Docker Desktop (WSL2 backend на Windows).
+
+**Команды:** `npm run supabase:start` | `supabase:stop` | `supabase:status` | `db:reset`.
+
+Ключи и connection string для локальной среды выводятся `supabase status` и копируются в `.env.local` (не коммитятся). Имена переменных — см. `INTEGRATIONS.md` и `.env.example`.
+
+Клиенты `src/lib/supabase/` — этап 4+.
 
 ## Ключевые потоки
 
