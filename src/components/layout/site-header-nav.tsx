@@ -12,9 +12,13 @@ import { HeaderSearch } from "./header-search";
 
 type SiteHeaderNavProps = {
   isAuthenticated: boolean;
+  cartItemCount?: number;
 };
 
-export function SiteHeaderNav({ isAuthenticated }: SiteHeaderNavProps) {
+export function SiteHeaderNav({
+  isAuthenticated,
+  cartItemCount = 0,
+}: SiteHeaderNavProps) {
   const pathname = usePathname();
 
   return (
@@ -46,6 +50,17 @@ export function SiteHeaderNav({ isAuthenticated }: SiteHeaderNavProps) {
 
       <div className="flex flex-1 items-center gap-2 sm:gap-3">
         <HeaderSearch className="min-w-0 flex-1 xl:max-w-md" />
+
+        <Link
+          href="/cart"
+          className={cn(
+            buttonVariants({ variant: "secondary", size: "sm" }),
+            "shrink-0",
+            pathname === "/cart" && "bg-blue-50 text-primary",
+          )}
+        >
+          Корзина{cartItemCount > 0 ? ` (${cartItemCount})` : ""}
+        </Link>
 
         {isAuthenticated ? (
           <div className="flex shrink-0 items-center gap-2">

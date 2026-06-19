@@ -3,8 +3,10 @@ import { getKindLabel, getLevelLabel } from "@/lib/catalog/format";
 import type { TaskDetail } from "@/lib/catalog/detail-queries";
 import { getCatalogItemHref } from "@/lib/catalog/paths";
 import type { FreeProductClaimState } from "@/lib/entitlements/types";
+import type { PaidProductCartState } from "@/lib/cart/types";
 
 import { FreeProductClaimCta } from "@/components/entitlements/free-product-claim-cta";
+import { PaidProductCartCta } from "@/components/cart/paid-product-cart-cta";
 
 import {
   CatalogComingSoonBlock,
@@ -19,9 +21,14 @@ import {
 type TaskDetailViewProps = {
   task: TaskDetail;
   claimState: FreeProductClaimState;
+  cartState: PaidProductCartState;
 };
 
-export function TaskDetailView({ task, claimState }: TaskDetailViewProps) {
+export function TaskDetailView({
+  task,
+  claimState,
+  cartState,
+}: TaskDetailViewProps) {
   return (
     <CatalogDetailShell
       breadcrumbs={[
@@ -115,6 +122,21 @@ export function TaskDetailView({ task, claimState }: TaskDetailViewProps) {
             slug={task.slug}
             kind="task"
             initialState={claimState}
+            signInReturnPath={getCatalogItemHref("task", task.slug)}
+          />
+        </section>
+      ) : null}
+
+      {cartState !== "hidden" ? (
+        <section className="space-y-3 border-t border-neutral-200 pt-8">
+          <h2 className="text-lg font-semibold text-foreground">Покупка</h2>
+          <p className="text-sm leading-6 text-neutral-600">
+            Платное задание можно добавить в корзину и оформить заказ.
+          </p>
+          <PaidProductCartCta
+            slug={task.slug}
+            kind="task"
+            initialState={cartState}
             signInReturnPath={getCatalogItemHref("task", task.slug)}
           />
         </section>

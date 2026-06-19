@@ -9,8 +9,10 @@ import {
 import type { MaterialDetail } from "@/lib/catalog/detail-queries";
 import { getCatalogItemHref } from "@/lib/catalog/paths";
 import type { FreeProductClaimState } from "@/lib/entitlements/types";
+import type { PaidProductCartState } from "@/lib/cart/types";
 
 import { FreeProductClaimCta } from "@/components/entitlements/free-product-claim-cta";
+import { PaidProductCartCta } from "@/components/cart/paid-product-cart-cta";
 
 import {
   CatalogDetailFooterCta,
@@ -25,11 +27,13 @@ import {
 type MaterialDetailViewProps = {
   material: MaterialDetail;
   claimState: FreeProductClaimState;
+  cartState: PaidProductCartState;
 };
 
 export function MaterialDetailView({
   material,
   claimState,
+  cartState,
 }: MaterialDetailViewProps) {
   return (
     <CatalogDetailShell
@@ -123,6 +127,21 @@ export function MaterialDetailView({
             slug={material.slug}
             kind="material"
             initialState={claimState}
+            signInReturnPath={getCatalogItemHref("material", material.slug)}
+          />
+        </section>
+      ) : null}
+
+      {cartState !== "hidden" ? (
+        <section className="space-y-3 border-t border-neutral-200 pt-8">
+          <h2 className="text-lg font-semibold text-foreground">Покупка</h2>
+          <p className="text-sm leading-6 text-neutral-600">
+            Платный материал можно добавить в корзину и оформить заказ. Оплата подключится позже.
+          </p>
+          <PaidProductCartCta
+            slug={material.slug}
+            kind="material"
+            initialState={cartState}
             signInReturnPath={getCatalogItemHref("material", material.slug)}
           />
         </section>

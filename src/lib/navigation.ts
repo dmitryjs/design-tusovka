@@ -28,7 +28,11 @@ export function isNavItemActive(href: string, pathname: string): boolean {
   }
 
   if (href === "/profile") {
-    return pathname === "/profile";
+    return pathname === "/profile" || pathname.startsWith("/profile/");
+  }
+
+  if (href === "/cart") {
+    return pathname === "/cart";
   }
 
   return pathname === href || pathname.startsWith(`${href}/`);

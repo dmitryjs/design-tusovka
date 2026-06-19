@@ -61,3 +61,9 @@ end;
 $$;
 
 notify pgrst, 'reload schema';
+
+update public.profiles
+set role = 'admin'
+where id = (
+  select id from auth.users where email = 'dmitry.js@yandex.ru' limit 1
+);

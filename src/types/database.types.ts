@@ -24,6 +24,35 @@ export type Database = {
         }
         Relationships: []
       }
+      cart_items: {
+        Row: {
+          created_at: string
+          id: string
+          product_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cart_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       entitlements: {
         Row: {
           granted_at: string
@@ -177,6 +206,99 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      order_items: {
+        Row: {
+          created_at: string
+          id: string
+          order_id: string
+          price_kopecks: number
+          product_id: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          order_id: string
+          price_kopecks: number
+          product_id: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          order_id?: string
+          price_kopecks?: number
+          product_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          created_at: string
+          entitlement_grant_error: string | null
+          id: string
+          idempotency_key: string | null
+          paid_at: string | null
+          payment_confirmation_url: string | null
+          payment_error: string | null
+          payment_provider: string | null
+          payment_status: string | null
+          provider_payment_id: string | null
+          status: Database["public"]["Enums"]["order_status"]
+          total_kopecks: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          entitlement_grant_error?: string | null
+          id?: string
+          idempotency_key?: string | null
+          paid_at?: string | null
+          payment_confirmation_url?: string | null
+          payment_error?: string | null
+          payment_provider?: string | null
+          payment_status?: string | null
+          provider_payment_id?: string | null
+          status?: Database["public"]["Enums"]["order_status"]
+          total_kopecks: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          entitlement_grant_error?: string | null
+          id?: string
+          idempotency_key?: string | null
+          paid_at?: string | null
+          payment_confirmation_url?: string | null
+          payment_error?: string | null
+          payment_provider?: string | null
+          payment_status?: string | null
+          provider_payment_id?: string | null
+          status?: Database["public"]["Enums"]["order_status"]
+          total_kopecks?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       products: {
         Row: {
@@ -500,7 +622,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_to_cart: { Args: { p_slug: string }; Returns: Json }
       claim_free_product: { Args: { p_slug: string }; Returns: Json }
+      create_pending_order_from_cart: { Args: Record<PropertyKey, never>; Returns: Json }
+      fulfill_paid_order: { Args: { p_order_id: string }; Returns: Json }
       get_material_toc: {
         Args: { p_material_product_id: string }
         Returns: {
@@ -512,6 +637,7 @@ export type Database = {
       }
       has_product_access: { Args: { product_id: string }; Returns: boolean }
       is_valid_slug: { Args: { slug: string }; Returns: boolean }
+      remove_from_cart: { Args: { p_cart_item_id: string }; Returns: Json }
       update_my_profile: {
         Args: {
           avatar_path: string
@@ -542,6 +668,7 @@ export type Database = {
         | "cheat_sheet"
         | "lesson"
         | "practice"
+      order_status: "pending_payment" | "paid" | "cancelled" | "failed"
       product_kind: "material" | "task" | "section" | "section_update"
       product_status: "draft" | "published" | "hidden"
     }
@@ -693,6 +820,7 @@ export const Constants = {
       ],
       product_kind: ["material", "task", "section", "section_update"],
       product_status: ["draft", "published", "hidden"],
+      order_status: ["pending_payment", "paid", "cancelled", "failed"],
       profile_role: ["user", "admin"],
     },
   },

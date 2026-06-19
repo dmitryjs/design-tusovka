@@ -3,6 +3,7 @@ import { Suspense } from "react";
 
 import { Container } from "@/components/layout/container";
 import { SiteHeaderNav } from "@/components/layout/site-header-nav";
+import { getCartItemCount } from "@/lib/cart/queries";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function SiteHeader() {
@@ -10,6 +11,8 @@ export async function SiteHeader() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  const cartItemCount = user ? await getCartItemCount(supabase) : 0;
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background">
@@ -33,7 +36,10 @@ export async function SiteHeader() {
               <div className="h-9 w-full max-w-sm animate-pulse rounded-lg bg-neutral-100" />
             }
           >
-            <SiteHeaderNav isAuthenticated={Boolean(user)} />
+            <SiteHeaderNav
+              isAuthenticated={Boolean(user)}
+              cartItemCount={cartItemCount}
+            />
           </Suspense>
         </div>
       </Container>

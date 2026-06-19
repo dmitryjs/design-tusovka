@@ -10,6 +10,7 @@ const migrations = [
   "20260618210000_profiles_update_policy.sql",
   "20260618220000_claim_free_product_rpc.sql",
   "20260618230000_profiles_admin_role.sql",
+  "20260618240000_cart_and_orders.sql",
 ].map((file) =>
   fs.readFileSync(path.join("supabase/migrations", file), "utf8"),
 );

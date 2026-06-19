@@ -12,6 +12,8 @@
 | **4** | [`supabase/cloud_patch_auth_profiles.sql`](../supabase/cloud_patch_auth_profiles.sql) | Для auth: trigger профиля + `profiles_update_own` (если bootstrap старый) |
 | **5** | [`supabase/cloud_patch_free_entitlements.sql`](../supabase/cloud_patch_free_entitlements.sql) | Для «Получить бесплатно» и библиотеки в `/profile` |
 | **6** | [`supabase/cloud_patch_admin_role.sql`](../supabase/cloud_patch_admin_role.sql) | Для `/admin`: роль `profiles.role` |
+| **7** | [`supabase/cloud_patch_cart_orders.sql`](../supabase/cloud_patch_cart_orders.sql) | Для корзины `/cart` и заказов |
+| **8** | [`supabase/cloud_patch_yookassa_orders.sql`](../supabase/cloud_patch_yookassa_orders.sql) | Для ЮKassa: поля оплаты в `orders`, `fulfill_paid_order` |
 
 Оба обязательных файла (шаги 1–2) выполняются в **Supabase Dashboard → SQL Editor → New query → Run**.
 
@@ -87,6 +89,43 @@ select id, display_name, role from public.profiles where role = 'admin';
 
 После этого откройте `/admin` под этим аккаунтом. Нужен `SUPABASE_SERVICE_ROLE_KEY` в `.env.local` для записи контента.
 
+### Корзина и заказы (шаг 7)
+
+Выполните [`supabase/cloud_patch_cart_orders.sql`](../supabase/cloud_patch_cart_orders.sql) для:
+
+- таблиц `cart_items`, `orders`, `order_items`;
+- RPC `add_to_cart`, `remove_from_cart`, `create_pending_order_from_cart`;
+- страниц `/cart` и `/profile/orders`.
+
+Проверка:
+
+```sql
+select proname from pg_proc
+where proname in ('add_to_cart', 'remove_from_cart', 'create_pending_order_from_cart');
+```
+
+Ожидается 3 строки.
+
+Ручная проверка:
+
+1. Платный продукт → «Добавить в корзину» → `/cart`.
+2. «Перейти к оплате» → заказ `pending_payment`, корзина пустая.
+3. Entitlement **не** создаётся до реальной оплаты.
+
+### ЮKassa (шаг 8)
+
+Выполните [`supabase/cloud_patch_yookassa_orders.sql`](../supabase/cloud_patch_yookassa_orders.sql).
+
+Подробная инструкция: [`docs/YOOKASSA_INTEGRATION.md`](YOOKASSA_INTEGRATION.md).
+
+Проверка:
+
+```sql
+select proname from pg_proc where proname = 'fulfill_paid_order';
+select column_name from information_schema.columns
+where table_schema = 'public' and table_name = 'orders' and column_name = 'provider_payment_id';
+```
+
 ## Где взять env
 
 **Project Settings → API** в Supabase Dashboard. Скопировать в `.env.local` (не коммитить):
@@ -95,6 +134,14 @@ select id, display_name, role from public.profiles where role = 'admin';
 NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-public-key>
 SUPABASE_SERVICE_ROLE_KEY=<service-role-secret>
+```
+
+Для оплаты (server-only, см. [`docs/YOOKASSA_INTEGRATION.md`](YOOKASSA_INTEGRATION.md), деплой: [`docs/VERCEL_DEPLOY.md`](VERCEL_DEPLOY.md)):
+
+```env
+YOOKASSA_SHOP_ID=
+YOOKASSA_SECRET_KEY=
+YOOKASSA_RETURN_URL=
 ```
 
 Имена переменных — в [`.env.example`](../.env.example).
