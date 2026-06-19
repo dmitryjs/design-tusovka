@@ -85,6 +85,21 @@ https://<your-domain>/checkout/success
 
 Параметр `order_id` добавляется сервером при создании платежа.
 
+### Настройки магазина в ЮKassa (юридические страницы)
+
+Перед боевым подключением замените placeholder’ы на реальные данные ИП на странице [`/requisites`](../src/app/requisites/page.tsx) (ИНН, ОГРНИП, email поддержки).
+
+| Поле в ЛК ЮKassa | Значение |
+|------------------|----------|
+| **Адрес сайта** | `NEXT_PUBLIC_SITE_URL` (например `https://design-tusovka.vercel.app`) |
+| **Ссылка на страницу с реквизитами** | `{NEXT_PUBLIC_SITE_URL}/requisites` |
+| Публичная оферта | `{NEXT_PUBLIC_SITE_URL}/offer` |
+| Политика конфиденциальности | `{NEXT_PUBLIC_SITE_URL}/privacy` |
+| Оплата и возврат | `{NEXT_PUBLIC_SITE_URL}/payment-and-refund` |
+| Поддержка | `{NEXT_PUBLIC_SITE_URL}/support` |
+
+Ссылки также доступны в футере сайта.
+
 ### Локальный тест webhook
 
 ЮKassa требует HTTPS. Для local используйте туннель (ngrok, cloudflared):
