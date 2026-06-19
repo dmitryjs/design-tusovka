@@ -2,73 +2,92 @@
 
 ## Этап
 
-**Запуск каталога на Supabase Cloud + bootstrap SQL**
+**Admin-lite: управление контентом MVP**
 
-**Статус: завершён, закоммичено**
+**Статус: завершён**
 
 ## Результат
 
-Главная `/` **загружается из Supabase Cloud**: карточки sections / materials / tasks, фильтры, поиск, цены. Ошибка `Could not find the table 'public.products'` устранена применением SQL в Cloud.
+Пользователь с ролью `admin` может открыть `/admin` и управлять материалами, заданиями, разделами и тегами без SQL. Гость перенаправляется на вход, обычный пользователь видит 403.
 
-## SQL-файлы (выполнены в Supabase SQL Editor)
+## Добавленные маршруты
 
-| Порядок | Файл | Назначение |
-|---------|------|------------|
-| 1 | `supabase/cloud_bootstrap.sql` | Схема, RLS, grants (migrations 3.2–3.3.4) |
-| 2 | `supabase/dev_seed.sql` | Демо-контент (15 карточек на главной) |
+| Маршрут | Назначение |
+|---------|------------|
+| `/admin` | Обзор и ссылки |
+| `/admin/products` | Список материалов и заданий |
+| `/admin/products/new` | Создание продукта |
+| `/admin/products/[id]` | Редактирование продукта |
+| `/admin/sections` | Список и CRUD разделов |
+| `/admin/tags` | Список и CRUD тегов |
 
-Инструкция: `docs/SUPABASE_CLOUD_BOOTSTRAP.md`
+## Архитектура
 
-## Supabase Cloud (основной режим)
+| Слой | Файлы |
+|------|-------|
+| Auth | `src/lib/auth/session.ts`, `src/lib/auth/admin.ts` |
+| Бизнес-логика | `src/lib/admin/products.ts`, `sections.ts`, `tags.ts`, `validation.ts` |
+| Server actions | `src/app/actions/admin/*` |
+| UI | `src/components/admin/*` |
 
-- Env в `.env.local` (не в git): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
-- Клиенты: `src/lib/supabase/client.ts`, `server.ts`, `admin.ts`
-- Docker/local — optional (`db:local:*`)
+Запись в БД — через `SUPABASE_SERVICE_ROLE_KEY` (server-only) после `assertAdmin()`. RLS для публичного каталога не менялся.
 
-## Демо-контент
+## SQL patch
 
-3 секции, 8 материалов, 4 задания, 12 тегов; уровни junior/middle/senior; free и paid.
+**Файл:** `supabase/cloud_patch_admin_role.sql`
 
-## Проверки перед commit
+**Содержимое:**
 
-| Команда | Exit code |
+- enum `profile_role` (`user`, `admin`);
+- колонка `profiles.role` default `user`;
+- trigger: пользователь не может сменить `role` сам;
+- обновление `handle_new_user` для `role = user`.
+
+**Миграция local:** `supabase/migrations/20260618230000_profiles_admin_role.sql`
+
+### Назначить admin вручную
+
+В Supabase SQL Editor (после patch), подставьте email:
+
+```sql
+update public.profiles
+set role = 'admin'
+where id = (
+  select id from auth.users where email = 'you@example.com' limit 1
+);
+```
+
+## Таблицы (чтение / запись admin)
+
+| Таблица | Операции |
+|---------|----------|
+| `profiles` | read (`role` для проверки) |
+| `products` | read, insert, update |
+| `materials`, `material_chapters` | read, insert, update, delete (главы) |
+| `tasks`, `task_content` | read, insert, update, upsert |
+| `sections` | read, insert, update |
+| `tags`, `product_tags` | read, insert, update, replace tags |
+
+## Проверки
+
+| Команда | Результат |
 |---------|-----------|
-| `npm run typecheck` | 0 |
-| `npm run lint` | 0 |
-| `npm run build` | 0 |
-| `.env.local` в git | нет (`.gitignore`) |
-| Секреты в репозитории | не обнаружены |
+| `npm run typecheck` | ожидается 0 |
+| `npm run lint` | ожидается 0 |
+| `npm run build` | ожидается 0 |
 
-## Commit
+## Ручные сценарии
 
-```
-chore: bootstrap cloud catalog data
-```
+1. Выполнить `cloud_patch_admin_role.sql`.
+2. Назначить себе `role = admin` через SQL.
+3. Гость → `/admin` → redirect на sign-in.
+4. Обычный user → `/admin` → «Нет доступа».
+5. Admin → создать бесплатный материал (`published`, 0 ₽) → виден на главной.
+6. Admin → платный материал → на сайте preview без текста глав.
+7. Admin → редактировать материал → изменения на сайте.
+8. Admin → создать тег и раздел.
+9. `SUPABASE_SERVICE_ROLE_KEY` задан в `.env.local`.
 
-## Изменённые файлы (в commit)
+## Не реализовано
 
-### SQL и скрипты
-
-- `supabase/cloud_bootstrap.sql`
-- `supabase/dev_seed.sql`
-- `scripts/build-cloud-bootstrap.mjs`
-
-### Supabase clients
-
-- `src/lib/supabase/env.ts`, `client.ts`, `server.ts`, `admin.ts`
-
-### Конфиг и docs
-
-- `package.json`, `package-lock.json`
-- `.env.example`
-- `docs/SUPABASE_CLOUD_BOOTSTRAP.md`, `docs/MENTOR_REPORT.md`
-- `docs/ARCHITECTURE.md`, `docs/INTEGRATIONS.md`, `docs/DECISIONS.md` (ADR-024)
-- `.cursor/skills/*`, `.cursor/rules/security.mdc`
-
-### UI (только сообщения empty/error, без новых фич)
-
-- `src/components/catalog/catalog-home.tsx`
-
-## Следующий шаг (не начинать здесь)
-
-Auth UI, страницы товара, `git push` на GitHub.
+Оплата, корзина, Storage, upload, rich editor, AI, ручная проверка, удаление продуктов.

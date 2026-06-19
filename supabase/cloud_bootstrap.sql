@@ -1,5 +1,5 @@
 -- Supabase Cloud bootstrap - Design Tusovka MVP
--- Consolidates migrations 20260618185410 through 20260618195500
+-- Consolidates migrations 20260618185410 through 20260618200000
 -- Run FIRST in Supabase Dashboard -> SQL Editor
 -- Safe to re-run: IF NOT EXISTS / OR REPLACE / DROP IF EXISTS
 -- Does NOT use DROP SCHEMA or destructive reset
@@ -859,3 +859,61 @@ create policy task_ai_criteria_select_entitled
         and public.has_product_access(t.product_id)
     )
   );
+
+
+-- Free catalog content RLS for MVP
+-- material_chapters: published free materials readable by anon/authenticated
+-- paid material chapters: entitled authenticated only (no content leak)
+
+grant select on table public.material_chapters to anon;
+
+drop policy if exists material_chapters_select_entitled on public.material_chapters;
+
+drop policy if exists material_chapters_select_free on public.material_chapters;
+create policy material_chapters_select_free
+  on public.material_chapters
+  for select
+  to anon, authenticated
+  using (
+    exists (
+      select 1
+      from public.materials m
+      inner join public.products p on p.id = m.product_id
+      where m.product_id = material_chapters.material_product_id
+        and p.status = 'published'::public.product_status
+        and p.kind = 'material'::public.product_kind
+        and p.price_kopecks = 0
+    )
+  );
+
+drop policy if exists material_chapters_select_entitled on public.material_chapters;
+create policy material_chapters_select_entitled
+  on public.material_chapters
+  for select
+  to authenticated
+  using (
+    exists (
+      select 1
+      from public.materials m
+      inner join public.products p on p.id = m.product_id
+      where m.product_id = material_chapters.material_product_id
+        and p.status = 'published'::public.product_status
+        and p.kind = 'material'::public.product_kind
+        and p.price_kopecks > 0
+        and public.has_product_access(material_chapters.material_product_id)
+    )
+  );
+
+
+-- Profiles update policy for authenticated users
+
+grant update on table public.profiles to authenticated;
+
+drop policy if exists profiles_update_own on public.profiles;
+drop policy if exists profiles_update_own on public.profiles;
+create policy profiles_update_own
+  on public.profiles
+  for update
+  to authenticated
+  using (id = (select auth.uid()))
+  with check (id = (select auth.uid()));

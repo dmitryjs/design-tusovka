@@ -1,4 +1,4 @@
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAnonServerClient } from "@/lib/supabase/server";
 
 import type { CatalogItem, CatalogItemKind, CatalogTag } from "./types";
 
@@ -52,7 +52,7 @@ function buildTagsByProductId(
 
 export async function getCatalogItems(): Promise<CatalogQueryResult> {
   try {
-    const supabase = createSupabaseServerClient();
+    const supabase = createSupabaseAnonServerClient();
 
     const { data: products, error: productsError } = await supabase
       .from("products")

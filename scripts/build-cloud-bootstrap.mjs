@@ -6,12 +6,16 @@ const migrations = [
   "20260618191440_create_profiles_and_access_foundation.sql",
   "20260618193254_create_catalog_read_policies.sql",
   "20260618195500_grant_api_access_for_rls.sql",
+  "20260618200000_free_catalog_content_rls.sql",
+  "20260618210000_profiles_update_policy.sql",
+  "20260618220000_claim_free_product_rpc.sql",
+  "20260618230000_profiles_admin_role.sql",
 ].map((file) =>
   fs.readFileSync(path.join("supabase/migrations", file), "utf8"),
 );
 
 let sql = `-- Supabase Cloud bootstrap - Design Tusovka MVP
--- Consolidates migrations 20260618185410 through 20260618195500
+-- Consolidates migrations 20260618185410 through 20260618200000
 -- Run FIRST in Supabase Dashboard -> SQL Editor
 -- Safe to re-run: IF NOT EXISTS / OR REPLACE / DROP IF EXISTS
 -- Does NOT use DROP SCHEMA or destructive reset

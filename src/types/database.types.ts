@@ -228,6 +228,7 @@ export type Database = {
           designer_level: Database["public"]["Enums"]["designer_level"]
           display_name: string | null
           id: string
+          role: Database["public"]["Enums"]["profile_role"]
           telegram_username: string | null
           updated_at: string
         }
@@ -238,6 +239,7 @@ export type Database = {
           designer_level?: Database["public"]["Enums"]["designer_level"]
           display_name?: string | null
           id: string
+          role?: Database["public"]["Enums"]["profile_role"]
           telegram_username?: string | null
           updated_at?: string
         }
@@ -248,6 +250,7 @@ export type Database = {
           designer_level?: Database["public"]["Enums"]["designer_level"]
           display_name?: string | null
           id?: string
+          role?: Database["public"]["Enums"]["profile_role"]
           telegram_username?: string | null
           updated_at?: string
         }
@@ -497,6 +500,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      claim_free_product: { Args: { p_slug: string }; Returns: Json }
       get_material_toc: {
         Args: { p_material_product_id: string }
         Returns: {
@@ -520,6 +524,7 @@ export type Database = {
     }
     Enums: {
       designer_level: "junior" | "middle" | "senior" | "all"
+      profile_role: "user" | "admin"
       entitlement_source_type:
         | "direct_order"
         | "zero_order"
@@ -688,6 +693,7 @@ export const Constants = {
       ],
       product_kind: ["material", "task", "section", "section_update"],
       product_status: ["draft", "published", "hidden"],
+      profile_role: ["user", "admin"],
     },
   },
 } as const

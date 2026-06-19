@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(18);
+select plan(19);
 
 do $setup$
 declare
@@ -12,8 +12,10 @@ declare
   v_hidden_product uuid := 'a0000000-0000-4000-8000-000000000004';
   v_free_task_product uuid := 'a0000000-0000-4000-8000-000000000010';
   v_paid_task_product uuid := 'a0000000-0000-4000-8000-000000000011';
+  v_free_material_product uuid := 'a0000000-0000-4000-8000-000000000005';
   v_chapter_1 uuid := 'b0000000-0000-4000-8000-000000000001';
   v_chapter_2 uuid := 'b0000000-0000-4000-8000-000000000002';
+  v_free_chapter_1 uuid := 'b0000000-0000-4000-8000-000000000003';
   v_user_a uuid := 'c0000000-0000-4000-8000-000000000001';
   v_user_b uuid := 'c0000000-0000-4000-8000-000000000002';
   v_source_id uuid := 'e0000000-0000-4000-8000-000000000001';
@@ -30,18 +32,22 @@ begin
     (v_draft_product, 'material', 'draft', 'test-draft', 'Draft Material', 0),
     (v_hidden_product, 'material', 'hidden', 'test-hidden', 'Hidden Material', 0),
     (v_free_task_product, 'task', 'published', 'test-free-task', 'Free Task', 0),
-    (v_paid_task_product, 'task', 'published', 'test-paid-task', 'Paid Task', 50000);
+    (v_paid_task_product, 'task', 'published', 'test-paid-task', 'Paid Task', 50000),
+    (v_free_material_product, 'material', 'published', 'test-free-material', 'Free Material', 0);
 
   insert into public.sections (product_id)
   values (v_section_product);
 
   insert into public.materials (product_id, section_product_id, format)
-  values (v_material_product, v_section_product, 'mini_guide');
+  values
+    (v_material_product, v_section_product, 'mini_guide'),
+    (v_free_material_product, v_section_product, 'mini_guide');
 
   insert into public.material_chapters (id, material_product_id, title, content, position)
   values
     (v_chapter_1, v_material_product, 'Chapter 1', '[{"type":"paragraph","text":"secret"}]'::jsonb, 0),
-    (v_chapter_2, v_material_product, 'Chapter 2', '[{"type":"paragraph","text":"secret2"}]'::jsonb, 1);
+    (v_chapter_2, v_material_product, 'Chapter 2', '[{"type":"paragraph","text":"secret2"}]'::jsonb, 1),
+    (v_free_chapter_1, v_free_material_product, 'Free Chapter', '[{"type":"paragraph","text":"open"}]'::jsonb, 0);
 
   insert into public.tasks (product_id)
   values
@@ -73,7 +79,7 @@ set local role anon;
 
 select results_eq(
   $$ select count(*)::bigint from public.products where slug like 'test-%' $$,
-  array[4::bigint],
+  array[5::bigint],
   'anon sees only published products'
 );
 
@@ -107,9 +113,15 @@ select results_eq(
   'get_material_toc returns outline fields only'
 );
 
-select throws_ok(
-  $$ select 1 from public.material_chapters $$,
-  '42501'
+select is_empty(
+  $$ select 1 from public.material_chapters where material_product_id = 'a0000000-0000-4000-8000-000000000002'::uuid $$,
+  'anon cannot read paid material_chapters without entitlement'
+);
+
+select results_eq(
+  $$ select count(*)::bigint from public.material_chapters where material_product_id = 'a0000000-0000-4000-8000-000000000005'::uuid $$,
+  array[1::bigint],
+  'anon can read free material chapters'
 );
 
 reset role;
@@ -118,25 +130,31 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 set local role authenticated;
 
 select is_empty(
-  $$ select 1 from public.material_chapters $$,
-  'authenticated without entitlement cannot read material_chapters'
+  $$ select 1 from public.material_chapters where material_product_id = 'a0000000-0000-4000-8000-000000000002'::uuid $$,
+  'authenticated without entitlement cannot read paid material_chapters'
+);
+
+select results_eq(
+  $$ select count(*)::bigint from public.material_chapters where material_product_id = 'a0000000-0000-4000-8000-000000000005'::uuid $$,
+  array[1::bigint],
+  'authenticated without entitlement can read free material chapters'
 );
 
 select set_config('request.jwt.claim.sub', 'c0000000-0000-4000-8000-000000000001', true);
 set local role authenticated;
 
 select results_eq(
-  $$ select count(*)::bigint from public.material_chapters $$,
+  $$ select count(*)::bigint from public.material_chapters where material_product_id = 'a0000000-0000-4000-8000-000000000002'::uuid $$,
   array[2::bigint],
-  'authenticated with entitlement can read material_chapters'
+  'authenticated with entitlement can read paid material_chapters'
 );
 
 select set_config('request.jwt.claim.sub', 'c0000000-0000-4000-8000-000000000002', true);
 set local role authenticated;
 
 select is_empty(
-  $$ select 1 from public.material_chapters $$,
-  'revoked entitlement cannot read material_chapters'
+  $$ select 1 from public.material_chapters where material_product_id = 'a0000000-0000-4000-8000-000000000002'::uuid $$,
+  'revoked entitlement cannot read paid material_chapters'
 );
 
 reset role;

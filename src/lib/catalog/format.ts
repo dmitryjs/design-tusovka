@@ -54,6 +54,38 @@ export function getLevelLabel(
   return LEVEL_LABELS[level];
 }
 
+const LEVEL_DIFFICULTY_LABELS: Record<
+  Database["public"]["Enums"]["designer_level"],
+  string
+> = {
+  junior: "Начальный",
+  middle: "Средний",
+  senior: "Сложный",
+  all: "Любой уровень",
+};
+
+export function getLevelDifficultyLabel(
+  level: Database["public"]["Enums"]["designer_level"],
+): string {
+  return LEVEL_DIFFICULTY_LABELS[level];
+}
+
+const LEVEL_LONG_LABELS: Record<
+  Database["public"]["Enums"]["designer_level"],
+  string
+> = {
+  junior: "Начальный уровень",
+  middle: "Средний уровень",
+  senior: "Senior уровень",
+  all: "Все уровни",
+};
+
+export function getLevelLongLabel(
+  level: Database["public"]["Enums"]["designer_level"],
+): string {
+  return LEVEL_LONG_LABELS[level];
+}
+
 export function getMaterialFormatLabel(
   format: Database["public"]["Enums"]["material_format"],
 ): string {

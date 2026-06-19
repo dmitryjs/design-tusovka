@@ -6,12 +6,86 @@
 
 | Шаг | Файл | Когда |
 |-----|------|-------|
-| **1** | [`supabase/cloud_bootstrap.sql`](../supabase/cloud_bootstrap.sql) | Первым — схема, RLS, grants |
+| **1** | [`supabase/cloud_bootstrap.sql`](../supabase/cloud_bootstrap.sql) | Первым — схема, RLS, grants (включая доступ к бесплатному контенту) |
 | **2** | [`supabase/dev_seed.sql`](../supabase/dev_seed.sql) | Вторым — демо-контент |
+| **3** | [`supabase/cloud_patch_free_content_rls.sql`](../supabase/cloud_patch_free_content_rls.sql) | **Только если** bootstrap выполнялся **до** обновления RLS (см. ниже) |
+| **4** | [`supabase/cloud_patch_auth_profiles.sql`](../supabase/cloud_patch_auth_profiles.sql) | Для auth: trigger профиля + `profiles_update_own` (если bootstrap старый) |
+| **5** | [`supabase/cloud_patch_free_entitlements.sql`](../supabase/cloud_patch_free_entitlements.sql) | Для «Получить бесплатно» и библиотеки в `/profile` |
+| **6** | [`supabase/cloud_patch_admin_role.sql`](../supabase/cloud_patch_admin_role.sql) | Для `/admin`: роль `profiles.role` |
 
-Оба файла выполняются в **Supabase Dashboard → SQL Editor → New query → Run**.
+Оба обязательных файла (шаги 1–2) выполняются в **Supabase Dashboard → SQL Editor → New query → Run**.
 
 Повторный запуск безопасен: bootstrap использует `IF NOT EXISTS` / `OR REPLACE`; seed — `ON CONFLICT` (UUID `e0000000-*`).
+
+### Когда нужен шаг 3 (patch)
+
+Если проект уже был поднят на **старом** `cloud_bootstrap.sql` (без миграции `20260618200000`), бесплатные материалы показывают только заголовки глав. Выполните **один раз**:
+
+[`supabase/cloud_patch_free_content_rls.sql`](../supabase/cloud_patch_free_content_rls.sql)
+
+После patch перезапустите `npm run dev` и откройте бесплатный материал — должен быть виден текст глав.
+
+**Новые проекты:** достаточно шагов 1–2 (актуальный bootstrap уже содержит patch).
+
+### Auth (шаг 4)
+
+Для входа/регистрации выполните [`supabase/cloud_patch_auth_profiles.sql`](../supabase/cloud_patch_auth_profiles.sql), если:
+
+- после регистрации в `/profile` нет строки в `profiles`;
+- нужна policy `profiles_update_own` (обновление своего профиля).
+
+Актуальный `cloud_bootstrap.sql` уже включает `handle_new_user` и `profiles_select_own`; patch добавляет `profiles_update_own` и пересоздаёт trigger.
+
+#### Настройки Supabase Dashboard → Authentication
+
+1. **Providers → Email** — включён Email provider.
+2. **URL Configuration**:
+   - Site URL: `http://localhost:3000` (dev) или production URL
+   - Redirect URLs: `http://localhost:3000/auth/callback` (+ production URL)
+3. **Email confirmations** — по желанию команды (если включены, после sign-up нужно подтвердить email).
+
+#### Env для auth
+
+```env
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+```
+
+Используется в redirect для sign-up и reset password (см. `.env.example`).
+
+### Бесплатное получение и библиотека (шаг 5)
+
+Выполните [`supabase/cloud_patch_free_entitlements.sql`](../supabase/cloud_patch_free_entitlements.sql) **один раз**, чтобы работали:
+
+- кнопка «Получить бесплатно» на страницах бесплатных материалов и заданий;
+- список полученных продуктов в `/profile`.
+
+Проверка в SQL Editor:
+
+```sql
+select proname from pg_proc where proname = 'claim_free_product';
+```
+
+Ожидается одна строка.
+
+### Admin-lite (шаг 6)
+
+Выполните [`supabase/cloud_patch_admin_role.sql`](../supabase/cloud_patch_admin_role.sql), затем назначьте администратора вручную:
+
+```sql
+update public.profiles
+set role = 'admin'
+where id = (
+  select id from auth.users where email = 'ВАШ_EMAIL' limit 1
+);
+```
+
+Проверка:
+
+```sql
+select id, display_name, role from public.profiles where role = 'admin';
+```
+
+После этого откройте `/admin` под этим аккаунтом. Нужен `SUPABASE_SERVICE_ROLE_KEY` в `.env.local` для записи контента.
 
 ## Где взять env
 
@@ -34,7 +108,7 @@ npm run dev
 
 Открыть http://localhost:3000
 
-Если меняли `.env.local` — **перезапустите** `npm run dev`.
+Если меняли `.env.local` или SQL — **перезапустите** `npm run dev`.
 
 ## Проверка, что каталог работает
 
@@ -42,22 +116,51 @@ npm run dev
 2. Главная `/` — карточки разделов, материалов и заданий, фильтры и поиск.
 3. Нет ошибки `Could not find the table 'public.products'`.
 4. Бесплатные позиции показывают «Бесплатно», платные — цену в ₽.
+5. `/materials/kak-chitat-produktovuyu-zadachu` — **3 главы с текстом** (бесплатный материал).
+6. `/materials/junior-designer-2026` — **только заголовки глав**, без текста (платный).
+7. `/tasks/razobrat-ekran-oplaty` — полный бриф и требования к сдаче.
+
+### Проверка RLS в SQL Editor (опционально)
+
+```sql
+-- от имени anon через PostgREST это делает приложение; в SQL Editor — set role:
+set local role anon;
+select count(*) from public.material_chapters mc
+join public.products p on p.id = mc.material_product_id
+where p.slug = 'kak-chitat-produktovuyu-zadachu';
+-- ожидается 3
+
+select count(*) from public.material_chapters mc
+join public.products p on p.id = mc.material_product_id
+where p.slug = 'junior-designer-2026';
+-- ожидается 0 для anon
+reset role;
+```
 
 ## Что создаёт bootstrap
 
-Таблицы, которые читает текущий код главной:
+Таблицы, которые читает текущий код каталога:
 
 - `products`, `sections`, `materials`, `tasks`
 - `tags`, `product_tags`
-- `material_chapters`, `task_content`, `task_ai_criteria` (для будущих страниц)
+- `material_chapters`, `task_content`, `task_ai_criteria`
 - `section_updates`, `section_update_materials`
 - `profiles`, `entitlements`, `admin_users` (фундамент auth, без UI)
 
 Плюс RLS, read policies, API `GRANT SELECT`, RPC `get_material_toc`, `has_product_access`.
 
+### Доступ к контенту (RLS)
+
+| Контент | anon / без покупки | С entitlement |
+|---------|-------------------|---------------|
+| Бесплатный материал (`price_kopecks = 0`) | полный текст глав | полный текст глав |
+| Платный материал | только `get_material_toc` (заголовки) | полный текст глав |
+| Бесплатное задание | `task_content` (бриф) | бриф |
+| Платное задание | закрыто | `task_content` |
+
 ## Что не входит
 
-Auth UI, корзина, оплата, Storage, админка — не настраиваются этими SQL.
+Корзина, оплата, Storage, админка — не настраиваются этими SQL. Auth UI реализован в Next.js (`/auth/*`, `/profile`).
 
 ## Альтернатива (optional)
 
