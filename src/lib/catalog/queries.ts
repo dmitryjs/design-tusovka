@@ -56,7 +56,7 @@ export async function getCatalogItems(): Promise<CatalogQueryResult> {
 
     const { data: products, error: productsError } = await supabase
       .from("products")
-      .select("id, kind, slug, title, description, price_kopecks")
+      .select("id, kind, slug, title, description, price_kopecks, cover_path")
       .eq("status", "published")
       .in("kind", CATALOG_KINDS);
 
@@ -155,6 +155,7 @@ export async function getCatalogItems(): Promise<CatalogQueryResult> {
         kind,
         priceKopecks: product.price_kopecks,
         tags: tagsByProductId.get(product.id) ?? [],
+        coverPath: product.cover_path,
       };
 
       if (kind === "section") {

@@ -49,20 +49,34 @@ export function PageHero({ title, description, children }: PageHeroProps) {
 export function PageSection({
   id,
   title,
+  titleIcon,
   action,
   children,
 }: {
   id?: string;
-  title: string;
+  title?: string;
+  titleIcon?: React.ReactNode;
   action?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
     <section id={id} className="space-y-4 scroll-mt-24">
-      <div className="flex items-center justify-between gap-4">
-        <h2 className="text-xl font-semibold text-foreground">{title}</h2>
-        {action}
-      </div>
+      {title || action ? (
+        <div
+          className={cn(
+            "flex items-center gap-4",
+            title ? "justify-between" : "justify-end",
+          )}
+        >
+          {title ? (
+            <h2 className="flex items-center gap-2 text-xl font-semibold text-foreground">
+              {titleIcon}
+              {title}
+            </h2>
+          ) : null}
+          {action}
+        </div>
+      ) : null}
       {children}
     </section>
   );

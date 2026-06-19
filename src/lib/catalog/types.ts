@@ -16,9 +16,11 @@ export type CatalogItem = {
   kind: CatalogItemKind;
   priceKopecks: number;
   tags: CatalogTag[];
+  coverPath?: string | null;
   sectionPosition?: number;
   materialCount?: number;
   averageRating?: number | null;
+  reviewCount?: number | null;
   level?: Database["public"]["Enums"]["designer_level"];
   format?: Database["public"]["Enums"]["material_format"];
   aiReviewAvailable?: boolean;

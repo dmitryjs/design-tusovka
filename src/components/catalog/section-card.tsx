@@ -13,11 +13,12 @@ import { cn } from "@/lib/utils";
 
 type SectionCardProps = {
   section: CatalogItem;
+  coverPath?: string;
   className?: string;
 };
 
-export function SectionCard({ section, className }: SectionCardProps) {
-  const coverPath = getSectionCoverPath(section.slug);
+export function SectionCard({ section, coverPath, className }: SectionCardProps) {
+  const resolvedCoverPath = coverPath ?? getSectionCoverPath(section.slug);
   const materialCount = section.materialCount ?? 0;
   const hasRating =
     section.averageRating != null && section.averageRating > 0;
@@ -31,10 +32,10 @@ export function SectionCard({ section, className }: SectionCardProps) {
       )}
     >
       <article className="flex h-full flex-col transition-opacity hover:opacity-95">
-        <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-neutral-100">
-          {coverPath ? (
+        <div className="relative aspect-video overflow-hidden rounded-xl bg-neutral-100">
+          {resolvedCoverPath ? (
             <Image
-              src={coverPath}
+              src={resolvedCoverPath}
               alt=""
               fill
               sizes="(min-width: 1536px) 200px, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
