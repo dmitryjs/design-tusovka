@@ -17,6 +17,8 @@ export type CatalogItem = {
   priceKopecks: number;
   tags: CatalogTag[];
   sectionPosition?: number;
+  materialCount?: number;
+  averageRating?: number | null;
   level?: Database["public"]["Enums"]["designer_level"];
   format?: Database["public"]["Enums"]["material_format"];
   aiReviewAvailable?: boolean;

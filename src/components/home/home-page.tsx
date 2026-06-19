@@ -1,17 +1,13 @@
-import Link from "next/link";
-
 import { MaterialCard } from "@/components/catalog/material-card";
+import { SectionCard } from "@/components/catalog/section-card";
 import { TaskCard } from "@/components/catalog/task-card";
+import { HomeHeroBanner } from "@/components/home/home-hero-banner";
 import {
-  PageHero,
   PageSection,
   PageSectionLink,
   PageShell,
 } from "@/components/layout/page-shell";
-import { buttonVariants } from "@/components/ui/button";
-import { getCatalogItemHref } from "@/lib/catalog/paths";
 import type { CatalogItem } from "@/lib/catalog/types";
-import { cn } from "@/lib/utils";
 
 type HomePageProps = {
   items: CatalogItem[];
@@ -27,48 +23,18 @@ export function HomePage({ items }: HomePageProps) {
   const tasks = items.filter((item) => item.kind === "task").slice(0, 3);
 
   return (
-    <PageShell breadcrumbs={[{ label: "Главная" }]}>
-      <PageHero
-        title="Практические знания для продуктовых дизайнеров"
-        description="Гайды, практики и задания для product, UX/UI и digital-дизайнеров. Начните с бесплатных материалов или смотрите превью платных."
-      >
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <Link href="/catalog" className={cn(buttonVariants({ size: "lg" }))}>
-            Смотреть каталог
-          </Link>
-          <Link
-            href="/tasks"
-            className={cn(buttonVariants({ variant: "secondary", size: "lg" }))}
-          >
-            Все задания
-          </Link>
-        </div>
-      </PageHero>
+    <PageShell breadcrumbs={[]}>
+      <HomeHeroBanner />
 
       {sections.length > 0 ? (
         <PageSection
-          title="Выберите направление"
+          id="how-it-works"
+          title="Разделы"
           action={<PageSectionLink href="/catalog">Все разделы</PageSectionLink>}
         >
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">
             {sections.map((section) => (
-              <Link
-                key={section.id}
-                href={getCatalogItemHref("section", section.slug)}
-                className="group rounded-xl border border-neutral-200 bg-card p-5 transition-colors hover:border-primary/30 hover:bg-neutral-50"
-              >
-                <h3 className="text-base font-semibold text-foreground group-hover:text-primary">
-                  {section.title}
-                </h3>
-                {section.description ? (
-                  <p className="mt-2 line-clamp-2 text-sm leading-6 text-neutral-600">
-                    {section.description}
-                  </p>
-                ) : null}
-                <span className="mt-4 inline-block text-sm font-medium text-primary">
-                  Открыть раздел →
-                </span>
-              </Link>
+              <SectionCard key={section.id} section={section} />
             ))}
           </div>
         </PageSection>

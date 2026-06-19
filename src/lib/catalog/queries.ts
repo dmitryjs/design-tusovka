@@ -120,6 +120,18 @@ export async function getCatalogItems(): Promise<CatalogQueryResult> {
     const sectionsById = new Map(
       (sectionsResult.data ?? []).map((section) => [section.product_id, section]),
     );
+    const materialCountBySectionId = new Map<string, number>();
+
+    for (const material of materialsResult.data ?? []) {
+      if (!material.section_product_id) {
+        continue;
+      }
+
+      const current =
+        materialCountBySectionId.get(material.section_product_id) ?? 0;
+      materialCountBySectionId.set(material.section_product_id, current + 1);
+    }
+
     const materialsById = new Map(
       (materialsResult.data ?? []).map((material) => [
         material.product_id,
@@ -150,6 +162,7 @@ export async function getCatalogItems(): Promise<CatalogQueryResult> {
         items.push({
           ...base,
           sectionPosition: section?.position ?? 0,
+          materialCount: materialCountBySectionId.get(product.id) ?? 0,
         });
         continue;
       }

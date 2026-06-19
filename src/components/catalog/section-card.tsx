@@ -1,8 +1,13 @@
+import { FileText, Star } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
-import { Badge } from "@/components/ui/badge";
-import { formatPrice, getKindLabel } from "@/lib/catalog/format";
+import { materialCountLabel } from "@/lib/catalog/format";
 import { getCatalogItemHref } from "@/lib/catalog/paths";
+import {
+  formatSectionRating,
+  getSectionCoverPath,
+} from "@/lib/catalog/section-covers";
 import type { CatalogItem } from "@/lib/catalog/types";
 import { cn } from "@/lib/utils";
 
@@ -12,7 +17,10 @@ type SectionCardProps = {
 };
 
 export function SectionCard({ section, className }: SectionCardProps) {
-  const isFree = section.priceKopecks === 0;
+  const coverPath = getSectionCoverPath(section.slug);
+  const materialCount = section.materialCount ?? 0;
+  const hasRating =
+    section.averageRating != null && section.averageRating > 0;
 
   return (
     <Link
@@ -22,26 +30,49 @@ export function SectionCard({ section, className }: SectionCardProps) {
         className,
       )}
     >
-      <article className="flex h-full flex-col rounded-xl border border-neutral-200 bg-card p-5 transition-colors hover:border-primary/20 hover:bg-neutral-50">
-        <Badge variant="secondary" className="w-fit">
-          {getKindLabel("section")}
-        </Badge>
-        <h3 className="mt-3 text-base leading-6 font-semibold text-foreground group-hover:text-primary">
-          {section.title}
-        </h3>
-        {section.description ? (
-          <p className="mt-2 line-clamp-3 flex-1 text-sm leading-6 text-neutral-600">
-            {section.description}
-          </p>
-        ) : null}
-        <p
-          className={cn(
-            "mt-4 text-sm font-semibold",
-            isFree ? "text-primary" : "text-foreground",
+      <article className="flex h-full flex-col transition-opacity hover:opacity-95">
+        <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-neutral-100">
+          {coverPath ? (
+            <Image
+              src={coverPath}
+              alt=""
+              fill
+              sizes="(min-width: 1536px) 200px, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+              className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-violet-50" />
           )}
-        >
-          {formatPrice(section.priceKopecks)}
-        </p>
+        </div>
+
+        <div className="flex flex-1 flex-col gap-2 pt-3">
+          <h3 className="line-clamp-2 text-sm leading-5 font-semibold text-foreground group-hover:text-primary">
+            {section.title}
+          </h3>
+          {section.description ? (
+            <p className="line-clamp-2 flex-1 text-xs leading-5 text-neutral-600">
+              {section.description}
+            </p>
+          ) : null}
+
+          <div className="mt-1 flex items-center justify-between gap-3 text-xs text-neutral-500">
+            <span className="inline-flex min-w-0 items-center gap-1.5">
+              <FileText className="size-3.5 shrink-0" aria-hidden />
+              <span className="truncate">
+                {materialCount} {materialCountLabel(materialCount)}
+              </span>
+            </span>
+            {hasRating ? (
+              <span className="inline-flex shrink-0 items-center gap-1 font-medium text-foreground">
+                <Star
+                  className="size-3.5 fill-amber-400 text-amber-400"
+                  aria-hidden
+                />
+                {formatSectionRating(section.averageRating!)}
+              </span>
+            ) : null}
+          </div>
+        </div>
       </article>
     </Link>
   );

@@ -47,16 +47,18 @@ export function PageHero({ title, description, children }: PageHeroProps) {
 }
 
 export function PageSection({
+  id,
   title,
   action,
   children,
 }: {
+  id?: string;
   title: string;
   action?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
-    <section className="space-y-4">
+    <section id={id} className="space-y-4 scroll-mt-24">
       <div className="flex items-center justify-between gap-4">
         <h2 className="text-xl font-semibold text-foreground">{title}</h2>
         {action}
