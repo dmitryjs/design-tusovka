@@ -4,15 +4,22 @@ import { Suspense } from "react";
 import { Container } from "@/components/layout/container";
 import { SiteHeaderNav } from "@/components/layout/site-header-nav";
 import { getCartItemCount } from "@/lib/cart/queries";
+import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function SiteHeader() {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  let isAuthenticated = false;
+  let cartItemCount = 0;
 
-  const cartItemCount = user ? await getCartItemCount(supabase) : 0;
+  if (isSupabaseConfigured()) {
+    const supabase = await createSupabaseServerClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    isAuthenticated = Boolean(user);
+    cartItemCount = user ? await getCartItemCount(supabase) : 0;
+  }
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background">
@@ -37,7 +44,7 @@ export async function SiteHeader() {
             }
           >
             <SiteHeaderNav
-              isAuthenticated={Boolean(user)}
+              isAuthenticated={isAuthenticated}
               cartItemCount={cartItemCount}
             />
           </Suspense>

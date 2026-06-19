@@ -23,6 +23,8 @@
 
 ## 2. Environment Variables на Vercel
 
+**Добавьте переменные до первого деплоя** (или сразу после failed build) и сделайте **Redeploy**. Без `NEXT_PUBLIC_SUPABASE_URL` и `NEXT_PUBLIC_SUPABASE_ANON_KEY` сайт не сможет загрузить каталог.
+
 Добавить в **Project → Settings → Environment Variables**.
 
 | Переменная | Scope | Local | Production |
