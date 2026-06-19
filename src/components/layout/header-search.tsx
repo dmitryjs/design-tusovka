@@ -4,7 +4,6 @@ import { Search } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
-import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 type HeaderSearchProps = {
@@ -38,7 +37,7 @@ export function HeaderSearch({ className }: HeaderSearchProps) {
 
   return (
     <form
-      className={cn("relative w-full", className)}
+      className={cn("relative w-[320px] shrink-0", className)}
       onSubmit={(event) => {
         event.preventDefault();
         submitSearch();
@@ -46,16 +45,17 @@ export function HeaderSearch({ className }: HeaderSearchProps) {
       role="search"
     >
       <Search
-        className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-neutral-500"
+        className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-neutral-400"
         aria-hidden
       />
-      <Input
+      <input
         key={`${pathname}-${queryFromUrl}`}
+        type="search"
         value={value}
         onChange={(event) => setDraft(event.target.value)}
-        placeholder="Поиск по материалам и заданиям"
-        className="h-9 pl-9"
-        aria-label="Поиск по материалам и заданиям"
+        placeholder="Поиск материалов, тем, авторов..."
+        aria-label="Поиск материалов, тем, авторов"
+        className="h-10 w-full rounded-md border border-neutral-200 bg-white pr-4 pl-10 text-sm text-foreground transition-colors outline-none placeholder:text-neutral-400 hover:border-neutral-300 focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-blue-100"
       />
     </form>
   );

@@ -1,4 +1,7 @@
+import Link from "next/link";
+
 import { PageHero, PageShell } from "@/components/layout/page-shell";
+import { SELLER_INFO } from "@/lib/legal/seller-info";
 import { cn } from "@/lib/utils";
 
 type LegalPageLayoutProps = {
@@ -56,4 +59,45 @@ export function LegalPlaceholder({ children }: { children: React.ReactNode }) {
       {children}
     </span>
   );
+}
+
+export function LegalMailto() {
+  return (
+    <a
+      href={`mailto:${SELLER_INFO.supportEmail}`}
+      className="text-neutral-800 underline-offset-2 hover:underline"
+    >
+      {SELLER_INFO.supportEmail}
+    </a>
+  );
+}
+
+export function LegalSiteLink({ href }: { href: string }) {
+  return (
+    <a href={href} className="text-neutral-800 underline-offset-2 hover:underline">
+      {href}
+    </a>
+  );
+}
+
+export function LegalInternalLink({
+  href,
+  children,
+}: {
+  href: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Link href={href} className="text-neutral-800 underline-offset-2 hover:underline">
+      {children}
+    </Link>
+  );
+}
+
+export function LegalAddress() {
+  const address = SELLER_INFO.legalAddress;
+  if (address) {
+    return <>{address}</>;
+  }
+  return <LegalPlaceholder>адрес регистрации ИП — указать в seller-info.ts</LegalPlaceholder>;
 }

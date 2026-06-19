@@ -2,27 +2,116 @@
 
 ## Этап
 
-**Юридические страницы для ЮKassa**
+**Production readiness polish перед модерацией ЮKassa**
 
 **Статус: завершён**
 
 ## Результат
 
-Добавлены минимальные страницы для подключения ЮKassa: реквизиты, оферта, конфиденциальность, оплата и возврат, поддержка. Ссылки в футере — серые, малозаметные. Тексты с placeholder’ами помечены для замены перед боевыми платежами.
+Проведена подготовка сайта к проверке ЮKassa и первым пользователям без изменений payment/webhook/auth/cart/admin. Юридические страницы заполнены реальными реквизитами ИП из `seller-info.ts`. Убраны видимые заглушки (`до N рабочих дней`, баннеры «Черновик»), исправлены устаревшие «скоро» на auth и странице заданий. Футер и production URLs проверены.
+
+## Вердикт по модерации ЮKassa
+
+**Можно отправлять на модерацию** при условии, что в Vercel заданы `NEXT_PUBLIC_SITE_URL=https://design-tusovka.vercel.app` и ключи ЮKassa, а в ЛК ЮKassa указаны URL из таблицы ниже.
+
+Рекомендуется до долгосрочной эксплуатации (не блокер модерации):
+
+- юридическая вычитка оферты и политики конфиденциальности;
+- задать `supportResponseNote` в `seller-info.ts` (конкретный SLA ответа поддержки).
+
+## Проверенные страницы
+
+| Маршрут | Статус | Примечание |
+|---------|--------|------------|
+| `/requisites` | OK | ИП, ИНН, ОГРНИП, email, вид деятельности |
+| `/offer` | OK | Оферта без баннера «черновик» |
+| `/privacy` | OK | Политика без баннера «черновик» |
+| `/payment-and-refund` | OK | Оплата, возврат, контакты |
+| `/support` | OK | Email, темы обращений, срок ответа (нейтральная формулировка) |
+
+## Placeholder’ы: что осталось
+
+| Место | Статус | Действие вручную |
+|-------|--------|------------------|
+| `SELLER_INFO.supportResponseNote` (`null`) | TODO в коде | Задать срок, напр. «до 3 рабочих дней» |
+| `you@example.com` в auth-формах | UI placeholder поля email | Не влияет на модерацию |
+| `Google — скоро` на sign-in/sign-up | Функция не подключена | Не блокер ЮKassa |
+| `docs/VERCEL_DEPLOY.md` — `<your-domain>` | Шаблон в документации | Заменить при custom domain |
+| `.env.example` — `your-project.vercel.app` | Шаблон env | Только для новых окружений |
+
+**Не найдено** на сайте: `ФИО_ПРЕДПРИНИМАТЕЛЯ`, `ИНН_ПРЕДПРИНИМАТЕЛЯ`, `ОГРНИП_ПРЕДПРИНИМАТЕЛЯ`, `support@example.com`, `your-domain` в пользовательском UI.
+
+## Production URLs
+
+Источник: `src/lib/legal/seller-info.ts` → `PRODUCTION_URLS` (при `NEXT_PUBLIC_SITE_URL=https://design-tusovka.vercel.app`):
+
+| Назначение | URL |
+|------------|-----|
+| Site | `https://design-tusovka.vercel.app` |
+| Auth callback | `https://design-tusovka.vercel.app/auth/callback` |
+| Checkout success | `https://design-tusovka.vercel.app/checkout/success` |
+| Checkout fail | `https://design-tusovka.vercel.app/checkout/fail` |
+| Webhook ЮKassa | `https://design-tusovka.vercel.app/api/webhooks/yookassa` |
+| Реквизиты | `https://design-tusovka.vercel.app/requisites` |
+
+## Футер
+
+- 5 ссылок на legal pages: Реквизиты, Оферта, Конфиденциальность, Оплата и возврат, Поддержка
+- Стиль: `text-xs text-neutral-400`, hover underline
+- Mobile: `flex-wrap`, `gap-y-1` — не ломается
+
+## Готовность к модерации (чеклист)
+
+| Критерий | Статус |
+|----------|--------|
+| Понятно, что продаётся (цифровые материалы, гайды, задания) | OK |
+| Реквизиты ИП | OK |
+| Поддержка (email, страница) | OK |
+| Условия оплаты и возврата | OK |
+| Нет пустых критичных legal-страниц | OK |
+| Payment logic / webhook не менялись | OK |
+
+## Изменённые файлы (polish)
+
+- `src/lib/legal/seller-info.ts` — `supportResponseNote`, `getSupportResponseText()`, `PRODUCTION_URLS`
+- `src/app/offer/page.tsx`, `privacy/page.tsx` — убран `draftNotice`
+- `src/app/payment-and-refund/page.tsx`, `support/page.tsx` — нейтральный срок ответа
+- `src/components/auth/auth-page-shell.tsx` — актуальные пункты в сайдбаре
+- `src/components/tasks/tasks-page.tsx` — описание без «скоро»
+- `docs/VERCEL_DEPLOY.md` — актуальные production URL
+
+## Проверки
+
+| Команда | Результат |
+|---------|-----------|
+| `npm run typecheck` | 0 |
+| `npm run lint` | 0 |
+| `npm run build` | 0 |
+
+---
+
+## Предыдущий этап: Юридические страницы для ЮKassa
+
+**Статус: завершён**
+
+## Результат
+
+Добавлены минимальные страницы для подключения ЮKassa: реквизиты, оферта, конфиденциальность, оплата и возврат, поддержка. Ссылки в футере — серые, малозаметные. Реквизиты ИП централизованы в `src/lib/legal/seller-info.ts`.
 
 ## Маршруты
 
 | Маршрут | Назначение |
 |---------|------------|
 | `/requisites` | Реквизиты ИП, контакты, вид деятельности |
-| `/offer` | Публичная оферта (черновик) |
-| `/privacy` | Политика конфиденциальности (черновик) |
+| `/offer` | Публичная оферта |
+| `/privacy` | Политика конфиденциальности |
 | `/payment-and-refund` | Оплата и возврат |
 | `/support` | Поддержка |
 
 ## Файлы
 
 - `src/components/legal/legal-page-layout.tsx` — общий layout юр. страниц
+- `src/lib/legal/seller-info.ts` — реквизиты продавца
 - `src/app/requisites|offer|privacy|payment-and-refund|support/page.tsx`
 - `src/components/layout/site-footer.tsx` — ссылки в футере
 

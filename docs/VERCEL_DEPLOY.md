@@ -87,16 +87,21 @@ https://<your-domain>/checkout/success
 
 ### Настройки магазина в ЮKassa (юридические страницы)
 
-Перед боевым подключением замените placeholder’ы на реальные данные ИП на странице [`/requisites`](../src/app/requisites/page.tsx) (ИНН, ОГРНИП, email поддержки).
+Реквизиты ИП заполнены в [`src/lib/legal/seller-info.ts`](../src/lib/legal/seller-info.ts). Перед долгосрочной эксплуатацией рекомендуется юридическая проверка текстов оферты и политики конфиденциальности.
 
-| Поле в ЛК ЮKassa | Значение |
-|------------------|----------|
-| **Адрес сайта** | `NEXT_PUBLIC_SITE_URL` (например `https://design-tusovka.vercel.app`) |
-| **Ссылка на страницу с реквизитами** | `{NEXT_PUBLIC_SITE_URL}/requisites` |
-| Публичная оферта | `{NEXT_PUBLIC_SITE_URL}/offer` |
-| Политика конфиденциальности | `{NEXT_PUBLIC_SITE_URL}/privacy` |
-| Оплата и возврат | `{NEXT_PUBLIC_SITE_URL}/payment-and-refund` |
-| Поддержка | `{NEXT_PUBLIC_SITE_URL}/support` |
+| Поле в ЛК ЮKassa | Значение (production) |
+|------------------|------------------------|
+| **Адрес сайта** | `https://design-tusovka.vercel.app` |
+| **Ссылка на страницу с реквизитами** | `https://design-tusovka.vercel.app/requisites` |
+| Публичная оферта | `https://design-tusovka.vercel.app/offer` |
+| Политика конфиденциальности | `https://design-tusovka.vercel.app/privacy` |
+| Оплата и возврат | `https://design-tusovka.vercel.app/payment-and-refund` |
+| Поддержка | `https://design-tusovka.vercel.app/support` |
+| Webhook | `https://design-tusovka.vercel.app/api/webhooks/yookassa` |
+| Auth callback (Supabase) | `https://design-tusovka.vercel.app/auth/callback` |
+| Return URL (оплата) | `https://design-tusovka.vercel.app/checkout/success` |
+
+`NEXT_PUBLIC_SITE_URL` на Vercel должен совпадать с адресом сайта в ЮKassa.
 
 Ссылки также доступны в футере сайта.
 

@@ -58,8 +58,8 @@ export function AuthPageShell({
           </p>
           <ul className="mt-6 space-y-3 text-sm text-neutral-600">
             <li>• Практические материалы и гайды</li>
-            <li>• Задания с проверкой — скоро</li>
-            <li>• Библиотека покупок — скоро</li>
+            <li>• Задания с брифом и превью</li>
+            <li>• Библиотека полученных материалов</li>
           </ul>
         </aside>
       </div>

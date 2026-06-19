@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
 
@@ -9,6 +10,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function SiteHeader() {
   let isAuthenticated = false;
+  let profileInitial: string | null = null;
   let cartItemCount = 0;
 
   if (isSupabaseConfigured()) {
@@ -18,33 +20,41 @@ export async function SiteHeader() {
     } = await supabase.auth.getUser();
 
     isAuthenticated = Boolean(user);
+
+    if (user?.email) {
+      profileInitial = user.email[0]?.toUpperCase() ?? null;
+    }
+
     cartItemCount = user ? await getCartItemCount(supabase) : 0;
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-background">
-      <Container className="py-3">
-        <div className="flex flex-col gap-3">
+    <header className="sticky top-0 z-50 border-b border-neutral-200 bg-white">
+      <Container className="px-4 md:px-6 lg:px-8">
+        <div className="flex h-14 items-center gap-4 lg:gap-6">
           <Link
             href="/"
-            className="flex w-fit shrink-0 items-center gap-2 text-base font-semibold tracking-tight text-foreground hover:text-primary"
+            className="flex shrink-0 items-center gap-2.5 text-[15px] font-semibold tracking-tight text-neutral-900"
           >
-            <span
-              className="flex size-8 items-center justify-center rounded-lg bg-primary text-sm font-bold text-primary-foreground"
-              aria-hidden
-            >
-              Т
-            </span>
-            <span>Дизайн Тусовка</span>
+            <Image
+              src="/logo.png"
+              alt=""
+              width={32}
+              height={32}
+              className="size-8 rounded-full object-cover"
+              priority
+            />
+            <span className="hidden sm:inline">Дизайн Тусовка</span>
           </Link>
 
           <Suspense
             fallback={
-              <div className="h-9 w-full max-w-sm animate-pulse rounded-lg bg-neutral-100" />
+              <div className="ml-auto h-10 w-[320px] shrink-0 animate-pulse rounded-md bg-neutral-100" />
             }
           >
             <SiteHeaderNav
               isAuthenticated={isAuthenticated}
+              profileInitial={profileInitial}
               cartItemCount={cartItemCount}
             />
           </Suspense>

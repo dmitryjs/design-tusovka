@@ -1,4 +1,5 @@
 import {
+  LegalAddress,
   LegalPageLayout,
   LegalSection,
 } from "@/components/legal/legal-page-layout";
@@ -19,6 +20,9 @@ export default function RequisitesPage() {
         <p>ИП: {SELLER_INFO.legalName}</p>
         <p>ИНН: {SELLER_INFO.inn}</p>
         <p>ОГРНИП: {SELLER_INFO.ogrnip}</p>
+        <p>
+          Адрес: <LegalAddress />
+        </p>
       </LegalSection>
 
       <LegalSection title="Контакты">
