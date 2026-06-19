@@ -2,26 +2,50 @@
 
 Внешние интеграции. API-поля фиксируются по **официальной документации** на этапах реализации.
 
-## Локальная разработка (этап 3.1)
+## Локальная разработка (этап 3.1, **optional**)
 
 | Параметр | Значение |
 |----------|----------|
-| CLI | `supabase` devDependency, npm scripts `supabase:*`, `db:reset` |
-| Запуск | `npm run supabase:start` (Docker должен быть running) |
+| CLI | `supabase` devDependency |
+| Запуск | `npm run supabase:start` (Docker, **не обязателен** для MVP) |
 | Статус | `npm run supabase:status` |
-| Studio | `http://127.0.0.1:54323` |
-| API URL (локально) | `http://127.0.0.1:54321` |
-| PostgreSQL (локально) | `127.0.0.1:54322` |
+| Studio (local) | `http://127.0.0.1:54323` |
+| API URL (local) | `http://127.0.0.1:54321` |
 
-После `supabase start` скопировать из вывода `supabase status` в `.env.local`:
+## Supabase Cloud (основной MVP-режим)
+
+| Параметр | Где взять |
+|----------|-----------|
+| Project URL | Dashboard → Project Settings → API |
+| anon key | Dashboard → API → `anon` / publishable |
+| service role | Dashboard → API → `service_role` (**server-only**) |
+
+Скопировать в `.env.local` (не коммитить):
 
 - `NEXT_PUBLIC_SUPABASE_URL` — Project URL
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY` — Publishable (anon) key
-- `SUPABASE_SERVICE_ROLE_KEY` — Secret (service role) key
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` — anon / publishable key (client + server RLS reads)
+- `SUPABASE_SERVICE_ROLE_KEY` — service role (только server routes/actions; обходит RLS)
 
-**Не публиковать** ключи, JWT secret и connection strings в git, документации или отчётах.
+**Не публиковать** ключи в git, документации или отчётах.
 
-Облачный проект Supabase — при деплое (этап 20); те же имена env.
+### CLI для облака
+
+| Команда | Назначение |
+|---------|------------|
+| `supabase link` | Привязка к cloud project (один раз) |
+| `npm run db:push` | Применить миграции из `supabase/migrations/` |
+| `npm run db:types` | Типы из linked project |
+
+### Optional local (Docker)
+
+| Команда | Назначение |
+|---------|------------|
+| `npm run supabase:start` | Локальный стек |
+| `npm run db:local:reset` | Миграции + seed локально |
+| `npm run db:local:test` | pgTAP RLS tests |
+| `npm run db:types:local` | Типы из local DB |
+
+Основной запуск приложения: `npm run dev` — **без Docker**.
 
 ## Сводная таблица
 

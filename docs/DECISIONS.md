@@ -196,7 +196,32 @@
 **Последствия:**
 
 - Этап 3.2 добавляет `supabase/migrations/` и схему по `DATA_MODEL.md`.
-- Облачный Supabase-проект и Vercel env — на этапе деплоя (этап 20).
+- **ADR-024:** основной MVP-режим переведён на Supabase Cloud; local Docker — optional.
+
+---
+
+## ADR-024: Supabase Cloud как основной MVP-режим
+
+**Статус:** Принято  
+**Дата:** 2026-06-19
+
+**Контекст:** Local Supabase через Docker блокирует разработку; для ускоренного MVP нужен cloud-first workflow без обязательного Docker.
+
+**Решение:**
+
+| Параметр | Значение |
+|----------|----------|
+| Основная БД | **Supabase Cloud** |
+| Запуск UI | `npm run dev` — без Docker |
+| Env | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` |
+| Клиенты | `client.ts` (browser), `server.ts` (anon, RLS), `admin.ts` (service role, `server-only`) |
+| Миграции | `supabase link` + `npm run db:push` |
+| Типы | `npm run db:types` (`--linked`) |
+| Local optional | `supabase:start`, `db:local:*` — для pgTAP и seed |
+
+**Безопасность:** RLS не отключается; service role только server-side; секреты не в git.
+
+**Не менялось:** SQL-миграции, RLS policies, бизнес-логика каталога.
 
 ---
 

@@ -1,18 +1,11 @@
-import "server-only";
-
 import { createClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/types/database.types";
 
 import { getSupabasePublicEnv } from "./env";
 
-export function createSupabaseServerClient() {
+export function createSupabaseBrowserClient() {
   const { url, anonKey } = getSupabasePublicEnv();
 
-  return createClient<Database>(url, anonKey, {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-    },
-  });
+  return createClient<Database>(url, anonKey);
 }

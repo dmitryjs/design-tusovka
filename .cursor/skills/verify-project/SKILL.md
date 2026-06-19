@@ -13,17 +13,32 @@ npm run lint
 npm run build
 ```
 
-## Команды БД (этап 3.1+)
+## Запуск MVP (без Docker)
 
 ```bash
-npm run supabase:status   # Docker + локальный стек
-npm run db:reset          # миграции + seed
-npm run db:lint           # схема без ошибок (exit 0)
-npm run db:types          # src/types/database.types.ts (exit 0)
-npm run db:test           # pgTAP RLS + grants из миграций (этап 3.3.3+)
+npm run dev
 ```
 
-`db:lint`, `db:types`, `db:test` — с `SUPABASE_TELEMETRY_DISABLED=1` через `cross-env`.
+Требуется `.env.local` с ключами Supabase Cloud (см. `INTEGRATIONS.md`).
+
+## Команды БД — Cloud
+
+```bash
+npm run db:push           # миграции в linked project
+npm run db:types          # типы из cloud
+```
+
+## Команды БД — optional local (Docker)
+
+```bash
+npm run supabase:start
+npm run db:local:reset
+npm run db:local:lint
+npm run db:types:local
+npm run db:local:test
+```
+
+`db:lint`, `db:types`, `db:test` — алиасы на `db:local:*` (обратная совместимость).
 
 Тестовый runner **не установлен** — `npm test` не использовать.
 
@@ -36,10 +51,10 @@ npm run db:test           # pgTAP RLS + grants из миграций (этап 3
 ## После этапа
 
 1. Запустить `typecheck`, `lint`, `build`.
-2. При изменении схемы: `db:reset`, `db:lint`, `db:types`.
-3. При изменении RLS или grants: `db:test`.
+2. При изменении схемы cloud: `db:push`, `db:types`.
+3. При изменении RLS: `db:local:test` (optional, Docker).
 4. Обновить `docs/STAGE_REPORT.md`.
-5. Проверить diff на секреты.
+5. Проверить diff на секреты (не коммитить `.env.local`).
 
 ## Документация
 

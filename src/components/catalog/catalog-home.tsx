@@ -55,19 +55,12 @@ export function CatalogHome({ initialItems, error }: CatalogHomeProps) {
             {error}
           </p>
           <p className="mt-4 text-sm text-neutral-600">
-            Проверьте, что локальный Supabase запущен (
-            <code className="rounded bg-white px-1 py-0.5 text-xs">
-              npm run supabase:start
-            </code>
-            ) и переменные в{" "}
+            Проверьте переменные в{" "}
             <code className="rounded bg-white px-1 py-0.5 text-xs">
               .env.local
             </code>{" "}
-            совпадают с выводом{" "}
-            <code className="rounded bg-white px-1 py-0.5 text-xs">
-              npm run supabase:status
-            </code>
-            .
+            (ключи из Supabase Cloud → Project Settings → API) и что миграции
+            применены к облачному проекту.
           </p>
         </div>
       </Container>
@@ -85,7 +78,7 @@ export function CatalogHome({ initialItems, error }: CatalogHomeProps) {
             </h1>
             <p className="max-w-2xl text-base leading-6 text-neutral-600">
               Практические материалы и задания для product, UX/UI и
-              digital-дизайнеров — из локальной базы Supabase.
+              digital-дизайнеров.
             </p>
           </div>
         </section>
@@ -127,11 +120,11 @@ export function CatalogHome({ initialItems, error }: CatalogHomeProps) {
               Каталог пока пуст
             </h2>
             <p className="mt-2 text-sm text-neutral-600">
-              Запустите{" "}
+              Выполните{" "}
               <code className="rounded bg-white px-1 py-0.5 text-xs">
-                npm run db:reset
+                supabase/dev_seed.sql
               </code>{" "}
-              чтобы применить seed-данные.
+              в Supabase SQL Editor (см. docs/SUPABASE_CLOUD_BOOTSTRAP.md).
             </p>
           </div>
         ) : filteredItems.length === 0 ? (

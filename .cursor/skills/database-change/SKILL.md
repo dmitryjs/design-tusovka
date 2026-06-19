@@ -5,21 +5,29 @@ description: Безопасное внесение изменений в схе�
 
 # Database Change
 
-## Локальная среда
+## Основной режим (Supabase Cloud)
 
-1. Docker running → `npm run supabase:start`
-2. `npm run supabase:status` — URL и ключи в `.env.local` (не коммитить)
-3. Новая миграция: `npx supabase migration new <name>`
-4. Применить: `npm run db:reset`
-5. `npm run db:lint`, `npm run db:types`
-6. `npm run db:test` — pgTAP RLS tests (`supabase test db --local`); grants проверяются из миграций, не из test setup
-7. `npm run supabase:stop`
+1. `supabase link` — привязка к cloud project (один раз)
+2. Новая миграция: `npx supabase migration new <name>`
+3. Применить в cloud: `npm run db:push`
+4. `npm run db:types` — типы из linked project
+5. `npm run typecheck`
 
-См. ADR-018–023, `docs/INTEGRATIONS.md`.
+См. ADR-018–024, `docs/INTEGRATIONS.md`.
+
+## Optional local (Docker)
+
+1. `npm run supabase:start`
+2. `npm run db:local:reset` — миграции + seed
+3. `npm run db:local:lint`, `npm run db:types:local`
+4. `npm run db:local:test` — pgTAP RLS tests
+5. `npm run supabase:stop`
+
+Не требуется для `npm run dev` при настроенном Cloud `.env.local`.
 
 ## Сверка
 
-`docs/DATA_MODEL.md`, `docs/BUSINESS_RULES.md`, ADR-009–013, ADR-018–023.
+`docs/DATA_MODEL.md`, `docs/BUSINESS_RULES.md`, ADR-009–013, ADR-018–024.
 
 ## Реализовано
 

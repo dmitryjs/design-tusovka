@@ -54,12 +54,18 @@ src/
   app/
     globals.css            # Tailwind v4 + shadcn tokens
     layout.tsx             # ru, Inter, header/main/footer
-    page.tsx               # Демо дизайн-системы (временная)
+    page.tsx               # Каталог (Supabase Cloud)
   components/
     layout/
     ui/                    # shadcn
   lib/
     utils.ts
+    supabase/
+      env.ts               # public env (URL + anon)
+      client.ts            # browser / client components
+      server.ts            # server RLS reads (anon key)
+      admin.ts             # server-only service role
+    catalog/
   types/
     database.types.ts      # supabase gen types (public)
 supabase/
@@ -115,13 +121,42 @@ src/lib/supabase|payments|polza|cart|access|storage/
 - `admin_users` без client grants; client writes на каталог/profiles/entitlements — нет
 - RPC: `has_product_access` — только `authenticated`; task policies разделены на free/entitled (anon не читает `entitlements` через RLS)
 
-**Команды:** `db:reset` | `db:lint` | `db:types` | `db:test` | `supabase:*`.
+**Команды (cloud):** `db:push` | `db:types` | `npm run dev`.
 
-Корзина, заказы, платежи, Storage, auth UI, `src/lib/supabase/` — **не созданы**.
+**Optional local (Docker):** `supabase:*` | `db:local:reset` | `db:local:test` | `db:types:local`.
 
-См. `DATA_MODEL.md`, ADR-019–023.
+Корзина, заказы, платежи, Storage, auth UI — **не созданы**.
 
-## Локальная разработка Supabase (этап 3.1)
+См. `DATA_MODEL.md`, ADR-019–024.
+
+## Supabase Cloud (основной MVP-режим)
+
+| Компонент | Источник |
+|-----------|----------|
+| PostgreSQL + RLS | Supabase Cloud |
+| Auth | Supabase Cloud (этап 4+) |
+| Storage | Supabase Cloud (этап 3+) |
+| Env | `.env.local` — см. `INTEGRATIONS.md` |
+
+### Клиенты (`src/lib/supabase/`)
+
+| Модуль | Ключ | Где использовать |
+|--------|------|------------------|
+| `client.ts` | `NEXT_PUBLIC_*` | Client components, browser |
+| `server.ts` | `NEXT_PUBLIC_*` (anon) | Server Components, RLS-aware reads |
+| `admin.ts` | `SUPABASE_SERVICE_ROLE_KEY` | Server-only: webhooks, grants, admin (этап 4+) |
+
+Service role **не** импортируется в client components.
+
+### Запуск без Docker
+
+```bash
+npm run dev
+```
+
+Требуется `.env.local` с ключами Supabase Cloud. Миграции: `supabase link` → `npm run db:push`.
+
+## Локальная разработка Supabase (optional)
 
 | Компонент | Локальный адрес |
 |-----------|-----------------|
@@ -130,13 +165,9 @@ src/lib/supabase|payments|polza|cart|access|storage/
 | Studio | `http://127.0.0.1:54323` |
 | Mailpit (Auth email) | `http://127.0.0.1:54324` |
 
-**Требования:** Docker Desktop (WSL2 backend на Windows).
+**Требования:** Docker Desktop (WSL2 backend на Windows). **Не обязателен** для `npm run dev` при работе с Cloud.
 
-**Команды:** `npm run supabase:start` | `supabase:stop` | `supabase:status` | `db:reset` | `db:lint` | `db:types`.
-
-Ключи и connection string для локальной среды выводятся `supabase status` и копируются в `.env.local` (не коммитятся). Имена переменных — см. `INTEGRATIONS.md` и `.env.example`.
-
-Клиенты `src/lib/supabase/` — этап 4+.
+**Команды:** `npm run supabase:start` | `db:local:reset` | `db:local:test`.
 
 ## Ключевые потоки
 
