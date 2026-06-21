@@ -12,6 +12,8 @@ import { getCatalogItemHref } from "@/lib/catalog/paths";
 
 function revalidateCartPaths(kind?: "material" | "task", slug?: string) {
   revalidatePath("/cart");
+  revalidatePath("/checkout");
+  revalidatePath("/checkout/payment");
   revalidatePath("/profile");
   revalidatePath("/profile/orders");
   if (kind && slug) {

@@ -1,10 +1,9 @@
 import { redirect } from "next/navigation";
 
-import { CartView } from "@/components/cart/cart-view";
-import { PageHero, PageShell } from "@/components/layout/page-shell";
+import { CartCheckoutView } from "@/components/cart/cart-checkout-view";
+import { PageShell } from "@/components/layout/page-shell";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getCart } from "@/lib/cart/queries";
-import { isYookassaConfigured } from "@/lib/payments/yookassa/config";
 
 export const dynamic = "force-dynamic";
 
@@ -24,15 +23,7 @@ export default async function CartPage() {
         { label: "Корзина" },
       ]}
     >
-      <PageHero
-        title="Корзина"
-        description="Платные материалы и задания. После оформления — оплата через ЮKassa (если настроена)."
-      />
-      <CartView
-        items={items}
-        error={error}
-        paymentsEnabled={isYookassaConfigured()}
-      />
+      <CartCheckoutView items={items} error={error} />
     </PageShell>
   );
 }

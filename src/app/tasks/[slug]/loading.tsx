@@ -1,5 +1,5 @@
-import { CatalogDetailLoading } from "@/components/catalog/catalog-detail-loading";
+import { TaskDetailLoading } from "@/components/catalog/task/task-detail-loading";
 
 export default function TaskLoading() {
-  return <CatalogDetailLoading />;
+  return <TaskDetailLoading />;
 }

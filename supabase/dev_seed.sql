@@ -3,7 +3,7 @@
 -- UUID prefix e0000000-* — only dev/demo rows; safe to re-run (upsert)
 -- Does NOT delete user data or non-dev rows
 
--- Sections (6)
+-- Sections (5 published on storefront + whiteboards draft)
 insert into public.products (id, kind, status, slug, title, description, price_kopecks, published_at)
 values
   (
@@ -13,7 +13,7 @@ values
     'product-thinking',
     'Продуктовое мышление',
     'Как читать задачу, формулировать гипотезы и принимать продуктовые решения в дизайне.',
-    0,
+    249000,
     now()
   ),
   (
@@ -23,7 +23,7 @@ values
     'job-and-portfolio',
     'Поиск работы и портфолио',
     'Как собирать, оформлять и защищать кейсы, когда цифр мало, а внимание рекрутера дорого.',
-    0,
+    249000,
     now()
   ),
   (
@@ -31,9 +31,9 @@ values
     'section',
     'published',
     'ai-design-engineering',
-    'AI и дизайн-инженерия',
-    'Практики UX/UI, продуктовые гипотезы и AI-инструменты для дизайнера в 2026.',
-    0,
+    'AI в дизайне и вайбкодинг',
+    'AI-инструменты, промпты и практики для ускорения UX/UI и прототипирования.',
+    249000,
     now()
   ),
   (
@@ -43,7 +43,7 @@ values
     'grade-growth',
     'Рост грейда',
     'Навыки и кейсы для перехода с junior на middle и с middle на senior.',
-    0,
+    249000,
     now()
   ),
   (
@@ -53,16 +53,16 @@ values
     'real-product-work',
     'Реальная работа в продукте',
     'Коммуникация с командой, приоритизация, метрики и ежедневные задачи product designer.',
-    0,
+    249000,
     now()
   ),
   (
     'e0000000-0000-4000-8000-000000000006',
     'section',
-    'published',
+    'draft',
     'whiteboards-and-practice',
     'Вайтборды и практические задания',
-    'Интерактивные вайтборды и практические задания для отработки навыков на реальных сценариях.',
+    'Снято с витрины.',
     0,
     now()
   )

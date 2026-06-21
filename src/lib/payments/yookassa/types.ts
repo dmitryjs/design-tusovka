@@ -1,3 +1,5 @@
+export type YookassaPaymentMethod = "bank_card" | "sbp";
+
 export type YookassaAmount = {
   value: string;
   currency: string;

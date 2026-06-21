@@ -18,8 +18,8 @@ export default async function AdminHomePage() {
 
   return (
     <AdminShell
-      title="Админ-панель"
-      description="Управление каталогом MVP без SQL."
+      title="Главная"
+      description="Обзор админ-панели MVP."
     >
       <div className="grid gap-4 sm:grid-cols-3">
         <Link

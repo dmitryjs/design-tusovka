@@ -23,9 +23,13 @@ export type LibraryItem = {
   productId: string;
   slug: string;
   title: string;
+  description: string;
   kind: "material" | "task";
   priceKopecks: number;
   level: Database["public"]["Enums"]["designer_level"];
   format?: Database["public"]["Enums"]["material_format"];
+  coverPath?: string | null;
+  averageRating?: number | null;
+  reviewCount?: number | null;
   grantedAt: string;
 };

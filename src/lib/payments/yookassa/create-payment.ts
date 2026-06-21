@@ -7,7 +7,7 @@ import { sumOrderItemsKopecks } from "../order-amount";
 import { createYookassaPaymentRequest, getYookassaPayment } from "./client";
 import { getYookassaConfig, isYookassaConfigured } from "./config";
 import { kopecksToRublesValue } from "./money";
-import type { CreateYookassaPaymentResult } from "./types";
+import type { CreateYookassaPaymentResult, YookassaPaymentMethod } from "./types";
 
 type OrderRow = {
   id: string;
@@ -67,6 +67,7 @@ function buildReturnUrl(baseReturnUrl: string, orderId: string): string {
 
 export async function createYookassaPayment(
   orderId: string,
+  paymentMethod: YookassaPaymentMethod = "bank_card",
 ): Promise<CreateYookassaPaymentResult> {
   if (!isYookassaConfigured()) {
     return {
@@ -199,6 +200,7 @@ export async function createYookassaPayment(
     returnUrl,
     idempotenceKey,
     metadata: { order_id: orderId },
+    paymentMethod,
   });
 
   if ("error" in paymentResult) {

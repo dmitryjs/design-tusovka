@@ -48,7 +48,7 @@ export function FreeProductClaimCta({
         </Button>
         <p className="text-sm text-neutral-600">
           Продукт сохранён в{" "}
-          <Link href="/profile" className="font-medium text-primary hover:underline">
+          <Link href="/profile/library" className="font-medium text-primary hover:underline">
             Моей библиотеке
           </Link>
           .

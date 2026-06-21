@@ -16,6 +16,12 @@ const MATERIAL_FORMAT_LABELS: Record<
   practice: "Практика",
 };
 
+export const MATERIAL_FORMAT_OPTIONS = (
+  Object.entries(MATERIAL_FORMAT_LABELS) as Array<
+    [Database["public"]["Enums"]["material_format"], string]
+  >
+).map(([value, label]) => ({ value, label }));
+
 const LEVEL_LABELS: Record<
   Database["public"]["Enums"]["designer_level"],
   string

@@ -12,7 +12,15 @@ import { buttonVariants } from "@/components/ui/button";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminProductsPage() {
+export default async function AdminProductsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ kind?: string }>;
+}) {
+  const { kind: kindParam } = await searchParams;
+  const kindFilter =
+    kindParam === "material" || kindParam === "task" ? kindParam : null;
+
   const ctx = await requireAdmin("/admin/products");
 
   if (ctx.role !== "admin") {
@@ -24,6 +32,9 @@ export default async function AdminProductsPage() {
 
   try {
     items = await listAdminProducts();
+    if (kindFilter) {
+      items = items.filter((item) => item.kind === kindFilter);
+    }
   } catch (loadError) {
     error =
       loadError instanceof Error
@@ -31,10 +42,24 @@ export default async function AdminProductsPage() {
         : "Не удалось загрузить продукты";
   }
 
+  const pageTitle =
+    kindFilter === "material"
+      ? "Материалы"
+      : kindFilter === "task"
+        ? "Задания"
+        : "Каталог";
+
+  const pageDescription =
+    kindFilter === "material"
+      ? "Материалы каталога."
+      : kindFilter === "task"
+        ? "Задания каталога."
+        : "Материалы и задания каталога.";
+
   return (
     <AdminShell
-      title="Продукты"
-      description="Материалы и задания каталога."
+      title={pageTitle}
+      description={pageDescription}
       actions={
         <Link href="/admin/products/new" className={buttonVariants()}>
           Создать продукт

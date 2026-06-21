@@ -2,9 +2,12 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { CheckoutStatusPanel } from "@/components/checkout/checkout-status-panel";
-import { PageHero, PageShell } from "@/components/layout/page-shell";
+import { CheckoutShell } from "@/components/checkout/checkout-shell";
+import { CheckoutTrustPanel } from "@/components/checkout/checkout-trust-panel";
+import { PageShell } from "@/components/layout/page-shell";
 import { buttonVariants } from "@/components/ui/button";
 import { getCurrentUser } from "@/lib/auth/session";
+import { formatPrice } from "@/lib/catalog/format";
 import { getOrderForCheckout } from "@/lib/payments/checkout-order";
 
 export const dynamic = "force-dynamic";
@@ -30,14 +33,16 @@ export default async function CheckoutSuccessPage({ searchParams }: PageProps) {
           { label: "Оплата" },
         ]}
       >
-        <PageHero
-          title="Оплата"
+        <CheckoutShell
+          step="done"
+          title="Статус оплаты"
           description="Укажите заказ в ссылке возврата или откройте раздел «Мои заказы»."
+          sidebar={<CheckoutTrustPanel />}
         >
           <Link href="/profile/orders" className={buttonVariants({ variant: "secondary" })}>
             Мои заказы
           </Link>
-        </PageHero>
+        </CheckoutShell>
       </PageShell>
     );
   }
@@ -51,15 +56,36 @@ export default async function CheckoutSuccessPage({ searchParams }: PageProps) {
         { label: "Оплата" },
       ]}
     >
-      <PageHero
-        title="Статус оплаты"
+      <CheckoutShell
+        step="done"
+        title="Готово"
         description="Доступ к контенту выдаётся только после подтверждения платежа на сервере."
+        sidebar={
+          order ? (
+            <div className="space-y-4">
+              <div className="rounded-xl border border-neutral-200 bg-white p-5">
+                <p className="text-sm text-neutral-600">Сумма заказа</p>
+                <p className="mt-1 text-2xl font-semibold text-foreground">
+                  {formatPrice(order.totalKopecks)}
+                </p>
+              </div>
+              <CheckoutTrustPanel />
+            </div>
+          ) : (
+            <CheckoutTrustPanel />
+          )
+        }
       >
-        <Link href="/profile/orders" className={buttonVariants({ variant: "secondary" })}>
-          Мои заказы
-        </Link>
-      </PageHero>
-      <CheckoutStatusPanel order={order} error={error} />
+        <CheckoutStatusPanel order={order} error={error} />
+        <div className="flex flex-wrap gap-3">
+          <Link href="/profile/library" className={buttonVariants()}>
+            В библиотеку
+          </Link>
+          <Link href="/profile/orders" className={buttonVariants({ variant: "secondary" })}>
+            Мои заказы
+          </Link>
+        </div>
+      </CheckoutShell>
     </PageShell>
   );
 }

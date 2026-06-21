@@ -1,3 +1,5 @@
+import type { Database } from "@/types/database.types";
+
 export type PaidProductCartState =
   | "hidden"
   | "guest"
@@ -32,9 +34,13 @@ export type CartItemView = {
   productId: string;
   slug: string;
   title: string;
+  description: string;
   kind: "material" | "task";
   priceKopecks: number;
   createdAt: string;
+  coverPath: string | null;
+  materialFormat?: Database["public"]["Enums"]["material_format"];
+  taskLevel?: Database["public"]["Enums"]["designer_level"];
 };
 
 export type OrderItemView = {

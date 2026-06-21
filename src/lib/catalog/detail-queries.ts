@@ -1,7 +1,16 @@
-import { createSupabaseAnonServerClient } from "@/lib/supabase/server";
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+import { createSupabaseAnonServerClient, createSupabaseServerClient } from "@/lib/supabase/server";
 import type { Database, Json } from "@/types/database.types";
 
 import { jsonbToParagraphs, jsonbToStringList } from "./content";
+import {
+  isAllowedSectionSlug,
+  resolveSectionCatalogSlug,
+  resolveSectionPageConfig,
+  resolveSectionPriceKopecks,
+} from "./section-pages";
+import { getSectionCoverPath } from "./section-covers";
 import type { CatalogTag } from "./types";
 
 export type DetailQueryResult<T> = {
@@ -26,8 +35,18 @@ export type MaterialDetail = {
   level: Database["public"]["Enums"]["designer_level"];
   tags: CatalogTag[];
   section: { slug: string; title: string } | null;
+  coverPath: string | null;
+  updatedAt: string | null;
   chapters: MaterialChapterView[];
+  hasFullAccess: boolean;
   isPreview: boolean;
+};
+
+export type TaskAiCriterion = {
+  id: string;
+  title: string;
+  description: string;
+  position: number;
 };
 
 export type TaskDetail = {
@@ -40,9 +59,13 @@ export type TaskDetail = {
   tags: CatalogTag[];
   aiReviewAvailable: boolean;
   manualReviewAvailable: boolean;
+  manualReviewPriceKopecks: number | null;
   brief: string[];
   submissionRequirements: string[];
+  aiCriteria: TaskAiCriterion[];
+  hasFullAccess: boolean;
   isPreview: boolean;
+  updatedAt: string | null;
 };
 
 export type SectionMaterialSummary = {
@@ -55,16 +78,27 @@ export type SectionMaterialSummary = {
   level: Database["public"]["Enums"]["designer_level"];
 };
 
+export type SectionStats = {
+  materialCount: number;
+  practiceCount: number;
+  templateCount: number;
+  guideCount: number;
+};
+
 export type SectionDetail = {
   id: string;
+  pageSlug: string;
+  catalogSlug: string;
   slug: string;
   title: string;
   description: string;
   priceKopecks: number;
   position: number;
+  coverPath: string | null;
   forWhom: string[];
   whatYouGet: string[];
   materials: SectionMaterialSummary[];
+  stats: SectionStats;
 };
 
 function queryErrorMessage(error: unknown): string {
@@ -74,7 +108,7 @@ function queryErrorMessage(error: unknown): string {
 }
 
 export async function fetchTagsForProducts(
-  supabase: ReturnType<typeof createSupabaseAnonServerClient>,
+  supabase: SupabaseClient<Database>,
   productIds: string[],
 ): Promise<Map<string, CatalogTag[]>> {
   if (!productIds.length) {
@@ -112,7 +146,7 @@ export async function getMaterialBySlug(
 
     const { data: product, error: productError } = await supabase
       .from("products")
-      .select("id, slug, title, description, price_kopecks")
+      .select("id, slug, title, description, price_kopecks, cover_path, updated_at")
       .eq("slug", slug)
       .eq("kind", "material")
       .eq("status", "published")
@@ -142,6 +176,22 @@ export async function getMaterialBySlug(
 
     const tagsMap = await fetchTagsForProducts(supabase, [product.id]);
     const isFree = product.price_kopecks === 0;
+    let hasFullAccess = isFree;
+
+    if (!isFree) {
+      const authSupabase = (await createSupabaseServerClient()) as unknown as SupabaseClient<Database>;
+      const {
+        data: { user },
+      } = await authSupabase.auth.getUser();
+
+      if (user) {
+        const { data: hasAccess } = await authSupabase.rpc("has_product_access", {
+          product_id: product.id,
+        });
+
+        hasFullAccess = Boolean(hasAccess);
+      }
+    }
 
     let section: MaterialDetail["section"] = null;
 
@@ -172,8 +222,12 @@ export async function getMaterialBySlug(
     const chapters: MaterialChapterView[] = [];
     const contentByChapterId = new Map<string, string>();
 
-    if (isFree) {
-      const { data: chapterRows, error: chaptersError } = await supabase
+    if (hasFullAccess) {
+      const chaptersClient = isFree
+        ? supabase
+        : ((await createSupabaseServerClient()) as unknown as SupabaseClient<Database>);
+
+      const { data: chapterRows, error: chaptersError } = await chaptersClient
         .from("material_chapters")
         .select("id, title, content, position")
         .eq("material_product_id", product.id)
@@ -193,7 +247,7 @@ export async function getMaterialBySlug(
         id: row.id,
         title: row.title,
         position: row.position,
-        contentText: isFree ? (contentByChapterId.get(row.id) ?? null) : null,
+        contentText: hasFullAccess ? (contentByChapterId.get(row.id) ?? null) : null,
       });
     }
 
@@ -208,8 +262,11 @@ export async function getMaterialBySlug(
         level: material.level,
         tags: tagsMap.get(product.id) ?? [],
         section,
+        coverPath: product.cover_path,
+        updatedAt: product.updated_at,
         chapters,
-        isPreview: !isFree,
+        hasFullAccess,
+        isPreview: !hasFullAccess,
       },
       error: null,
     };
@@ -226,7 +283,7 @@ export async function getTaskBySlug(
 
     const { data: product, error: productError } = await supabase
       .from("products")
-      .select("id, slug, title, description, price_kopecks")
+      .select("id, slug, title, description, price_kopecks, updated_at")
       .eq("slug", slug)
       .eq("kind", "task")
       .eq("status", "published")
@@ -243,7 +300,7 @@ export async function getTaskBySlug(
     const { data: task, error: taskError } = await supabase
       .from("tasks")
       .select(
-        "product_id, level, ai_review_available, manual_review_available",
+        "product_id, level, ai_review_available, manual_review_available, manual_review_price_kopecks",
       )
       .eq("product_id", product.id)
       .maybeSingle();
@@ -258,12 +315,33 @@ export async function getTaskBySlug(
 
     const tagsMap = await fetchTagsForProducts(supabase, [product.id]);
     const isFree = product.price_kopecks === 0;
+    let hasFullAccess = isFree;
+
+    if (!isFree) {
+      const authSupabase = (await createSupabaseServerClient()) as unknown as SupabaseClient<Database>;
+      const {
+        data: { user },
+      } = await authSupabase.auth.getUser();
+
+      if (user) {
+        const { data: hasAccess } = await authSupabase.rpc("has_product_access", {
+          product_id: product.id,
+        });
+
+        hasFullAccess = Boolean(hasAccess);
+      }
+    }
 
     let brief: string[] = [];
     let submissionRequirements: string[] = [];
+    let aiCriteria: TaskAiCriterion[] = [];
 
-    if (isFree) {
-      const { data: content, error: contentError } = await supabase
+    if (hasFullAccess) {
+      const contentClient = isFree
+        ? supabase
+        : ((await createSupabaseServerClient()) as unknown as SupabaseClient<Database>);
+
+      const { data: content, error: contentError } = await contentClient
         .from("task_content")
         .select("brief, submission_requirements")
         .eq("task_product_id", product.id)
@@ -279,6 +357,23 @@ export async function getTaskBySlug(
           content.submission_requirements as Json,
         );
       }
+
+      const { data: criteriaRows, error: criteriaError } = await contentClient
+        .from("task_ai_criteria")
+        .select("id, title, description, position")
+        .eq("task_product_id", product.id)
+        .order("position");
+
+      if (criteriaError) {
+        return { data: null, error: criteriaError.message };
+      }
+
+      aiCriteria = (criteriaRows ?? []).map((row) => ({
+        id: row.id,
+        title: row.title,
+        description: row.description,
+        position: row.position,
+      }));
     }
 
     return {
@@ -292,9 +387,13 @@ export async function getTaskBySlug(
         tags: tagsMap.get(product.id) ?? [],
         aiReviewAvailable: task.ai_review_available,
         manualReviewAvailable: task.manual_review_available,
+        manualReviewPriceKopecks: task.manual_review_price_kopecks,
         brief,
         submissionRequirements,
-        isPreview: !isFree,
+        aiCriteria,
+        hasFullAccess,
+        isPreview: !hasFullAccess,
+        updatedAt: product.updated_at,
       },
       error: null,
     };
@@ -304,15 +403,20 @@ export async function getTaskBySlug(
 }
 
 export async function getSectionBySlug(
-  slug: string,
+  requestedSlug: string,
 ): Promise<DetailQueryResult<SectionDetail>> {
   try {
+    if (!isAllowedSectionSlug(requestedSlug)) {
+      return { data: null, error: null };
+    }
+
+    const catalogSlug = resolveSectionCatalogSlug(requestedSlug);
     const supabase = createSupabaseAnonServerClient();
 
     const { data: product, error: productError } = await supabase
       .from("products")
-      .select("id, slug, title, description, price_kopecks")
-      .eq("slug", slug)
+      .select("id, slug, title, description, price_kopecks, cover_path")
+      .eq("slug", catalogSlug)
       .eq("kind", "section")
       .eq("status", "published")
       .maybeSingle();
@@ -386,17 +490,40 @@ export async function getSectionBySlug(
       .filter((item): item is SectionMaterialSummary => item !== null)
       .sort((a, b) => a.title.localeCompare(b.title, "ru"));
 
+    const pageConfig = resolveSectionPageConfig(requestedSlug, catalogSlug);
+    const pageSlug = pageConfig?.pageSlug ?? requestedSlug;
+    const displayTitle = pageConfig?.heroTitle ?? product.title;
+    const displayDescription = pageConfig?.heroDescription ?? product.description;
+    const coverPath =
+      pageConfig?.coverPath ??
+      product.cover_path ??
+      getSectionCoverPath(catalogSlug);
+    const priceKopecks = resolveSectionPriceKopecks(product.price_kopecks, pageConfig);
+
+    const stats: SectionStats = {
+      materialCount: materials.length,
+      practiceCount: materials.filter((item) => item.format === "practice").length,
+      templateCount: materials.filter((item) => item.format === "template").length,
+      guideCount: materials.filter(
+        (item) => item.format === "mini_guide" || item.format === "full_guide",
+      ).length,
+    };
+
     return {
       data: {
         id: product.id,
-        slug: product.slug,
-        title: product.title,
-        description: product.description,
-        priceKopecks: product.price_kopecks,
+        pageSlug,
+        catalogSlug,
+        slug: pageSlug,
+        title: displayTitle,
+        description: displayDescription,
+        priceKopecks,
         position: section.position,
+        coverPath,
         forWhom: jsonbToStringList(section.for_whom as Json),
         whatYouGet: jsonbToStringList(section.what_you_get as Json),
         materials,
+        stats,
       },
       error: null,
     };

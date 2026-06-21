@@ -22,7 +22,7 @@ export default async function ProfileOrdersPage() {
     <PageShell
       breadcrumbs={[
         { label: "Главная", href: "/" },
-        { label: "Моя библиотека", href: "/profile" },
+        { label: "Профиль", href: "/profile" },
         { label: "Заказы" },
       ]}
     >

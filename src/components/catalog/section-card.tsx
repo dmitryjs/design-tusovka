@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { materialCountLabel } from "@/lib/catalog/format";
-import { getCatalogItemHref } from "@/lib/catalog/paths";
+import { getPreferredSectionPageHref, isPublishedCatalogSectionSlug } from "@/lib/catalog/section-pages";
 import {
   formatSectionRating,
   getSectionCoverPath,
@@ -18,6 +18,10 @@ type SectionCardProps = {
 };
 
 export function SectionCard({ section, coverPath, className }: SectionCardProps) {
+  if (!isPublishedCatalogSectionSlug(section.slug)) {
+    return null;
+  }
+
   const resolvedCoverPath = coverPath ?? getSectionCoverPath(section.slug);
   const materialCount = section.materialCount ?? 0;
   const hasRating =
@@ -25,7 +29,7 @@ export function SectionCard({ section, coverPath, className }: SectionCardProps)
 
   return (
     <Link
-      href={getCatalogItemHref("section", section.slug)}
+      href={getPreferredSectionPageHref(section.slug)}
       className={cn(
         "group block h-full rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-200",
         className,

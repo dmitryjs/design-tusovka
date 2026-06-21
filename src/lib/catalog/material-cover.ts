@@ -19,6 +19,25 @@ export function getMaterialCoverPlaceholderClass(
   return FORMAT_THUMB_CLASS[format] ?? "bg-blue-50 text-blue-700";
 }
 
+const FORMAT_TAG_CLASS: Partial<
+  Record<Database["public"]["Enums"]["material_format"], string>
+> = {
+  practice: "text-purple-700",
+  lesson: "text-blue-700",
+  mini_guide: "text-emerald-700",
+  full_guide: "text-sky-700",
+  checklist: "text-amber-800",
+  template: "text-orange-700",
+  cheat_sheet: "text-violet-700",
+  notes: "text-neutral-600",
+};
+
+export function getMaterialFormatTagClass(
+  format: Database["public"]["Enums"]["material_format"],
+): string {
+  return FORMAT_TAG_CLASS[format] ?? "text-neutral-600";
+}
+
 export function resolveMaterialCoverUrl(coverPath: string | null | undefined): string | null {
   if (!coverPath) {
     return null;

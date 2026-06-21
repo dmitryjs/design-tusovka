@@ -1,5 +1,5 @@
-import { CatalogDetailLoading } from "@/components/catalog/catalog-detail-loading";
+import { MaterialDetailLoading } from "@/components/catalog/material-detail-loading";
 
 export default function MaterialLoading() {
-  return <CatalogDetailLoading />;
+  return <MaterialDetailLoading />;
 }

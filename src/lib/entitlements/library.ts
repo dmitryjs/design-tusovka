@@ -13,6 +13,8 @@ type EntitlementRow = {
     id: string;
     slug: string;
     title: string;
+    description: string;
+    cover_path: string | null;
     kind: Database["public"]["Enums"]["product_kind"];
     price_kopecks: number;
     status: Database["public"]["Enums"]["product_status"];
@@ -57,6 +59,8 @@ export async function getUserLibrary(
         id,
         slug,
         title,
+        description,
+        cover_path,
         kind,
         price_kopecks,
         status,
@@ -92,10 +96,12 @@ export async function getUserLibrary(
       productId: product.id,
       slug: product.slug,
       title: product.title,
+      description: product.description,
       kind: product.kind,
       priceKopecks: product.price_kopecks,
       level: material?.level ?? task?.level ?? "all",
       format: material?.format,
+      coverPath: product.cover_path,
       grantedAt: row.granted_at,
     });
   }

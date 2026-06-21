@@ -178,6 +178,7 @@ export async function getCatalogItems(): Promise<CatalogQueryResult> {
           ...base,
           level: material.level,
           format: material.format,
+          sectionProductId: material.section_product_id,
         });
         continue;
       }

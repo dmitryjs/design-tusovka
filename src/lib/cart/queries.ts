@@ -16,11 +16,29 @@ type CartRow = {
     id: string;
     slug: string;
     title: string;
+    description: string;
     kind: Database["public"]["Enums"]["product_kind"];
     price_kopecks: number;
     status: Database["public"]["Enums"]["product_status"];
+    cover_path: string | null;
+    materials:
+      | { format: Database["public"]["Enums"]["material_format"] }
+      | { format: Database["public"]["Enums"]["material_format"] }[]
+      | null;
+    tasks:
+      | { level: Database["public"]["Enums"]["designer_level"] }
+      | { level: Database["public"]["Enums"]["designer_level"] }[]
+      | null;
   };
 };
+
+function firstOrNull<T>(value: T | T[] | null | undefined): T | null {
+  if (!value) {
+    return null;
+  }
+
+  return Array.isArray(value) ? (value[0] ?? null) : value;
+}
 
 async function getClient(
   supabase?: ServerSupabase,
@@ -55,9 +73,13 @@ export async function getCart(
         id,
         slug,
         title,
+        description,
         kind,
         price_kopecks,
-        status
+        status,
+        cover_path,
+        materials ( format ),
+        tasks ( level )
       )
     `,
     )
@@ -81,14 +103,21 @@ export async function getCart(
       continue;
     }
 
+    const material = firstOrNull(product.materials);
+    const task = firstOrNull(product.tasks);
+
     items.push({
       id: row.id,
       productId: product.id,
       slug: product.slug,
       title: product.title,
+      description: product.description,
       kind: product.kind,
       priceKopecks: product.price_kopecks,
       createdAt: row.created_at,
+      coverPath: product.cover_path,
+      materialFormat: material?.format,
+      taskLevel: task?.level,
     });
   }
 

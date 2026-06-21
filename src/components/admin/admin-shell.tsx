@@ -4,13 +4,6 @@ import { Container } from "@/components/layout/container";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-const NAV = [
-  { href: "/admin", label: "Обзор" },
-  { href: "/admin/products", label: "Продукты" },
-  { href: "/admin/sections", label: "Разделы" },
-  { href: "/admin/tags", label: "Теги" },
-];
-
 type AdminShellProps = {
   title: string;
   description?: string;
@@ -25,14 +18,11 @@ export function AdminShell({
   actions,
 }: AdminShellProps) {
   return (
-    <Container className="py-8 md:py-10">
-      <div className="mx-auto flex max-w-5xl flex-col gap-6">
-        <header className="space-y-4 border-b border-neutral-200 pb-6">
+    <div className="px-4 py-6 md:px-8 md:py-8">
+      <div className="mx-auto flex max-w-6xl flex-col gap-6">
+        <header className="space-y-1 border-b border-neutral-200 pb-6">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="space-y-1">
-              <p className="text-xs font-medium tracking-wide text-neutral-500 uppercase">
-                Admin-lite
-              </p>
               <h1 className="text-2xl font-semibold text-foreground">{title}</h1>
               {description ? (
                 <p className="text-sm text-neutral-600">{description}</p>
@@ -40,23 +30,10 @@ export function AdminShell({
             </div>
             {actions}
           </div>
-          <nav className="flex flex-wrap gap-2" aria-label="Админ-навигация">
-            {NAV.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  buttonVariants({ variant: "secondary", size: "sm" }),
-                )}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
         </header>
         {children}
       </div>
-    </Container>
+    </div>
   );
 }
 

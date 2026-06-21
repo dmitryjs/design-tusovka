@@ -2,19 +2,26 @@
 
 import { useDeferredValue, useMemo, useState } from "react";
 
-import { PageHero, PageShell } from "@/components/layout/page-shell";
+import { CatalogEmptyPanel } from "@/components/catalog/catalog-detail-shell";
+import {
+  CatalogFiltersPanel,
+  CatalogFormatQuickFilters,
+} from "@/components/catalog/catalog-filters-panel";
+import { CatalogSearchField } from "@/components/catalog/catalog-search-field";
+import { HomeSectionCard } from "@/components/home/home-section-card";
+import { PopularMaterialCard } from "@/components/home/popular-material-card";
+import { PageShell } from "@/components/layout/page-shell";
 import { Button } from "@/components/ui/button";
-import type { CatalogFilter, CatalogItem } from "@/lib/catalog/types";
-
-import { MaterialCard } from "./material-card";
-import { CatalogEmptyPanel } from "./catalog-detail-shell";
-import { SectionCard } from "./section-card";
-
-const FILTERS: Array<{ value: CatalogFilter; label: string }> = [
-  { value: "all", label: "Все" },
-  { value: "material", label: "Материалы" },
-  { value: "section", label: "Разделы" },
-];
+import { Separator } from "@/components/ui/separator";
+import {
+  DEFAULT_CATALOG_FILTERS,
+  filterCatalogMaterials,
+  isCatalogMaterial,
+  resultCountLabel,
+} from "@/lib/catalog/catalog-filters";
+import { buildHomeSectionCards } from "@/lib/catalog/section-covers";
+import { isPublishedCatalogSectionSlug } from "@/lib/catalog/section-pages";
+import type { CatalogFiltersState, CatalogItem } from "@/lib/catalog/types";
 
 type CatalogPageProps = {
   initialItems: CatalogItem[];
@@ -22,49 +29,41 @@ type CatalogPageProps = {
   error: string | null;
 };
 
-function matchesSearch(item: CatalogItem, query: string): boolean {
-  if (!query) {
-    return true;
-  }
-
-  const haystack = `${item.title} ${item.description}`.toLowerCase();
-  return haystack.includes(query);
-}
-
-function resultCountLabel(count: number): string {
-  const mod10 = count % 10;
-  const mod100 = count % 100;
-
-  if (mod10 === 1 && mod100 !== 11) {
-    return "позиция";
-  }
-
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) {
-    return "позиции";
-  }
-
-  return "позиций";
-}
-
 export function CatalogPage({
   initialItems,
   initialQuery = "",
   error,
 }: CatalogPageProps) {
-  const catalogItems = useMemo(
-    () => initialItems.filter((item) => item.kind !== "task"),
+  const sectionCards = useMemo(
+    () => buildHomeSectionCards(initialItems),
     [initialItems],
   );
 
-  const [filter, setFilter] = useState<CatalogFilter>("all");
-  const deferredQuery = useDeferredValue(initialQuery.trim().toLowerCase());
+  const materials = useMemo(
+    () => initialItems.filter(isCatalogMaterial),
+    [initialItems],
+  );
 
-  const filteredItems = useMemo(() => {
-    return catalogItems.filter((item) => {
-      const matchesFilter = filter === "all" || item.kind === filter;
-      return matchesFilter && matchesSearch(item, deferredQuery);
-    });
-  }, [catalogItems, filter, deferredQuery]);
+  const catalogSections = useMemo(
+    () =>
+      initialItems.filter(
+        (item) => item.kind === "section" && isPublishedCatalogSectionSlug(item.slug),
+      ),
+    [initialItems],
+  );
+
+  const [filters, setFilters] = useState<CatalogFiltersState>({
+    ...DEFAULT_CATALOG_FILTERS,
+    query: initialQuery,
+  });
+  const [filtersOpen, setFiltersOpen] = useState(false);
+
+  const deferredFilters = useDeferredValue(filters);
+
+  const filteredMaterials = useMemo(
+    () => filterCatalogMaterials(materials, deferredFilters),
+    [materials, deferredFilters],
+  );
 
   if (error) {
     return (
@@ -93,78 +92,100 @@ export function CatalogPage({
         { label: "Каталог" },
       ]}
     >
-      <PageHero
-        title="Каталог материалов"
-        description="Выбирайте практические материалы и разделы. Бесплатные — с полным содержанием, платные — с превью. Задания — на отдельной странице."
-      />
+      <header className="space-y-3">
+        <h1 className="text-[28px] leading-[36px] font-semibold tracking-tight text-foreground sm:text-[32px] sm:leading-[40px]">
+          Каталог материалов
+        </h1>
+        <p className="max-w-3xl text-base leading-6 text-neutral-600">
+          Выбирайте практические материалы и разделы. Бесплатные — с полным содержанием,
+          платные — с превью. Задания — на отдельной странице.
+        </p>
+      </header>
 
-      <section className="flex flex-wrap gap-2" aria-label="Фильтры каталога">
-        {FILTERS.map((option) => (
-          <Button
-            key={option.value}
-            type="button"
-            size="sm"
-            variant={filter === option.value ? "default" : "secondary"}
-            onClick={() => setFilter(option.value)}
-            aria-pressed={filter === option.value}
-          >
-            {option.label}
-          </Button>
-        ))}
+      <section aria-label="Разделы с материалами">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {sectionCards.map((section) => (
+            <HomeSectionCard key={section.slug} section={section} />
+          ))}
+        </div>
       </section>
 
-      {catalogItems.length > 0 ? (
-        <p className="text-sm text-neutral-500" aria-live="polite">
-          Найдено {filteredItems.length} {resultCountLabel(filteredItems.length)}
-          {filter !== "all" || deferredQuery
-            ? ` из ${catalogItems.length}`
-            : ""}
-        </p>
-      ) : null}
+      <Separator className="bg-neutral-200" />
 
-      {catalogItems.length === 0 ? (
-        <CatalogEmptyPanel
-          title="Каталог пока пуст"
-          description="Выполните supabase/dev_seed.sql в Supabase SQL Editor."
-        />
-      ) : filteredItems.length === 0 ? (
-        <div className="space-y-4">
-          <CatalogEmptyPanel
-            title="Ничего не найдено"
-            description="Попробуйте другой запрос в поиске в шапке или сбросьте фильтр."
+      <section aria-label="Материалы" className="space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+          <CatalogSearchField
+            value={filters.query}
+            onChange={(query) => setFilters((current) => ({ ...current, query }))}
           />
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() => setFilter("all")}
-          >
-            Сбросить фильтры
-          </Button>
+          <CatalogFiltersPanel
+            filters={filters}
+            sections={catalogSections}
+            open={filtersOpen}
+            onOpenChange={setFiltersOpen}
+            onChange={setFilters}
+          />
         </div>
-      ) : (
-        <section
-          className="grid gap-4 lg:grid-cols-2"
-          aria-label="Список каталога"
-        >
-          {filteredItems.map((item) =>
-            item.kind === "material" && item.format && item.level ? (
-              <MaterialCard
+
+        <CatalogFormatQuickFilters
+          activeFormat={filters.format}
+          onChange={(format) => setFilters((current) => ({ ...current, format }))}
+        />
+
+        {materials.length > 0 ? (
+          <p className="text-sm text-neutral-500" aria-live="polite">
+            Найдено {filteredMaterials.length} {resultCountLabel(filteredMaterials.length)}
+            {filteredMaterials.length !== materials.length
+              ? ` из ${materials.length}`
+              : ""}
+          </p>
+        ) : null}
+
+        {materials.length === 0 ? (
+          <CatalogEmptyPanel
+            title="Каталог пока пуст"
+            description="Выполните supabase/dev_seed.sql в Supabase SQL Editor."
+          />
+        ) : filteredMaterials.length === 0 ? (
+          <div className="space-y-4">
+            <CatalogEmptyPanel
+              title="Ничего не найдено"
+              description="Попробуйте другой запрос или сбросьте фильтры."
+            />
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() =>
+                setFilters({
+                  ...DEFAULT_CATALOG_FILTERS,
+                  query: filters.query,
+                })
+              }
+            >
+              Сбросить фильтры
+            </Button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {filteredMaterials.map((item) => (
+              <PopularMaterialCard
                 key={item.id}
+                className="w-full min-w-0"
                 material={{
                   slug: item.slug,
                   title: item.title,
                   description: item.description,
                   priceKopecks: item.priceKopecks,
-                  format: item.format,
-                  level: item.level,
+                  format: item.format!,
+                  coverPath: item.coverPath,
+                  averageRating: item.averageRating,
+                  reviewCount: item.reviewCount,
                 }}
               />
-            ) : (
-              <SectionCard key={item.id} section={item} />
-            ),
-          )}
-        </section>
-      )}
+            ))}
+          </div>
+        )}
+      </section>
     </PageShell>
   );
 }

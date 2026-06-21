@@ -1,28 +1,19 @@
-import Link from "next/link";
-
-import { Badge } from "@/components/ui/badge";
+import { Container } from "@/components/layout/container";
 import {
-  getKindLabel,
-  getLevelLabel,
-  getMaterialFormatLabel,
-} from "@/lib/catalog/format";
+  Breadcrumbs,
+  type BreadcrumbItem,
+} from "@/components/layout/breadcrumbs";
+import { MaterialAccessCard } from "@/components/catalog/material/material-access-card";
+import { MaterialContent } from "@/components/catalog/material/material-content";
+import { MaterialCover } from "@/components/catalog/material/material-cover";
+import { MaterialHero } from "@/components/catalog/material/material-hero";
+import { MaterialMeta } from "@/components/catalog/material/material-meta";
+import { MaterialPreviewNotice } from "@/components/catalog/material/material-preview-notice";
+import { MaterialTableOfContents } from "@/components/catalog/material/material-table-of-contents";
 import type { MaterialDetail } from "@/lib/catalog/detail-queries";
 import { getCatalogItemHref } from "@/lib/catalog/paths";
 import type { FreeProductClaimState } from "@/lib/entitlements/types";
 import type { PaidProductCartState } from "@/lib/cart/types";
-
-import { FreeProductClaimCta } from "@/components/entitlements/free-product-claim-cta";
-import { PaidProductCartCta } from "@/components/cart/paid-product-cart-cta";
-
-import {
-  CatalogDetailFooterCta,
-  CatalogDetailMeta,
-  CatalogDetailSection,
-  CatalogDetailShell,
-  CatalogEmptyPanel,
-  CatalogPreviewNotice,
-  CatalogTagList,
-} from "./catalog-detail-shell";
 
 type MaterialDetailViewProps = {
   material: MaterialDetail;
@@ -30,139 +21,101 @@ type MaterialDetailViewProps = {
   cartState: PaidProductCartState;
 };
 
+function buildBreadcrumbs(material: MaterialDetail): BreadcrumbItem[] {
+  const items: BreadcrumbItem[] = [
+    { label: "Главная", href: "/" },
+    { label: "Материалы", href: "/catalog" },
+  ];
+
+  if (material.section) {
+    items.push({
+      label: material.section.title,
+      href: getCatalogItemHref("section", material.section.slug),
+    });
+  }
+
+  items.push({ label: material.title });
+
+  return items;
+}
+
+function MaterialSidebar({
+  material,
+  accessCardProps,
+}: {
+  material: MaterialDetail;
+  accessCardProps: React.ComponentProps<typeof MaterialAccessCard>;
+}) {
+  return (
+    <>
+      <MaterialAccessCard {...accessCardProps} />
+      <MaterialTableOfContents
+        chapters={material.chapters}
+        isPreview={material.isPreview}
+      />
+      <MaterialMeta material={material} />
+    </>
+  );
+}
+
 export function MaterialDetailView({
   material,
   claimState,
   cartState,
 }: MaterialDetailViewProps) {
+  const signInReturnPath = getCatalogItemHref("material", material.slug);
+  const accessCardProps = {
+    slug: material.slug,
+    priceKopecks: material.priceKopecks,
+    hasFullAccess: material.hasFullAccess,
+    claimState,
+    cartState,
+    signInReturnPath,
+  };
+
   return (
-    <CatalogDetailShell
-      breadcrumbs={[
-        { label: "Главная", href: "/" },
-        { label: "Каталог", href: "/catalog" },
-        { label: material.title },
-      ]}
-    >
-      <CatalogDetailMeta
-        kind="material"
-        badges={
-          <>
-            <Badge variant="secondary">{getKindLabel("material")}</Badge>
-            <Badge variant="outline">
-              {getMaterialFormatLabel(material.format)}
-            </Badge>
-            {material.level !== "all" ? (
-              <Badge variant="outline">{getLevelLabel(material.level)}</Badge>
+    <Container className="py-6 md:py-8 lg:py-10">
+      <div className="mx-auto flex max-w-6xl flex-col gap-6 md:gap-8">
+        <Breadcrumbs items={buildBreadcrumbs(material)} />
+
+        <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="flex min-w-0 flex-col gap-6 md:gap-8">
+            <MaterialHero
+              material={material}
+              claimState={claimState}
+              cartState={cartState}
+            />
+
+            <div className="flex flex-col gap-6 md:gap-8 lg:hidden">
+              <MaterialAccessCard {...accessCardProps} />
+            </div>
+
+            <MaterialCover
+              title={material.title}
+              format={material.format}
+              coverPath={material.coverPath}
+            />
+
+            {material.isPreview ? <MaterialPreviewNotice /> : null}
+
+            {material.hasFullAccess ? (
+              <MaterialContent chapters={material.chapters} />
             ) : null}
-          </>
-        }
-        title={material.title}
-        description={material.description}
-        priceKopecks={material.priceKopecks}
-      />
+          </div>
 
-      <CatalogTagList tags={material.tags} />
-
-      {material.section ? (
-        <div className="rounded-xl border border-neutral-300 bg-neutral-50 px-4 py-3 text-sm text-neutral-700 sm:px-5">
-          <span className="text-neutral-500">Раздел: </span>
-          <Link
-            href={getCatalogItemHref("section", material.section.slug)}
-            className="font-medium text-primary hover:underline"
-          >
-            {material.section.title}
-          </Link>
+          <aside className="hidden flex-col gap-6 lg:sticky lg:top-20 lg:flex lg:self-start">
+            <MaterialSidebar material={material} accessCardProps={accessCardProps} />
+          </aside>
         </div>
-      ) : null}
 
-      {material.isPreview ? <CatalogPreviewNotice kind="material" /> : null}
-
-      {material.chapters.length > 0 ? (
-        <CatalogDetailSection
-          title={material.isPreview ? "Оглавление" : "Содержание"}
-          description={
-            material.isPreview
-              ? "Заголовки глав доступны в превью. Текст — после покупки."
-              : `${material.chapters.length} ${chapterCountLabel(material.chapters.length)}`
-          }
-        >
-          <ol className="flex flex-col gap-3 sm:gap-4">
-            {material.chapters.map((chapter) => (
-              <li key={chapter.id}>
-                <article className="rounded-xl border border-neutral-300 bg-card px-4 py-4 sm:px-5">
-                  <h3 className="text-base font-semibold text-foreground">
-                    <span className="mr-2 text-neutral-400">
-                      {chapter.position + 1}.
-                    </span>
-                    {chapter.title}
-                  </h3>
-                  {chapter.contentText ? (
-                    <div className="mt-3 whitespace-pre-wrap text-sm leading-6 text-neutral-700">
-                      {chapter.contentText}
-                    </div>
-                  ) : material.isPreview ? (
-                    <p className="mt-2 text-sm text-neutral-500">
-                      Текст главы откроется после покупки.
-                    </p>
-                  ) : null}
-                </article>
-              </li>
-            ))}
-          </ol>
-        </CatalogDetailSection>
-      ) : !material.isPreview ? (
-        <CatalogEmptyPanel
-          title="Содержание пока не добавлено"
-          description="Когда появятся главы, они отобразятся здесь."
-        />
-      ) : null}
-
-      {claimState !== "hidden" ? (
-        <section className="space-y-3 border-t border-neutral-200 pt-8">
-          <h2 className="text-lg font-semibold text-foreground">Сохранить в библиотеку</h2>
-          <p className="text-sm leading-6 text-neutral-600">
-            Бесплатный материал можно добавить в профиль, чтобы быстро вернуться к нему позже.
-          </p>
-          <FreeProductClaimCta
-            slug={material.slug}
-            kind="material"
-            initialState={claimState}
-            signInReturnPath={getCatalogItemHref("material", material.slug)}
+        <div className="flex flex-col gap-6 lg:hidden">
+          <MaterialTableOfContents
+            chapters={material.chapters}
+            isPreview={material.isPreview}
           />
-        </section>
-      ) : null}
-
-      {cartState !== "hidden" ? (
-        <section className="space-y-3 border-t border-neutral-200 pt-8">
-          <h2 className="text-lg font-semibold text-foreground">Покупка</h2>
-          <p className="text-sm leading-6 text-neutral-600">
-            Платный материал можно добавить в корзину и оформить заказ. Оплата подключится позже.
-          </p>
-          <PaidProductCartCta
-            slug={material.slug}
-            kind="material"
-            initialState={cartState}
-            signInReturnPath={getCatalogItemHref("material", material.slug)}
-          />
-        </section>
-      ) : null}
-
-      <CatalogDetailFooterCta />
-    </CatalogDetailShell>
+          <MaterialMeta material={material} />
+        </div>
+      </div>
+    </Container>
   );
-}
-
-function chapterCountLabel(count: number): string {
-  const mod10 = count % 10;
-  const mod100 = count % 100;
-
-  if (mod10 === 1 && mod100 !== 11) {
-    return "глава";
-  }
-
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) {
-    return "главы";
-  }
-
-  return "глав";
 }
