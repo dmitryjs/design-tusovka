@@ -23,6 +23,7 @@ export type MaterialChapterView = {
   title: string;
   position: number;
   contentText: string | null;
+  contentJson: Json | null;
 };
 
 export type MaterialDetail = {
@@ -220,7 +221,7 @@ export async function getMaterialBySlug(
     }
 
     const chapters: MaterialChapterView[] = [];
-    const contentByChapterId = new Map<string, string>();
+    const contentByChapterId = new Map<string, { text: string; json: Json }>();
 
     if (hasFullAccess) {
       const chaptersClient = isFree
@@ -238,16 +239,21 @@ export async function getMaterialBySlug(
       }
 
       for (const row of chapterRows ?? []) {
-        contentByChapterId.set(row.id, jsonbToParagraphs(row.content as Json));
+        contentByChapterId.set(row.id, {
+          text: jsonbToParagraphs(row.content as Json),
+          json: row.content as Json,
+        });
       }
     }
 
     for (const row of toc ?? []) {
+      const content = contentByChapterId.get(row.id);
       chapters.push({
         id: row.id,
         title: row.title,
         position: row.position,
-        contentText: hasFullAccess ? (contentByChapterId.get(row.id) ?? null) : null,
+        contentText: hasFullAccess ? (content?.text ?? null) : null,
+        contentJson: hasFullAccess ? (content?.json ?? null) : null,
       });
     }
 

@@ -1,24 +1,28 @@
+import Link from "next/link";
+
 import { Container } from "@/components/layout/container";
 import {
   Breadcrumbs,
   type BreadcrumbItem,
 } from "@/components/layout/breadcrumbs";
 import { MaterialAccessCard } from "@/components/catalog/material/material-access-card";
-import { MaterialContent } from "@/components/catalog/material/material-content";
 import { MaterialCover } from "@/components/catalog/material/material-cover";
 import { MaterialHero } from "@/components/catalog/material/material-hero";
 import { MaterialMeta } from "@/components/catalog/material/material-meta";
 import { MaterialPreviewNotice } from "@/components/catalog/material/material-preview-notice";
 import { MaterialTableOfContents } from "@/components/catalog/material/material-table-of-contents";
+import { ProductReviewsSection } from "@/components/reviews/product-reviews-section";
 import type { MaterialDetail } from "@/lib/catalog/detail-queries";
-import { getCatalogItemHref } from "@/lib/catalog/paths";
+import { getCatalogItemHref, getMaterialReadHref } from "@/lib/catalog/paths";
 import type { FreeProductClaimState } from "@/lib/entitlements/types";
 import type { PaidProductCartState } from "@/lib/cart/types";
+import type { ProductReviewsData } from "@/lib/reviews/types";
 
 type MaterialDetailViewProps = {
   material: MaterialDetail;
   claimState: FreeProductClaimState;
   cartState: PaidProductCartState;
+  reviewsData: ProductReviewsData;
 };
 
 function buildBreadcrumbs(material: MaterialDetail): BreadcrumbItem[] {
@@ -62,6 +66,7 @@ export function MaterialDetailView({
   material,
   claimState,
   cartState,
+  reviewsData,
 }: MaterialDetailViewProps) {
   const signInReturnPath = getCatalogItemHref("material", material.slug);
   const accessCardProps = {
@@ -84,6 +89,7 @@ export function MaterialDetailView({
               material={material}
               claimState={claimState}
               cartState={cartState}
+              reviewStats={reviewsData.stats}
             />
 
             <div className="flex flex-col gap-6 md:gap-8 lg:hidden">
@@ -99,8 +105,27 @@ export function MaterialDetailView({
             {material.isPreview ? <MaterialPreviewNotice /> : null}
 
             {material.hasFullAccess ? (
-              <MaterialContent chapters={material.chapters} />
+              <section className="rounded-xl border border-neutral-200 bg-white px-5 py-5">
+                <h2 className="text-lg font-semibold text-foreground">Текст материала</h2>
+                <p className="mt-2 text-sm leading-6 text-neutral-600">
+                  Полный контент открыт в режиме чтения с навигацией по заголовкам.
+                </p>
+                <Link
+                  href={getMaterialReadHref(material.slug)}
+                  className="mt-4 inline-flex text-sm font-medium text-primary hover:underline"
+                >
+                  Открыть чтение материала
+                </Link>
+              </section>
             ) : null}
+
+            <ProductReviewsSection
+              productId={material.id}
+              productKind="material"
+              productSlug={material.slug}
+              signInReturnPath={signInReturnPath}
+              reviewsData={reviewsData}
+            />
           </div>
 
           <aside className="hidden flex-col gap-6 lg:sticky lg:top-20 lg:flex lg:self-start">

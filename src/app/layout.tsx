@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 
+import { ConditionalSiteChrome } from "@/components/layout/conditional-site-chrome";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
 
@@ -26,9 +27,12 @@ export default function RootLayout({
   return (
     <html lang="ru">
       <body className="flex min-h-svh flex-col">
-        <SiteHeader />
-        <main className="flex-1">{children}</main>
-        <SiteFooter />
+        <ConditionalSiteChrome
+          siteHeader={<SiteHeader />}
+          siteFooter={<SiteFooter />}
+        >
+          {children}
+        </ConditionalSiteChrome>
       </body>
     </html>
   );

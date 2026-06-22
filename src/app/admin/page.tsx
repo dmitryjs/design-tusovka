@@ -1,11 +1,14 @@
 import Link from "next/link";
 
+import { AdminDashboard } from "@/components/admin/admin-dashboard";
 import {
+  AdminEmptyState,
   AdminForbidden,
   AdminShell,
 } from "@/components/admin/admin-shell";
-import { requireAdmin } from "@/lib/auth/admin";
 import { buttonVariants } from "@/components/ui/button";
+import { getAdminDashboardOverview } from "@/lib/admin/analytics";
+import { requireAdmin } from "@/lib/auth/admin";
 
 export const dynamic = "force-dynamic";
 
@@ -16,45 +19,34 @@ export default async function AdminHomePage() {
     return <AdminForbidden />;
   }
 
+  let error: string | null = null;
+  let overview: Awaited<ReturnType<typeof getAdminDashboardOverview>> | null = null;
+
+  try {
+    overview = await getAdminDashboardOverview();
+  } catch (loadError) {
+    error =
+      loadError instanceof Error ? loadError.message : "Не удалось загрузить дашборд";
+  }
+
   return (
     <AdminShell
-      title="Главная"
-      description="Обзор админ-панели MVP."
-    >
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Link
-          href="/admin/products"
-          className="rounded-xl border border-neutral-300 bg-card p-5 transition-colors hover:border-primary/30 hover:bg-neutral-50"
-        >
-          <h2 className="text-base font-semibold text-foreground">Продукты</h2>
-          <p className="mt-2 text-sm text-neutral-600">
-            Материалы и задания: создание, цена, статус, контент.
-          </p>
-        </Link>
-        <Link
-          href="/admin/sections"
-          className="rounded-xl border border-neutral-300 bg-card p-5 transition-colors hover:border-primary/30 hover:bg-neutral-50"
-        >
-          <h2 className="text-base font-semibold text-foreground">Разделы</h2>
-          <p className="mt-2 text-sm text-neutral-600">
-            Секции каталога и их публикация.
-          </p>
-        </Link>
-        <Link
-          href="/admin/tags"
-          className="rounded-xl border border-neutral-300 bg-card p-5 transition-colors hover:border-primary/30 hover:bg-neutral-50"
-        >
-          <h2 className="text-base font-semibold text-foreground">Теги</h2>
-          <p className="mt-2 text-sm text-neutral-600">
-            Справочник тегов для продуктов.
-          </p>
-        </Link>
-      </div>
-      <p className="text-sm text-neutral-500">
-        <Link href="/" className={buttonVariants({ variant: "link", size: "sm" })}>
+      title="Дашборд"
+      description="Ключевые метрики, контент, заказы и быстрые действия в одном месте."
+      actions={
+        <Link href="/" className={buttonVariants({ variant: "secondary", size: "sm" })}>
           Открыть сайт
         </Link>
-      </p>
+      }
+    >
+      {error || !overview ? (
+        <AdminEmptyState
+          title="Не удалось загрузить дашборд"
+          description={error ?? "Проверьте подключение к Supabase и service role key."}
+        />
+      ) : (
+        <AdminDashboard data={overview} />
+      )}
     </AdminShell>
   );
 }

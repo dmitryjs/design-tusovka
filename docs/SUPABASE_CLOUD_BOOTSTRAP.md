@@ -14,6 +14,8 @@
 | **6** | [`supabase/cloud_patch_admin_role.sql`](../supabase/cloud_patch_admin_role.sql) | Для `/admin`: роль `profiles.role` |
 | **7** | [`supabase/cloud_patch_cart_orders.sql`](../supabase/cloud_patch_cart_orders.sql) | Для корзины `/cart` и заказов |
 | **8** | [`supabase/cloud_patch_yookassa_orders.sql`](../supabase/cloud_patch_yookassa_orders.sql) | Для ЮKassa: поля оплаты в `orders`, `fulfill_paid_order` |
+| **9** | [`supabase/cloud_patch_product_reviews.sql`](../supabase/cloud_patch_product_reviews.sql) | Отзывы на страницах товаров и `/admin/reviews` |
+| **10** | [`supabase/cloud_patch_storage.sql`](../supabase/cloud_patch_storage.sql) | Storage: `public-media`, `private-files` (загрузка медиа в админке) |
 
 Оба обязательных файла (шаги 1–2) выполняются в **Supabase Dashboard → SQL Editor → New query → Run**.
 
@@ -125,6 +127,46 @@ select proname from pg_proc where proname = 'fulfill_paid_order';
 select column_name from information_schema.columns
 where table_schema = 'public' and table_name = 'orders' and column_name = 'provider_payment_id';
 ```
+
+### Отзывы (шаг 9)
+
+Выполните [`supabase/cloud_patch_product_reviews.sql`](../supabase/cloud_patch_product_reviews.sql) для:
+
+- таблицы `product_reviews`;
+- RPC `get_product_review_stats`, `list_product_reviews`, `can_review_product`, `upsert_product_review`, `delete_my_product_review`;
+- блока отзывов на страницах материалов, заданий и разделов.
+
+Проверка:
+
+```sql
+select proname from pg_proc
+where proname in (
+  'get_product_review_stats',
+  'list_product_reviews',
+  'can_review_product',
+  'upsert_product_review',
+  'delete_my_product_review'
+);
+```
+
+Ожидается 5 строк.
+
+### Storage (шаг 10)
+
+Выполните [`supabase/cloud_patch_storage.sql`](../supabase/cloud_patch_storage.sql) для bucket'ов:
+
+- `public-media` — публичные обложки и медиа в материалах (загрузка в админке);
+- `private-files` — приватные файлы (решения, PDF — позже).
+
+Проверка в Dashboard → **Storage** — должны появиться оба bucket'а.
+
+Или через SQL:
+
+```sql
+select id, public from storage.buckets where id in ('public-media', 'private-files');
+```
+
+Ожидается 2 строки.
 
 ## Где взять env
 

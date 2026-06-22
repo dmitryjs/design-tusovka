@@ -1,4 +1,5 @@
 import type { Database } from "@/types/database.types";
+import type { MaterialBlock } from "@/lib/content/material-blocks";
 
 export type ProductKind = Extract<
   Database["public"]["Enums"]["product_kind"],
@@ -24,6 +25,7 @@ export type AdminProductFormInput = {
   sectionProductId?: string;
   tagIds: string[];
   chapters: AdminChapterInput[];
+  contentBlocks: MaterialBlock[];
   taskBriefText: string;
   taskSubmissionText: string;
 };

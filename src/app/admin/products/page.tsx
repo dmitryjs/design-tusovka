@@ -43,18 +43,12 @@ export default async function AdminProductsPage({
   }
 
   const pageTitle =
-    kindFilter === "material"
-      ? "Материалы"
-      : kindFilter === "task"
-        ? "Задания"
-        : "Каталог";
+    kindFilter === "task" ? "Задания" : "Материалы";
 
   const pageDescription =
-    kindFilter === "material"
-      ? "Материалы каталога."
-      : kindFilter === "task"
-        ? "Задания каталога."
-        : "Материалы и задания каталога.";
+    kindFilter === "task"
+      ? "Задания каталога."
+      : "Материалы и задания каталога.";
 
   return (
     <AdminShell

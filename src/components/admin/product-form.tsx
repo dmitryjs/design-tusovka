@@ -8,13 +8,11 @@ import {
   createProductAction,
   updateProductAction,
 } from "@/app/actions/admin/products";
+import { MaterialProductForm } from "@/components/admin/material/material-product-form";
 import { AdminAlert } from "@/components/admin/admin-shell";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import type {
-  AdminChapterInput,
-  AdminProductFormInput,
-} from "@/lib/admin/types";
+import type { AdminProductFormInput } from "@/lib/admin/types";
 import { cn } from "@/lib/utils";
 
 type SelectOption = { value: string; label: string };
@@ -44,17 +42,6 @@ const LEVEL_OPTIONS: SelectOption[] = [
   { value: "middle", label: "Middle" },
   { value: "senior", label: "Senior" },
   { value: "all", label: "Все уровни" },
-];
-
-const FORMAT_OPTIONS: SelectOption[] = [
-  { value: "mini_guide", label: "Мини-гайд" },
-  { value: "full_guide", label: "Полный гайд" },
-  { value: "notes", label: "Заметки" },
-  { value: "checklist", label: "Чеклист" },
-  { value: "template", label: "Шаблон" },
-  { value: "cheat_sheet", label: "Шпаргалка" },
-  { value: "lesson", label: "Урок" },
-  { value: "practice", label: "Практика" },
 ];
 
 function Field({
@@ -89,8 +76,8 @@ function SelectControl({
   return (
     <select
       value={value}
-      disabled={disabled}
       onChange={(event) => onChange(event.target.value)}
+      disabled={disabled}
       className={cn(
         "h-10 w-full rounded-lg border border-neutral-300 bg-white px-3 text-sm",
         disabled && "opacity-60",
@@ -105,21 +92,15 @@ function SelectControl({
   );
 }
 
-export function ProductForm({
+function TaskProductForm({
   mode,
   productId,
   initial,
-  sections,
   tags,
   saved,
 }: ProductFormProps) {
   const router = useRouter();
   const [form, setForm] = useState<AdminProductFormInput>(initial);
-  const [chapters, setChapters] = useState<AdminChapterInput[]>(
-    initial.chapters.length > 0
-      ? initial.chapters
-      : [{ title: "", contentText: "", position: 0 }],
-  );
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(saved ?? false);
@@ -149,21 +130,11 @@ export function ProductForm({
     setFieldErrors({});
     setSuccess(false);
 
-    const payload: AdminProductFormInput = {
-      ...form,
-      chapters: chapters
-        .filter((chapter) => chapter.title.trim())
-        .map((chapter, index) => ({
-          ...chapter,
-          position: index,
-        })),
-    };
-
     startTransition(async () => {
       const result =
         mode === "create"
-          ? await createProductAction(payload)
-          : await updateProductAction(productId!, payload);
+          ? await createProductAction(form)
+          : await updateProductAction(productId!, form);
 
       if (result.fieldErrors) {
         setFieldErrors(result.fieldErrors);
@@ -179,8 +150,6 @@ export function ProductForm({
       router.refresh();
     });
   }
-
-  const isMaterial = form.kind === "material";
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
@@ -263,35 +232,6 @@ export function ProductForm({
         </Field>
       </div>
 
-      {isMaterial ? (
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Формат" error={fieldErrors.format}>
-            <SelectControl
-              value={form.format ?? "mini_guide"}
-              onChange={(value) =>
-                updateForm(
-                  "format",
-                  value as NonNullable<AdminProductFormInput["format"]>,
-                )
-              }
-              options={FORMAT_OPTIONS}
-              disabled={isPending}
-            />
-          </Field>
-          <Field label="Раздел" error={fieldErrors.sectionProductId}>
-            <SelectControl
-              value={form.sectionProductId ?? ""}
-              onChange={(value) => updateForm("sectionProductId", value)}
-              options={[
-                { value: "", label: "Выберите раздел" },
-                ...sections,
-              ]}
-              disabled={isPending}
-            />
-          </Field>
-        </div>
-      ) : null}
-
       <fieldset className="space-y-2">
         <legend className="text-sm font-medium text-foreground">Теги</legend>
         <div className="flex flex-wrap gap-2">
@@ -321,94 +261,29 @@ export function ProductForm({
         </div>
       </fieldset>
 
-      {isMaterial ? (
-        <section className="space-y-4 rounded-xl border border-neutral-300 p-4">
-          <div className="flex items-center justify-between gap-2">
-            <h2 className="text-base font-semibold">Главы материала</h2>
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              disabled={isPending}
-              onClick={() =>
-                setChapters((current) => [
-                  ...current,
-                  {
-                    title: "",
-                    contentText: "",
-                    position: current.length,
-                  },
-                ])
-              }
-            >
-              Добавить главу
-            </Button>
-          </div>
-          {chapters.map((chapter, index) => (
-            <div
-              key={chapter.id ?? `new-${index}`}
-              className="space-y-3 rounded-lg border border-neutral-200 bg-neutral-50 p-4"
-            >
-              <Field label={`Глава ${index + 1} — заголовок`}>
-                <Input
-                  value={chapter.title}
-                  onChange={(event) =>
-                    setChapters((current) =>
-                      current.map((item, itemIndex) =>
-                        itemIndex === index
-                          ? { ...item, title: event.target.value }
-                          : item,
-                      ),
-                    )
-                  }
-                  disabled={isPending}
-                />
-              </Field>
-              <Field label="Текст главы">
-                <textarea
-                  value={chapter.contentText}
-                  onChange={(event) =>
-                    setChapters((current) =>
-                      current.map((item, itemIndex) =>
-                        itemIndex === index
-                          ? { ...item, contentText: event.target.value }
-                          : item,
-                      ),
-                    )
-                  }
-                  disabled={isPending}
-                  rows={5}
-                  className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm"
-                />
-              </Field>
-            </div>
-          ))}
-        </section>
-      ) : (
-        <section className="space-y-4 rounded-xl border border-neutral-300 p-4">
-          <h2 className="text-base font-semibold">Контент задания</h2>
-          <Field label="Бриф (по строке на пункт)">
-            <textarea
-              value={form.taskBriefText}
-              onChange={(event) => updateForm("taskBriefText", event.target.value)}
-              disabled={isPending}
-              rows={6}
-              className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm"
-            />
-          </Field>
-          <Field label="Требования к сдаче (по строке на пункт)">
-            <textarea
-              value={form.taskSubmissionText}
-              onChange={(event) =>
-                updateForm("taskSubmissionText", event.target.value)
-              }
-              disabled={isPending}
-              rows={5}
-              className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm"
-            />
-          </Field>
-        </section>
-      )}
+      <section className="space-y-4 rounded-xl border border-neutral-300 p-4">
+        <h2 className="text-base font-semibold">Контент задания</h2>
+        <Field label="Бриф (по строке на пункт)">
+          <textarea
+            value={form.taskBriefText}
+            onChange={(event) => updateForm("taskBriefText", event.target.value)}
+            disabled={isPending}
+            rows={6}
+            className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm"
+          />
+        </Field>
+        <Field label="Требования к сдаче (по строке на пункт)">
+          <textarea
+            value={form.taskSubmissionText}
+            onChange={(event) =>
+              updateForm("taskSubmissionText", event.target.value)
+            }
+            disabled={isPending}
+            rows={5}
+            className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm"
+          />
+        </Field>
+      </section>
 
       <div className="flex flex-wrap gap-2">
         <Button type="submit" disabled={isPending}>
@@ -420,4 +295,45 @@ export function ProductForm({
       </div>
     </form>
   );
+}
+
+export function ProductForm(props: ProductFormProps) {
+  const [kind, setKind] = useState(props.initial.kind);
+
+  if (props.mode === "create") {
+    return (
+      <div className="space-y-6">
+        <label className="flex max-w-xs flex-col gap-1.5 text-sm">
+          <span className="font-medium text-foreground">Тип продукта</span>
+          <select
+            value={kind}
+            onChange={(event) =>
+              setKind(event.target.value as AdminProductFormInput["kind"])
+            }
+            className="h-10 rounded-lg border border-neutral-300 bg-white px-3 text-sm"
+          >
+            <option value="material">Материал</option>
+            <option value="task">Задание</option>
+          </select>
+        </label>
+        {kind === "material" ? (
+          <MaterialProductForm
+            {...props}
+            initial={{ ...props.initial, kind: "material" }}
+          />
+        ) : (
+          <TaskProductForm
+            {...props}
+            initial={{ ...props.initial, kind: "task" }}
+          />
+        )}
+      </div>
+    );
+  }
+
+  if (props.initial.kind === "material") {
+    return <MaterialProductForm {...props} />;
+  }
+
+  return <TaskProductForm {...props} />;
 }

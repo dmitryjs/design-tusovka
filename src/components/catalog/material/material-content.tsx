@@ -1,34 +1,58 @@
-import type { MaterialChapterView } from "@/lib/catalog/detail-queries";
+import type { Json } from "@/types/database.types";
+import {
+  parseMaterialBlocks,
+  type MaterialBlock,
+} from "@/lib/content/material-blocks";
+
+import { MaterialBlockRenderer } from "@/components/content/material-block-renderer";
+
+export type MaterialChapterBlocksView = {
+  id: string;
+  title: string;
+  position: number;
+  blocks: MaterialBlock[];
+};
+
+export function parseChapterBlocks(content: Json): MaterialBlock[] {
+  return parseMaterialBlocks(content);
+}
 
 type MaterialContentProps = {
-  chapters: MaterialChapterView[];
+  chapters: Array<{
+    id: string;
+    title: string;
+    position: number;
+    contentText: string | null;
+    contentJson?: Json | null;
+  }>;
 };
 
 export function MaterialContent({ chapters }: MaterialContentProps) {
-  const chaptersWithContent = chapters.filter((chapter) => chapter.contentText);
+  const allBlocks: MaterialBlock[] = [];
 
-  if (chaptersWithContent.length === 0) {
+  for (const chapter of chapters) {
+    if (chapter.contentJson) {
+      allBlocks.push(...parseMaterialBlocks(chapter.contentJson));
+      continue;
+    }
+
+    if (chapter.contentText) {
+      allBlocks.push({
+        id: `${chapter.id}-legacy`,
+        type: "paragraph",
+        data: { text: chapter.contentText },
+      });
+    }
+  }
+
+  if (allBlocks.length === 0) {
     return null;
   }
 
   return (
     <section id="material-content" className="space-y-6 scroll-mt-24">
       <h2 className="text-lg font-semibold text-foreground">Текст материала</h2>
-      <ol className="flex flex-col gap-6">
-        {chaptersWithContent.map((chapter) => (
-          <li key={chapter.id} id={`chapter-${chapter.id}`} className="scroll-mt-24">
-            <article className="rounded-xl border border-neutral-200 bg-white px-4 py-5 sm:px-6">
-              <h3 className="text-base font-semibold text-foreground">
-                <span className="mr-2 text-neutral-400">{chapter.position + 1}.</span>
-                {chapter.title}
-              </h3>
-              <div className="mt-4 whitespace-pre-wrap text-sm leading-6 text-neutral-700">
-                {chapter.contentText}
-              </div>
-            </article>
-          </li>
-        ))}
-      </ol>
+      <MaterialBlockRenderer blocks={allBlocks} />
     </section>
   );
 }

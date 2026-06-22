@@ -25,19 +25,6 @@ function AdminNavLink({
       : "text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900",
   );
 
-  if (item.disabled || !item.href) {
-    return (
-      <span
-        aria-disabled="true"
-        title="Скоро"
-        className={cn(baseClassName, "cursor-not-allowed opacity-45 hover:bg-transparent")}
-      >
-        <item.Icon className="size-[18px] shrink-0" aria-hidden />
-        <span className="min-w-0 truncate">{item.label}</span>
-      </span>
-    );
-  }
-
   return (
     <Link href={item.href} className={baseClassName} aria-current={active ? "page" : undefined}>
       <item.Icon className={cn("size-[18px] shrink-0", active && "text-primary")} aria-hidden />
@@ -57,7 +44,7 @@ export function AdminSidebar({ className }: AdminSidebarProps) {
   return (
     <aside
       className={cn(
-        "flex h-full w-[248px] shrink-0 flex-col border-r border-neutral-200 bg-white px-3 py-5",
+        "flex h-full w-[248px] shrink-0 flex-col overflow-hidden border-r border-neutral-200 bg-white px-3 py-5",
         className,
       )}
     >
@@ -66,7 +53,7 @@ export function AdminSidebar({ className }: AdminSidebarProps) {
         <p className="mt-1 text-base font-semibold text-foreground">Дизайн Тусовка</p>
       </div>
 
-      <nav className="flex flex-1 flex-col gap-6 overflow-y-auto" aria-label="Админ-навигация">
+      <nav className="flex flex-1 flex-col gap-6" aria-label="Админ-навигация">
         {ADMIN_NAV.map((section) => (
           <div key={section.title ?? "root"}>
             {section.title ? (
@@ -106,9 +93,7 @@ export function AdminSidebarMobile({ className }: AdminSidebarProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const flatItems = ADMIN_NAV.flatMap((section) => section.items).filter(
-    (item) => !item.disabled && item.href,
-  );
+  const flatItems = ADMIN_NAV.flatMap((section) => section.items);
 
   return (
     <nav
@@ -125,7 +110,7 @@ export function AdminSidebarMobile({ className }: AdminSidebarProps) {
           return (
             <li key={item.label} className="shrink-0">
               <Link
-                href={item.href!}
+                href={item.href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
                   "inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors",

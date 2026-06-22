@@ -7,6 +7,7 @@ import {
   getPreferredSectionPageSlug,
   getSectionPageHref,
 } from "@/lib/catalog/section-pages";
+import { getProductReviewsData } from "@/lib/reviews/queries";
 
 export const dynamic = "force-dynamic";
 
@@ -31,5 +32,7 @@ export default async function SectionPage({ params }: SectionPageProps) {
     redirect(getSectionPageHref(preferredSlug));
   }
 
-  return <SectionDetailView section={data} />;
+  const reviewsData = await getProductReviewsData(data.id);
+
+  return <SectionDetailView section={data} reviewsData={reviewsData} />;
 }

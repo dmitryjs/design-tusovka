@@ -14,21 +14,19 @@ function AdminSidebarFallback() {
 
 export function AdminLayoutShell({ children }: AdminLayoutShellProps) {
   return (
-    <div className="min-h-screen bg-neutral-50">
+    <div className="flex h-screen flex-col overflow-hidden bg-neutral-50">
       <Suspense fallback={null}>
         <AdminSidebarMobile />
       </Suspense>
 
-      <div className="flex min-h-[calc(100vh-0px)]">
+      <div className="flex min-h-0 flex-1">
         <Suspense fallback={<AdminSidebarFallback />}>
-          <div className="hidden lg:block">
-            <div className="sticky top-0 h-screen">
-              <AdminSidebar />
-            </div>
+          <div className="hidden h-full shrink-0 lg:block">
+            <AdminSidebar />
           </div>
         </Suspense>
 
-        <main className="min-w-0 flex-1">{children}</main>
+        <main className="min-h-0 min-w-0 flex-1 overflow-y-auto">{children}</main>
       </div>
     </div>
   );

@@ -3,26 +3,18 @@ import {
   BarChart3,
   BookOpen,
   Briefcase,
-  CircleUserRound,
   FileBarChart,
   FileText,
-  FolderKanban,
   Home,
-  LayoutGrid,
   Layers,
-  MessageSquare,
-  Plug,
-  Settings,
-  ShieldCheck,
   Star,
   Users,
 } from "lucide-react";
 
 export type AdminNavItem = {
   label: string;
-  href?: string;
+  href: string;
   Icon: LucideIcon;
-  disabled?: boolean;
   isActive?: (pathname: string, searchParams?: URLSearchParams) => boolean;
 };
 
@@ -39,7 +31,7 @@ export const ADMIN_NAV: AdminNavSection[] = [
   {
     items: [
       {
-        label: "Главная",
+        label: "Дашборд",
         href: "/admin",
         Icon: Home,
         isActive: (pathname) => pathname === "/admin",
@@ -51,12 +43,10 @@ export const ADMIN_NAV: AdminNavSection[] = [
     items: [
       {
         label: "Материалы",
-        href: "/admin/products?kind=material",
+        href: "/admin/products",
         Icon: FileText,
         isActive: (pathname, searchParams) =>
-          productsActive(pathname) &&
-          (searchParams?.get("kind") === "material" ||
-            (!searchParams?.get("kind") && pathname.startsWith("/admin/products/"))),
+          productsActive(pathname) && searchParams?.get("kind") !== "task",
       },
       {
         label: "Задания",
@@ -77,39 +67,40 @@ export const ADMIN_NAV: AdminNavSection[] = [
         Icon: Layers,
         isActive: (pathname) => pathname.startsWith("/admin/tags"),
       },
-      {
-        label: "Каталог",
-        href: "/admin/products",
-        Icon: LayoutGrid,
-        isActive: (pathname, searchParams) =>
-          productsActive(pathname) && !searchParams?.get("kind"),
-      },
     ],
   },
   {
     title: "Пользователи",
     items: [
-      { label: "Пользователи", Icon: Users, disabled: true },
-      { label: "Подписки", Icon: ShieldCheck, disabled: true },
-      { label: "Отзывы", Icon: Star, disabled: true },
-      { label: "Комментарии", Icon: MessageSquare, disabled: true },
+      {
+        label: "Пользователи",
+        href: "/admin/users",
+        Icon: Users,
+        isActive: (pathname) => pathname.startsWith("/admin/users"),
+      },
+      {
+        label: "Отзывы",
+        href: "/admin/reviews",
+        Icon: Star,
+        isActive: (pathname) => pathname.startsWith("/admin/reviews"),
+      },
     ],
   },
   {
     title: "Аналитика",
     items: [
-      { label: "Статистика", Icon: BarChart3, disabled: true },
-      { label: "События", Icon: CircleUserRound, disabled: true },
-      { label: "Отчёты", Icon: FileBarChart, disabled: true },
-    ],
-  },
-  {
-    title: "Настройки",
-    items: [
-      { label: "Главная сайта", Icon: FolderKanban, disabled: true },
-      { label: "Профиль", href: "/profile", Icon: CircleUserRound },
-      { label: "Настройки сайта", Icon: Settings, disabled: true },
-      { label: "Интеграции", Icon: Plug, disabled: true },
+      {
+        label: "Статистика",
+        href: "/admin/analytics",
+        Icon: BarChart3,
+        isActive: (pathname) => pathname.startsWith("/admin/analytics"),
+      },
+      {
+        label: "Отчёты",
+        href: "/admin/reports",
+        Icon: FileBarChart,
+        isActive: (pathname) => pathname.startsWith("/admin/reports"),
+      },
     ],
   },
 ];
@@ -121,10 +112,6 @@ export function isAdminNavItemActive(
 ): boolean {
   if (item.isActive) {
     return item.isActive(pathname, searchParams);
-  }
-
-  if (!item.href || item.disabled) {
-    return false;
   }
 
   if (item.href.includes("?")) {

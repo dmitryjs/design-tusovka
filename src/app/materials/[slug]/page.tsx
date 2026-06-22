@@ -5,6 +5,7 @@ import { MaterialDetailView } from "@/components/catalog/material-detail";
 import { getMaterialBySlug } from "@/lib/catalog/detail-queries";
 import { getFreeProductClaimState } from "@/lib/entitlements/access";
 import { getPaidProductCartState } from "@/lib/cart/access";
+import { getProductReviewsData } from "@/lib/reviews/queries";
 
 export const dynamic = "force-dynamic";
 
@@ -26,12 +27,14 @@ export default async function MaterialPage({ params }: MaterialPageProps) {
 
   const claimState = await getFreeProductClaimState(data.id, data.priceKopecks);
   const cartState = await getPaidProductCartState(data.id, data.priceKopecks);
+  const reviewsData = await getProductReviewsData(data.id);
 
   return (
     <MaterialDetailView
       material={data}
       claimState={claimState}
       cartState={cartState}
+      reviewsData={reviewsData}
     />
   );
 }

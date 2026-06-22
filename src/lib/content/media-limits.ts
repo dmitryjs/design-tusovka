@@ -1,0 +1,2 @@
+export const MATERIAL_MEDIA_MAX_BYTES = 15 * 1024 * 1024;
+export const MATERIAL_MEDIA_MAX_LABEL = "15 МБ";

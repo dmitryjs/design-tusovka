@@ -6,10 +6,12 @@ import {
   type BreadcrumbItem,
 } from "@/components/layout/breadcrumbs";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { ProductReviewsSection } from "@/components/reviews/product-reviews-section";
 import type { TaskDetail } from "@/lib/catalog/detail-queries";
 import { getCatalogItemHref } from "@/lib/catalog/paths";
-import type { FreeProductClaimState } from "@/lib/entitlements/types";
 import type { PaidProductCartState } from "@/lib/cart/types";
+import type { FreeProductClaimState } from "@/lib/entitlements/types";
+import type { ProductReviewsData } from "@/lib/reviews/types";
 import { cn } from "@/lib/utils";
 import { Play } from "lucide-react";
 
@@ -27,6 +29,7 @@ type TaskDetailViewProps = {
   task: TaskDetail;
   claimState: FreeProductClaimState;
   cartState: PaidProductCartState;
+  reviewsData: ProductReviewsData;
 };
 
 function buildBreadcrumbs(task: TaskDetail): BreadcrumbItem[] {
@@ -41,6 +44,7 @@ export function TaskDetailView({
   task,
   claimState,
   cartState,
+  reviewsData,
 }: TaskDetailViewProps) {
   const signInReturnPath = getCatalogItemHref("task", task.slug);
   const accessCardProps = {
@@ -60,7 +64,12 @@ export function TaskDetailView({
 
         <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_360px]">
           <div className="flex min-w-0 flex-col gap-6 md:gap-8">
-            <TaskHero task={task} claimState={claimState} cartState={cartState} />
+            <TaskHero
+              task={task}
+              claimState={claimState}
+              cartState={cartState}
+              reviewStats={reviewsData.stats}
+            />
 
             <div className="flex flex-col gap-6 lg:hidden">
               <TaskAccessCard {...accessCardProps} />
@@ -110,6 +119,14 @@ export function TaskDetailView({
                 </section>
               </>
             ) : null}
+
+            <ProductReviewsSection
+              productId={task.id}
+              productKind="task"
+              productSlug={task.slug}
+              signInReturnPath={signInReturnPath}
+              reviewsData={reviewsData}
+            />
           </div>
 
           <aside className="hidden flex-col gap-6 lg:sticky lg:top-20 lg:flex lg:self-start">

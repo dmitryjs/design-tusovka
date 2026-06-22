@@ -207,6 +207,47 @@ export type Database = {
           },
         ]
       }
+      product_reviews: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          is_hidden: boolean
+          product_id: string
+          rating: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          is_hidden?: boolean
+          product_id: string
+          rating: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          is_hidden?: boolean
+          product_id?: string
+          rating?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_reviews_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_items: {
         Row: {
           created_at: string
@@ -623,8 +664,10 @@ export type Database = {
     }
     Functions: {
       add_to_cart: { Args: { p_slug: string }; Returns: Json }
+      can_review_product: { Args: { p_product_id: string }; Returns: boolean }
       claim_free_product: { Args: { p_slug: string }; Returns: Json }
       create_pending_order_from_cart: { Args: Record<PropertyKey, never>; Returns: Json }
+      delete_my_product_review: { Args: { p_product_id: string }; Returns: Json }
       fulfill_paid_order: { Args: { p_order_id: string }; Returns: Json }
       get_material_toc: {
         Args: { p_material_product_id: string }
@@ -635,8 +678,16 @@ export type Database = {
           title: string
         }[]
       }
+      get_product_review_stats: {
+        Args: { p_product_id: string }
+        Returns: {
+          average_rating: number
+          review_count: number
+        }[]
+      }
       has_product_access: { Args: { product_id: string }; Returns: boolean }
       is_valid_slug: { Args: { slug: string }; Returns: boolean }
+      list_product_reviews: { Args: { p_product_id: string }; Returns: Json }
       remove_from_cart: { Args: { p_cart_item_id: string }; Returns: Json }
       update_my_profile: {
         Args: {
@@ -646,6 +697,10 @@ export type Database = {
           telegram_username: string
         }
         Returns: undefined
+      }
+      upsert_product_review: {
+        Args: { p_body: string; p_product_id: string; p_rating: number }
+        Returns: Json
       }
     }
     Enums: {

@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { Eye, EyeOff, Pencil, Trash2 } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 
 import { updateProfileAction } from "@/app/profile/settings/actions";
-import { ProfileAvatar } from "@/components/profile/profile-avatar";
+import { ProfileAvatarUpload } from "@/components/profile/profile-avatar-upload";
 import {
   ProfileSettingsShell,
   SettingsField,
@@ -53,9 +53,10 @@ function buildSavedValues(
 
 type ProfileSettingsFormProps = {
   data: ProfileSettingsData;
+  storageEnabled: boolean;
 };
 
-export function ProfileSettingsForm({ data }: ProfileSettingsFormProps) {
+export function ProfileSettingsForm({ data, storageEnabled }: ProfileSettingsFormProps) {
   const { profile, emailConfirmed } = data;
   const { user, profile: profileRow } = profile;
 
@@ -275,32 +276,12 @@ export function ProfileSettingsForm({ data }: ProfileSettingsFormProps) {
           </SettingsPanel>
 
           <SettingsPanel title="Аватар">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-              <ProfileAvatar
-                displayName={profileRow.display_name}
-                email={user.email ?? ""}
-                avatarPath={profileRow.avatar_path}
-                size="lg"
-              />
-              <div className="space-y-3">
-                <p className="text-sm text-neutral-600">
-                  JPG, PNG или WEBP. Максимум 10 МБ.
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <Button type="button" variant="outline" size="sm" disabled>
-                    <Pencil className="size-4" aria-hidden />
-                    Изменить
-                  </Button>
-                  <Button type="button" variant="outline" size="sm" disabled>
-                    <Trash2 className="size-4" aria-hidden />
-                    Удалить
-                  </Button>
-                </div>
-                <p className="text-xs text-neutral-500">
-                  Загрузка аватара будет доступна после подключения Storage.
-                </p>
-              </div>
-            </div>
+            <ProfileAvatarUpload
+              displayName={profileRow.display_name}
+              email={user.email ?? ""}
+              avatarPath={profileRow.avatar_path}
+              storageEnabled={storageEnabled}
+            />
           </SettingsPanel>
 
           <SettingsPanel title="Email">

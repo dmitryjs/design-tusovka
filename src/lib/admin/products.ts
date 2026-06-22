@@ -6,8 +6,11 @@ import {
   chapterContentJsonToText,
   multilineToStringListJson,
   stringListJsonToMultiline,
-  textToChapterContentJson,
 } from "./content-json";
+import {
+  chaptersToMaterialBlocks,
+  materialBlocksToJson,
+} from "@/lib/content/material-blocks";
 import type {
   AdminMutationResult,
   AdminProductDetail,
@@ -134,6 +137,12 @@ export async function getAdminProductDetail(
         contentText: chapterContentJsonToText(chapter.content),
         position: chapter.position,
       })),
+      contentBlocks: chaptersToMaterialBlocks(
+        (chapters ?? []).map((chapter) => ({
+          title: chapter.title,
+          content: chapter.content,
+        })),
+      ),
       taskBriefText: "",
       taskSubmissionText: "",
     };
@@ -167,6 +176,7 @@ export async function getAdminProductDetail(
     status: product.status,
     tagIds,
     chapters: [],
+    contentBlocks: [],
     taskBriefText: stringListJsonToMultiline(content?.brief ?? []),
     taskSubmissionText: stringListJsonToMultiline(
       content?.submission_requirements ?? [],
@@ -195,9 +205,10 @@ async function syncProductTags(productId: string, tagIds: string[]) {
   }
 }
 
-async function syncMaterialChapters(
+async function syncMaterialContentBlocks(
   productId: string,
-  chapters: AdminProductFormInput["chapters"],
+  blocks: AdminProductFormInput["contentBlocks"],
+  existingChapterId?: string,
 ) {
   const admin = getAdminClient();
   const { data: existing, error: existingError } = await admin
@@ -209,12 +220,10 @@ async function syncMaterialChapters(
     throw new Error(existingError.message);
   }
 
-  const keepIds = new Set(
-    chapters.map((chapter) => chapter.id).filter(Boolean) as string[],
-  );
+  const keepId = existingChapterId ?? existing?.[0]?.id;
   const deleteIds = (existing ?? [])
     .map((row) => row.id)
-    .filter((id) => !keepIds.has(id));
+    .filter((id) => id !== keepId);
 
   if (deleteIds.length > 0) {
     const { error } = await admin
@@ -227,30 +236,30 @@ async function syncMaterialChapters(
     }
   }
 
-  for (const chapter of chapters) {
-    const payload = {
-      material_product_id: productId,
-      title: chapter.title.trim(),
-      content: textToChapterContentJson(chapter.contentText),
-      position: chapter.position,
-    };
+  const payload = {
+    material_product_id: productId,
+    title: "Контент",
+    content: materialBlocksToJson(blocks),
+    position: 0,
+  };
 
-    if (chapter.id) {
-      const { error } = await admin
-        .from("material_chapters")
-        .update(payload)
-        .eq("id", chapter.id);
+  if (keepId) {
+    const { error } = await admin
+      .from("material_chapters")
+      .update(payload)
+      .eq("id", keepId);
 
-      if (error) {
-        throw new Error(error.message);
-      }
-    } else if (chapter.title.trim()) {
-      const { error } = await admin.from("material_chapters").insert(payload);
-
-      if (error) {
-        throw new Error(error.message);
-      }
+    if (error) {
+      throw new Error(error.message);
     }
+
+    return;
+  }
+
+  const { error } = await admin.from("material_chapters").insert(payload);
+
+  if (error) {
+    throw new Error(error.message);
   }
 }
 
@@ -300,7 +309,11 @@ export async function createAdminProduct(
         throw new Error(error.message);
       }
 
-      await syncMaterialChapters(product.id, input.chapters);
+      await syncMaterialContentBlocks(
+        product.id,
+        input.contentBlocks,
+        input.chapters[0]?.id,
+      );
     } else {
       const { error: taskError } = await admin.from("tasks").insert({
         product_id: product.id,
@@ -392,7 +405,11 @@ export async function updateAdminProduct(
         throw new Error(error.message);
       }
 
-      await syncMaterialChapters(productId, input.chapters);
+      await syncMaterialContentBlocks(
+        productId,
+        input.contentBlocks,
+        input.chapters[0]?.id,
+      );
     } else {
       const { error: taskError } = await admin
         .from("tasks")

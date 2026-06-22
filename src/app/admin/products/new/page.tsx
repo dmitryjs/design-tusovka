@@ -4,6 +4,7 @@ import {
 } from "@/components/admin/admin-shell";
 import { ProductForm } from "@/components/admin/product-form";
 import { requireAdmin } from "@/lib/auth/admin";
+import { createMaterialBlock } from "@/lib/content/material-blocks";
 import {
   listAdminSectionOptions,
   listAdminTagOptions,
@@ -46,7 +47,8 @@ export default async function AdminNewProductPage() {
           status: "draft",
           sectionProductId: sections[0]?.id ?? "",
           tagIds: [],
-          chapters: [{ title: "", contentText: "", position: 0 }],
+          chapters: [],
+          contentBlocks: [createMaterialBlock("paragraph")],
           taskBriefText: "",
           taskSubmissionText: "",
         }}

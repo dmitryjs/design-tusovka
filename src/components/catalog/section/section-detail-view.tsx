@@ -7,10 +7,14 @@ import { SectionHero } from "@/components/catalog/section/section-hero";
 import { SectionMaterialsList } from "@/components/catalog/section/section-materials-list";
 import { SectionRoadmapFromSection } from "@/components/catalog/section/section-roadmap";
 import { SectionSidebar } from "@/components/catalog/section/section-sidebar";
+import { ProductReviewsSection } from "@/components/reviews/product-reviews-section";
 import type { SectionDetail } from "@/lib/catalog/detail-queries";
+import { getSectionPageHref } from "@/lib/catalog/section-pages";
+import type { ProductReviewsData } from "@/lib/reviews/types";
 
 type SectionDetailViewProps = {
   section: SectionDetail;
+  reviewsData: ProductReviewsData;
 };
 
 function buildBreadcrumbs(section: SectionDetail): BreadcrumbItem[] {
@@ -21,7 +25,9 @@ function buildBreadcrumbs(section: SectionDetail): BreadcrumbItem[] {
   ];
 }
 
-export function SectionDetailView({ section }: SectionDetailViewProps) {
+export function SectionDetailView({ section, reviewsData }: SectionDetailViewProps) {
+  const signInReturnPath = getSectionPageHref(section.pageSlug);
+
   return (
     <Container className="py-6 md:py-8 lg:py-10">
       <div className="mx-auto flex max-w-6xl flex-col gap-6 md:gap-8">
@@ -29,7 +35,7 @@ export function SectionDetailView({ section }: SectionDetailViewProps) {
 
         <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_360px]">
           <div className="flex min-w-0 flex-col gap-6 md:gap-8">
-            <SectionHero section={section} />
+            <SectionHero section={section} reviewStats={reviewsData.stats} />
 
             <div className="lg:hidden">
               <SectionSidebar section={section} />
@@ -37,6 +43,14 @@ export function SectionDetailView({ section }: SectionDetailViewProps) {
 
             <SectionRoadmapFromSection section={section} />
             <SectionMaterialsList materials={section.materials} />
+
+            <ProductReviewsSection
+              productId={section.id}
+              productKind="section"
+              productSlug={section.pageSlug}
+              signInReturnPath={signInReturnPath}
+              reviewsData={reviewsData}
+            />
           </div>
 
           <aside className="hidden lg:sticky lg:top-20 lg:block lg:self-start">

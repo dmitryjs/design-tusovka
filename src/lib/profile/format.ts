@@ -73,5 +73,10 @@ export function resolveAvatarUrl(
     return avatarPath;
   }
 
-  return `/storage/v1/object/public/${avatarPath}`;
+  const base = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim().replace(/\/$/, "");
+  if (!base) {
+    return null;
+  }
+
+  return `${base}/storage/v1/object/public/${avatarPath}`;
 }

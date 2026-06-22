@@ -11,6 +11,8 @@ import {
 } from "@/lib/catalog/material-detail-utils";
 import { getPreferredSectionPageHref } from "@/lib/catalog/section-pages";
 import type { MaterialDetail } from "@/lib/catalog/detail-queries";
+import { ProductRatingBadge } from "@/components/reviews/product-rating-badge";
+import type { ProductReviewStats } from "@/lib/reviews/types";
 import type { FreeProductClaimState } from "@/lib/entitlements/types";
 import type { PaidProductCartState } from "@/lib/cart/types";
 import { cn } from "@/lib/utils";
@@ -19,6 +21,7 @@ type MaterialHeroProps = {
   material: MaterialDetail;
   claimState: FreeProductClaimState;
   cartState: PaidProductCartState;
+  reviewStats: ProductReviewStats;
 };
 
 function resolveOwnedBadge(
@@ -52,7 +55,7 @@ function resolvePriceBadgeLabel(
   return formatPrice(priceKopecks);
 }
 
-export function MaterialHero({ material, claimState, cartState }: MaterialHeroProps) {
+export function MaterialHero({ material, claimState, cartState, reviewStats }: MaterialHeroProps) {
   const isOwned = resolveOwnedBadge(material, claimState, cartState);
   const priceBadgeKind = resolveMaterialPriceBadgeKind(
     material.priceKopecks,
@@ -87,6 +90,7 @@ export function MaterialHero({ material, claimState, cartState }: MaterialHeroPr
         <h1 className="text-[28px] leading-[36px] font-semibold tracking-tight text-foreground sm:text-[32px] sm:leading-[40px] md:text-[36px] md:leading-[44px]">
           {material.title}
         </h1>
+        <ProductRatingBadge stats={reviewStats} />
         {material.description ? (
           <p className="max-w-3xl text-base leading-6 text-neutral-600">
             {material.description}

@@ -1,0 +1,99 @@
+import type { Json } from "@/types/database.types";
+
+import type { MaterialDetail } from "@/lib/catalog/detail-queries";
+import type { CatalogTag } from "@/lib/catalog/types";
+import type { AdminProductFormInput } from "@/lib/admin/types";
+
+type SelectOption = { value: string; label: string };
+
+function resolveTags(form: AdminProductFormInput, tagOptions: SelectOption[]): CatalogTag[] {
+  return form.tagIds
+    .map((tagId) => {
+      const option = tagOptions.find((tag) => tag.value === tagId);
+      if (!option) {
+        return null;
+      }
+
+      return {
+        id: option.value,
+        slug: option.value,
+        name: option.label,
+      };
+    })
+    .filter((tag): tag is CatalogTag => tag !== null);
+}
+
+function resolveSection(
+  form: AdminProductFormInput,
+  sectionOptions: SelectOption[],
+): MaterialDetail["section"] {
+  if (!form.sectionProductId) {
+    return null;
+  }
+
+  const section = sectionOptions.find((option) => option.value === form.sectionProductId);
+  if (!section) {
+    return null;
+  }
+
+  return {
+    slug: section.value,
+    title: section.label,
+  };
+}
+
+function filterContentBlocks(form: AdminProductFormInput) {
+  return form.contentBlocks.filter((block) => {
+    const data = block.data as Record<string, unknown>;
+    return Object.values(data).some((value) => {
+      if (typeof value === "string") {
+        return value.trim().length > 0;
+      }
+
+      if (Array.isArray(value)) {
+        return value.length > 0;
+      }
+
+      return false;
+    });
+  });
+}
+
+export function buildAdminMaterialPreviewDetail(
+  form: AdminProductFormInput,
+  options: {
+    productId?: string;
+    tags: SelectOption[];
+    sections: SelectOption[];
+  },
+): MaterialDetail {
+  const priceKopecks = Math.round(form.priceRubles * 100);
+  const isFree = priceKopecks === 0;
+  const hasFullAccess = isFree;
+  const contentBlocks = filterContentBlocks(form);
+
+  return {
+    id: options.productId ?? "preview",
+    slug: form.slug.trim() || "preview",
+    title: form.title.trim() || "Без названия",
+    description: form.description.trim(),
+    priceKopecks,
+    format: form.format ?? "mini_guide",
+    level: form.level,
+    tags: resolveTags(form, options.tags),
+    section: resolveSection(form, options.sections),
+    coverPath: null,
+    updatedAt: null,
+    chapters: [
+      {
+        id: "preview-content",
+        title: "Контент",
+        position: 0,
+        contentText: null,
+        contentJson: hasFullAccess ? (contentBlocks as unknown as Json) : null,
+      },
+    ],
+    hasFullAccess,
+    isPreview: !hasFullAccess,
+  };
+}

@@ -5,6 +5,7 @@ import { TaskDetailView } from "@/components/catalog/task-detail";
 import { getTaskBySlug } from "@/lib/catalog/detail-queries";
 import { getFreeProductClaimState } from "@/lib/entitlements/access";
 import { getPaidProductCartState } from "@/lib/cart/access";
+import { getProductReviewsData } from "@/lib/reviews/queries";
 
 export const dynamic = "force-dynamic";
 
@@ -26,8 +27,14 @@ export default async function TaskPage({ params }: TaskPageProps) {
 
   const claimState = await getFreeProductClaimState(data.id, data.priceKopecks);
   const cartState = await getPaidProductCartState(data.id, data.priceKopecks);
+  const reviewsData = await getProductReviewsData(data.id);
 
   return (
-    <TaskDetailView task={data} claimState={claimState} cartState={cartState} />
+    <TaskDetailView
+      task={data}
+      claimState={claimState}
+      cartState={cartState}
+      reviewsData={reviewsData}
+    />
   );
 }

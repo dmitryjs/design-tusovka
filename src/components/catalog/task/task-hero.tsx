@@ -5,6 +5,8 @@ import {
   getLevelLabel,
 } from "@/lib/catalog/format";
 import type { TaskDetail } from "@/lib/catalog/detail-queries";
+import { ProductRatingBadge } from "@/components/reviews/product-rating-badge";
+import type { ProductReviewStats } from "@/lib/reviews/types";
 import type { FreeProductClaimState } from "@/lib/entitlements/types";
 import type { PaidProductCartState } from "@/lib/cart/types";
 import {
@@ -19,6 +21,7 @@ type TaskHeroProps = {
   task: TaskDetail;
   claimState: FreeProductClaimState;
   cartState: PaidProductCartState;
+  reviewStats: ProductReviewStats;
 };
 
 function resolvePriceBadgeLabel(
@@ -36,7 +39,7 @@ function resolvePriceBadgeLabel(
   return formatPrice(priceKopecks);
 }
 
-export function TaskHero({ task, claimState, cartState }: TaskHeroProps) {
+export function TaskHero({ task, claimState, cartState, reviewStats }: TaskHeroProps) {
   const isOwned = resolveTaskOwned(
     task.priceKopecks,
     task.hasFullAccess,
@@ -95,6 +98,7 @@ export function TaskHero({ task, claimState, cartState }: TaskHeroProps) {
         <h1 className="text-[28px] leading-[36px] font-semibold tracking-tight text-foreground sm:text-[32px] sm:leading-[40px] md:text-[36px] md:leading-[44px]">
           {task.title}
         </h1>
+        <ProductRatingBadge stats={reviewStats} />
         {task.description ? (
           <p className="max-w-3xl text-base leading-6 text-neutral-600">
             {task.description}

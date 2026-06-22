@@ -8,13 +8,17 @@ import {
   sectionPracticeCountLabel,
 } from "@/lib/catalog/section-detail-utils";
 import type { SectionDetail } from "@/lib/catalog/detail-queries";
+import { getSectionPageHref } from "@/lib/catalog/section-pages";
+import { ProductRatingBadge } from "@/components/reviews/product-rating-badge";
+import type { ProductReviewStats } from "@/lib/reviews/types";
 import { cn } from "@/lib/utils";
 
 type SectionHeroProps = {
   section: SectionDetail;
+  reviewStats: ProductReviewStats;
 };
 
-export function SectionHero({ section }: SectionHeroProps) {
+export function SectionHero({ section, reviewStats }: SectionHeroProps) {
   return (
     <header className="overflow-hidden rounded-2xl border border-neutral-200 bg-white">
       <div className="grid lg:grid-cols-[minmax(0,1fr)_280px]">
@@ -44,6 +48,7 @@ export function SectionHero({ section }: SectionHeroProps) {
             <h1 className="text-[28px] leading-[36px] font-semibold tracking-tight text-foreground sm:text-[32px] sm:leading-[40px] md:text-[36px] md:leading-[44px]">
               {section.title}
             </h1>
+            <ProductRatingBadge stats={reviewStats} />
             {section.description ? (
               <p className="max-w-2xl text-base leading-6 text-neutral-600">
                 {section.description}
