@@ -1,4 +1,3 @@
-import { Play } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -20,29 +19,12 @@ export function HomeHeroBanner() {
             </p>
           </div>
 
-          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-            <Link
-              href="/catalog"
-              className={cn(buttonVariants({ size: "lg" }), "text-sm font-normal")}
-            >
-              Смотреть материалы
-            </Link>
-            <Link
-              href="#how-it-works"
-              className={cn(
-                buttonVariants({ variant: "secondary", size: "lg" }),
-                "gap-2.5",
-              )}
-            >
-              <span
-                className="flex size-6 items-center justify-center rounded-full bg-primary text-primary-foreground"
-                aria-hidden
-              >
-                <Play className="size-3 fill-current" />
-              </span>
-              Как это работает
-            </Link>
-          </div>
+          <Link
+            href="/catalog"
+            className={cn(buttonVariants({ size: "lg" }), "text-sm font-normal")}
+          >
+            Смотреть материалы
+          </Link>
         </div>
 
         <div className="relative flex min-h-[220px] items-end justify-center px-4 pb-4 sm:min-h-[280px] lg:min-h-[320px] lg:px-6 lg:pb-6">
