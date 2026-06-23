@@ -10,11 +10,13 @@ import { SectionSidebar } from "@/components/catalog/section/section-sidebar";
 import { ProductReviewsSection } from "@/components/reviews/product-reviews-section";
 import type { SectionDetail } from "@/lib/catalog/detail-queries";
 import { getSectionPageHref } from "@/lib/catalog/section-pages";
+import type { PaidProductCartState } from "@/lib/cart/types";
 import type { ProductReviewsData } from "@/lib/reviews/types";
 
 type SectionDetailViewProps = {
   section: SectionDetail;
   reviewsData: ProductReviewsData;
+  cartState: PaidProductCartState;
 };
 
 function buildBreadcrumbs(section: SectionDetail): BreadcrumbItem[] {
@@ -25,7 +27,11 @@ function buildBreadcrumbs(section: SectionDetail): BreadcrumbItem[] {
   ];
 }
 
-export function SectionDetailView({ section, reviewsData }: SectionDetailViewProps) {
+export function SectionDetailView({
+  section,
+  reviewsData,
+  cartState,
+}: SectionDetailViewProps) {
   const signInReturnPath = getSectionPageHref(section.pageSlug);
 
   return (
@@ -35,10 +41,19 @@ export function SectionDetailView({ section, reviewsData }: SectionDetailViewPro
 
         <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_360px]">
           <div className="flex min-w-0 flex-col gap-6 md:gap-8">
-            <SectionHero section={section} reviewStats={reviewsData.stats} />
+            <SectionHero
+              section={section}
+              reviewStats={reviewsData.stats}
+              cartState={cartState}
+              signInReturnPath={signInReturnPath}
+            />
 
             <div className="lg:hidden">
-              <SectionSidebar section={section} />
+              <SectionSidebar
+                section={section}
+                cartState={cartState}
+                signInReturnPath={signInReturnPath}
+              />
             </div>
 
             <SectionRoadmapFromSection section={section} />
@@ -54,7 +69,11 @@ export function SectionDetailView({ section, reviewsData }: SectionDetailViewPro
           </div>
 
           <aside className="hidden lg:sticky lg:top-20 lg:block lg:self-start">
-            <SectionSidebar section={section} />
+            <SectionSidebar
+              section={section}
+              cartState={cartState}
+              signInReturnPath={signInReturnPath}
+            />
           </aside>
         </div>
       </div>

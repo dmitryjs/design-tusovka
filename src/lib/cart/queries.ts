@@ -97,7 +97,9 @@ export async function getCart(
     if (
       !product ||
       product.status !== "published" ||
-      (product.kind !== "material" && product.kind !== "task") ||
+      (product.kind !== "material" &&
+        product.kind !== "task" &&
+        product.kind !== "section") ||
       product.price_kopecks <= 0
     ) {
       continue;

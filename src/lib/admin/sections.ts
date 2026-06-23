@@ -25,6 +25,7 @@ export async function listAdminSections(): Promise<AdminSectionListItem[]> {
       slug,
       description,
       status,
+      cover_path,
       sections ( position )
     `,
     )
@@ -45,6 +46,7 @@ export async function listAdminSections(): Promise<AdminSectionListItem[]> {
       description: row.description,
       status: row.status,
       position: section?.position ?? 0,
+      coverPath: row.cover_path,
     };
   });
 }
@@ -63,6 +65,7 @@ export async function getAdminSectionDetail(
       slug,
       description,
       status,
+      cover_path,
       sections ( position )
     `,
     )
@@ -87,6 +90,7 @@ export async function getAdminSectionDetail(
     description: data.description,
     status: data.status,
     position: section?.position ?? 0,
+    coverPath: data.cover_path,
   };
 }
 
@@ -111,6 +115,7 @@ export async function createAdminSection(
       price_kopecks: 0,
       status: input.status,
       published_at: publishedAtForStatus(input.status),
+      cover_path: input.coverPath?.trim() || null,
     })
     .select("id")
     .single();
@@ -157,6 +162,7 @@ export async function updateAdminSection(
       description: input.description.trim(),
       status: input.status,
       published_at: publishedAtForStatus(input.status),
+      cover_path: input.coverPath?.trim() || null,
     })
     .eq("id", sectionProductId)
     .eq("kind", "section");
@@ -172,6 +178,40 @@ export async function updateAdminSection(
 
   if (sectionError) {
     return { ok: false, error: sectionError.message };
+  }
+
+  return { ok: true, data: sectionProductId };
+}
+
+export async function deleteAdminSection(
+  sectionProductId: string,
+): Promise<AdminMutationResult> {
+  const admin = getAdminClient();
+
+  const { count, error: countError } = await admin
+    .from("materials")
+    .select("*", { count: "exact", head: true })
+    .eq("section_product_id", sectionProductId);
+
+  if (countError) {
+    return { ok: false, error: countError.message };
+  }
+
+  if ((count ?? 0) > 0) {
+    return {
+      ok: false,
+      error: "Нельзя удалить раздел с привязанными материалами. Сначала перенесите или удалите их.",
+    };
+  }
+
+  const { error } = await admin
+    .from("products")
+    .delete()
+    .eq("id", sectionProductId)
+    .eq("kind", "section");
+
+  if (error) {
+    return { ok: false, error: error.message };
   }
 
   return { ok: true, data: sectionProductId };

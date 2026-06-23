@@ -2,12 +2,15 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { Trash2 } from "lucide-react";
 
 import {
   createSectionAction,
+  deleteSectionAction,
   updateSectionAction,
 } from "@/app/actions/admin/sections";
 import { AdminAlert } from "@/components/admin/admin-shell";
+import { SectionCoverField } from "@/components/admin/section-cover-field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { AdminSectionFormInput } from "@/lib/admin/types";
@@ -24,6 +27,7 @@ type SectionFormProps = {
   sectionId?: string;
   initial: AdminSectionFormInput;
   onSuccess?: () => void;
+  onDeleted?: () => void;
 };
 
 export function SectionForm({
@@ -31,6 +35,7 @@ export function SectionForm({
   sectionId,
   initial,
   onSuccess,
+  onDeleted,
 }: SectionFormProps) {
   const router = useRouter();
   const [form, setForm] = useState(initial);
@@ -38,6 +43,7 @@ export function SectionForm({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [isDeleting, startDelete] = useTransition();
 
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -67,12 +73,47 @@ export function SectionForm({
     });
   }
 
+  function handleDelete() {
+    if (!sectionId) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Удалить раздел «${form.title}»? Это действие нельзя отменить.`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setError(null);
+    setSuccess(false);
+
+    startDelete(async () => {
+      const result = await deleteSectionAction(sectionId);
+
+      if (!result.ok) {
+        setError(result.error ?? "Не удалось удалить раздел");
+        return;
+      }
+
+      onDeleted?.();
+      router.refresh();
+    });
+  }
+
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       {success ? (
         <AdminAlert variant="success">Раздел сохранён.</AdminAlert>
       ) : null}
       {error ? <AdminAlert variant="error">{error}</AdminAlert> : null}
+
+      <SectionCoverField
+        coverPath={form.coverPath}
+        disabled={isPending || isDeleting}
+        onChange={(coverPath) => setForm((current) => ({ ...current, coverPath }))}
+      />
 
       <label className="flex flex-col gap-1.5 text-sm">
         <span className="font-medium">Название</span>
@@ -81,7 +122,7 @@ export function SectionForm({
           onChange={(event) =>
             setForm((current) => ({ ...current, title: event.target.value }))
           }
-          disabled={isPending}
+          disabled={isPending || isDeleting}
         />
         {fieldErrors.title ? (
           <span className="text-destructive-foreground">{fieldErrors.title}</span>
@@ -95,7 +136,7 @@ export function SectionForm({
           onChange={(event) =>
             setForm((current) => ({ ...current, slug: event.target.value }))
           }
-          disabled={isPending || mode === "edit"}
+          disabled={isPending || isDeleting || mode === "edit"}
         />
         {fieldErrors.slug ? (
           <span className="text-destructive-foreground">{fieldErrors.slug}</span>
@@ -112,7 +153,7 @@ export function SectionForm({
               description: event.target.value,
             }))
           }
-          disabled={isPending}
+          disabled={isPending || isDeleting}
           rows={3}
           className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm"
         />
@@ -129,7 +170,7 @@ export function SectionForm({
                 status: event.target.value as AdminSectionFormInput["status"],
               }))
             }
-            disabled={isPending}
+            disabled={isPending || isDeleting}
             className="h-10 rounded-lg border border-neutral-300 px-3 text-sm"
           >
             {STATUS_OPTIONS.map((option) => (
@@ -151,14 +192,28 @@ export function SectionForm({
                 position: Number(event.target.value),
               }))
             }
-            disabled={isPending}
+            disabled={isPending || isDeleting}
           />
         </label>
       </div>
 
-      <Button type="submit" disabled={isPending} className="w-fit">
-        {isPending ? "Сохраняем…" : mode === "create" ? "Создать раздел" : "Сохранить"}
-      </Button>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button type="submit" disabled={isPending || isDeleting} className="w-fit">
+          {isPending ? "Сохраняем…" : mode === "create" ? "Создать раздел" : "Сохранить"}
+        </Button>
+        {mode === "edit" && sectionId ? (
+          <Button
+            type="button"
+            variant="ghost"
+            disabled={isPending || isDeleting}
+            onClick={handleDelete}
+            className="text-destructive-foreground hover:text-destructive-foreground"
+          >
+            <Trash2 className="size-4" aria-hidden />
+            {isDeleting ? "Удаляем…" : "Удалить раздел"}
+          </Button>
+        ) : null}
+      </div>
     </form>
   );
 }
@@ -171,7 +226,8 @@ export function SectionsManager({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
 
-  const editing = sections.find((section) => section.id === editingId);
+  const sortedSections = [...sections].sort((a, b) => a.position - b.position);
+  const editing = sortedSections.find((section) => section.id === editingId);
 
   return (
     <div className="grid gap-8 lg:grid-cols-2">
@@ -190,11 +246,11 @@ export function SectionsManager({
             Создать
           </Button>
         </div>
-        {sections.length === 0 ? (
+        {sortedSections.length === 0 ? (
           <p className="text-sm text-neutral-500">Разделов пока нет.</p>
         ) : (
           <ul className="space-y-2">
-            {sections.map((section) => (
+            {sortedSections.map((section) => (
               <li key={section.id}>
                 <button
                   type="button"
@@ -231,7 +287,8 @@ export function SectionsManager({
                 slug: "",
                 description: "",
                 status: "draft",
-                position: sections.length,
+                position: sortedSections.length,
+                coverPath: null,
               }}
               onSuccess={() => setShowCreate(false)}
             />
@@ -239,7 +296,13 @@ export function SectionsManager({
         ) : editing ? (
           <>
             <h2 className="mb-4 text-base font-semibold">Редактирование</h2>
-            <SectionForm mode="edit" sectionId={editing.id} initial={editing} />
+            <SectionForm
+              key={editing.id}
+              mode="edit"
+              sectionId={editing.id}
+              initial={editing}
+              onDeleted={() => setEditingId(null)}
+            />
           </>
         ) : (
           <p className="text-sm text-neutral-500">

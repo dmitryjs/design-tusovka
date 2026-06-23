@@ -9,21 +9,30 @@ import {
 } from "@/lib/cart/mutations";
 import type { CartMutationResult } from "@/lib/cart/types";
 import { getCatalogItemHref } from "@/lib/catalog/paths";
+import { getPreferredSectionPageHref } from "@/lib/catalog/section-pages";
 
-function revalidateCartPaths(kind?: "material" | "task", slug?: string) {
+function revalidateCartPaths(
+  kind?: "material" | "task" | "section",
+  slug?: string,
+) {
   revalidatePath("/cart");
   revalidatePath("/checkout");
   revalidatePath("/checkout/payment");
   revalidatePath("/profile");
   revalidatePath("/profile/orders");
   if (kind && slug) {
-    revalidatePath(getCatalogItemHref(kind, slug));
+    if (kind === "section") {
+      revalidatePath(getPreferredSectionPageHref(slug));
+      revalidatePath(getCatalogItemHref("section", slug));
+    } else {
+      revalidatePath(getCatalogItemHref(kind, slug));
+    }
   }
 }
 
 export async function addToCartAction(
   slug: string,
-  kind: "material" | "task",
+  kind: "material" | "task" | "section",
 ): Promise<CartMutationResult> {
   const result = await addToCart(slug);
 

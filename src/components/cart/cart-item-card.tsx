@@ -28,12 +28,15 @@ type CartItemCardProps = {
 const KIND_BADGE_CLASS: Record<CartItemView["kind"], string> = {
   material: "bg-blue-50 text-blue-700",
   task: "bg-orange-50 text-orange-700",
+  section: "bg-violet-50 text-violet-700",
 };
 
 export function CartItemCard({ item, disabled, onRemove }: CartItemCardProps) {
   const href = getCatalogItemHref(item.kind, item.slug);
   const coverUrl =
-    item.kind === "material" ? resolveMaterialCoverUrl(item.coverPath) : null;
+    item.kind === "material" || item.kind === "section"
+      ? resolveMaterialCoverUrl(item.coverPath)
+      : null;
 
   const metaLine =
     item.kind === "material" && item.materialFormat

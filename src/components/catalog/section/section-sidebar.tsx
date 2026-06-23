@@ -1,4 +1,3 @@
-import Link from "next/link";
 import {
   BookOpen,
   FileText,
@@ -8,16 +7,20 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
+import { SectionPurchaseCta } from "@/components/catalog/section/section-purchase-cta";
 import { formatPrice } from "@/lib/catalog/format";
 import {
   sectionMaterialsCountLabel,
   sectionPracticeCountLabel,
 } from "@/lib/catalog/section-detail-utils";
 import type { SectionDetail } from "@/lib/catalog/detail-queries";
+import type { PaidProductCartState } from "@/lib/cart/types";
 import { cn } from "@/lib/utils";
 
 type SectionSidebarProps = {
   section: SectionDetail;
+  cartState: PaidProductCartState;
+  signInReturnPath: string;
   className?: string;
 };
 
@@ -63,7 +66,12 @@ function IncludeRow({
   );
 }
 
-export function SectionSidebar({ section, className }: SectionSidebarProps) {
+export function SectionSidebar({
+  section,
+  cartState,
+  signInReturnPath,
+  className,
+}: SectionSidebarProps) {
   return (
     <div className={cn("flex flex-col gap-6", className)}>
       <SidebarCard id="section-purchase" title="Купить раздел">
@@ -77,15 +85,14 @@ export function SectionSidebar({ section, className }: SectionSidebarProps) {
             </p>
           </div>
 
-          <Link
-            href="#section-materials"
-            className={cn(
-              "inline-flex h-10 w-full items-center justify-center rounded-lg px-4 text-sm font-medium",
-              "bg-primary text-primary-foreground hover:bg-primary/90",
-            )}
-          >
-            Купить за {formatPrice(section.priceKopecks)}
-          </Link>
+          <SectionPurchaseCta
+            catalogSlug={section.catalogSlug}
+            priceKopecks={section.priceKopecks}
+            cartState={cartState}
+            signInReturnPath={signInReturnPath}
+            fullWidth
+            label={`Купить за ${formatPrice(section.priceKopecks)}`}
+          />
 
           <p className="flex items-center justify-center gap-1.5 text-xs text-neutral-500">
             <ShieldCheck className="size-3.5 shrink-0" aria-hidden />

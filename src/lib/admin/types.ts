@@ -51,6 +51,7 @@ export type AdminSectionFormInput = {
   description: string;
   status: Database["public"]["Enums"]["product_status"];
   position: number;
+  coverPath: string | null;
 };
 
 export type AdminSectionListItem = AdminSectionFormInput & {

@@ -35,7 +35,7 @@ export type CartItemView = {
   slug: string;
   title: string;
   description: string;
-  kind: "material" | "task";
+  kind: "material" | "task" | "section";
   priceKopecks: number;
   createdAt: string;
   coverPath: string | null;

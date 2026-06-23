@@ -16,6 +16,7 @@
 | **8** | [`supabase/cloud_patch_yookassa_orders.sql`](../supabase/cloud_patch_yookassa_orders.sql) | Для ЮKassa: поля оплаты в `orders`, `fulfill_paid_order` |
 | **9** | [`supabase/cloud_patch_product_reviews.sql`](../supabase/cloud_patch_product_reviews.sql) | Отзывы на страницах товаров и `/admin/reviews` |
 | **10** | [`supabase/cloud_patch_storage.sql`](../supabase/cloud_patch_storage.sql) | Storage: `public-media`, `private-files` (загрузка медиа в админке) |
+| **11** | [`supabase/cloud_patch_section_cart.sql`](../supabase/cloud_patch_section_cart.sql) | Разделы в корзине и checkout |
 
 Оба обязательных файла (шаги 1–2) выполняются в **Supabase Dashboard → SQL Editor → New query → Run**.
 

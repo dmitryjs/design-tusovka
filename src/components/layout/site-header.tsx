@@ -4,13 +4,14 @@ import { Suspense } from "react";
 
 import { Container } from "@/components/layout/container";
 import { SiteHeaderNav } from "@/components/layout/site-header-nav";
-import { getCartItemCount } from "@/lib/cart/queries";
+import { getCart } from "@/lib/cart/queries";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function SiteHeader() {
   let isAuthenticated = false;
   let profileInitial: string | null = null;
+  let cartItems: Awaited<ReturnType<typeof getCart>>["items"] = [];
   let cartItemCount = 0;
 
   if (isSupabaseConfigured()) {
@@ -25,7 +26,11 @@ export async function SiteHeader() {
       profileInitial = user.email[0]?.toUpperCase() ?? null;
     }
 
-    cartItemCount = user ? await getCartItemCount(supabase) : 0;
+    if (user) {
+      const cart = await getCart(supabase);
+      cartItems = cart.items;
+      cartItemCount = cart.items.length;
+    }
   }
 
   return (
@@ -56,6 +61,7 @@ export async function SiteHeader() {
               isAuthenticated={isAuthenticated}
               profileInitial={profileInitial}
               cartItemCount={cartItemCount}
+              cartItems={cartItems}
             />
           </Suspense>
         </div>

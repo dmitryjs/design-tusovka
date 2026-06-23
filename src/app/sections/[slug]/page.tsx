@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { CatalogErrorState } from "@/components/catalog/catalog-states";
 import { SectionDetailView } from "@/components/catalog/section/section-detail-view";
+import { getPaidProductCartState } from "@/lib/cart/access";
 import { getSectionBySlug } from "@/lib/catalog/detail-queries";
 import {
   getPreferredSectionPageSlug,
@@ -33,6 +34,13 @@ export default async function SectionPage({ params }: SectionPageProps) {
   }
 
   const reviewsData = await getProductReviewsData(data.id);
+  const cartState = await getPaidProductCartState(data.id, data.priceKopecks);
 
-  return <SectionDetailView section={data} reviewsData={reviewsData} />;
+  return (
+    <SectionDetailView
+      section={data}
+      reviewsData={reviewsData}
+      cartState={cartState}
+    />
+  );
 }

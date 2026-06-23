@@ -1,24 +1,28 @@
 "use client";
 
-import { Bell, ShoppingCart, User } from "lucide-react";
+import { Bell, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { CartPreviewDropdown } from "@/components/layout/cart-preview-dropdown";
 import { HeaderIconButton } from "@/components/layout/header-icon-button";
 import { HeaderSearch } from "@/components/layout/header-search";
 import { isNavItemActive, MAIN_NAV } from "@/lib/navigation";
+import type { CartItemView } from "@/lib/cart/types";
 import { cn } from "@/lib/utils";
 
 type SiteHeaderNavProps = {
   isAuthenticated: boolean;
   profileInitial?: string | null;
   cartItemCount?: number;
+  cartItems?: CartItemView[];
 };
 
 export function SiteHeaderNav({
   isAuthenticated,
   profileInitial,
   cartItemCount = 0,
+  cartItems = [],
 }: SiteHeaderNavProps) {
   const pathname = usePathname();
 
@@ -56,20 +60,7 @@ export function SiteHeaderNav({
           <Bell className="size-[18px]" strokeWidth={1.75} />
         </HeaderIconButton>
 
-        <HeaderIconButton
-          href="/cart"
-          label={
-            cartItemCount > 0
-              ? `Корзина, ${cartItemCount} ${cartItemCount === 1 ? "товар" : "товаров"}`
-              : "Корзина"
-          }
-          className="relative"
-        >
-          <ShoppingCart className="size-[18px]" strokeWidth={1.75} />
-          {cartItemCount > 0 ? (
-            <span className="absolute top-1 right-1 size-2 rounded-full bg-primary" aria-hidden />
-          ) : null}
-        </HeaderIconButton>
+        <CartPreviewDropdown items={cartItems} itemCount={cartItemCount} />
 
         {isAuthenticated ? (
           <Link
