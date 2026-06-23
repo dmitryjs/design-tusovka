@@ -1,5 +1,15 @@
 export function normalizeSiteUrl(url: string): string {
-  return url.replace(/\/$/, "");
+  const trimmed = url.trim().replace(/\/+$/, "");
+
+  if (!trimmed) {
+    return trimmed;
+  }
+
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+
+  return `https://${trimmed}`;
 }
 
 export function getPublicSiteUrl(): string | null {
