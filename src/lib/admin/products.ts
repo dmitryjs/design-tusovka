@@ -481,3 +481,114 @@ export async function listAdminTagOptions(): Promise<
 
   return data ?? [];
 }
+
+export type AdminBulkDeleteProductsResult = {
+  deleted: Array<{ id: string; slug: string; kind: "material" | "task" }>;
+  failures: Array<{ id: string; message: string }>;
+};
+
+async function assertProductDeletable(
+  admin: ReturnType<typeof getAdminClient>,
+  productId: string,
+): Promise<AdminMutationResult<{ slug: string; kind: "material" | "task" }>> {
+  const { data: product, error: productError } = await admin
+    .from("products")
+    .select("id, slug, kind")
+    .eq("id", productId)
+    .in("kind", ["material", "task"])
+    .maybeSingle();
+
+  if (productError) {
+    return { ok: false, error: productError.message };
+  }
+
+  if (!product || (product.kind !== "material" && product.kind !== "task")) {
+    return { ok: false, error: "Продукт не найден" };
+  }
+
+  const { count, error: orderError } = await admin
+    .from("order_items")
+    .select("*", { count: "exact", head: true })
+    .eq("product_id", productId);
+
+  if (orderError) {
+    return { ok: false, error: orderError.message };
+  }
+
+  if ((count ?? 0) > 0) {
+    return {
+      ok: false,
+      error:
+        "Нельзя удалить продукт из заказов. Установите статус «Скрыт», если нужно убрать с витрины.",
+    };
+  }
+
+  return {
+    ok: true,
+    data: { slug: product.slug, kind: product.kind },
+  };
+}
+
+export async function deleteAdminProduct(
+  productId: string,
+): Promise<AdminMutationResult<{ slug: string; kind: "material" | "task" }>> {
+  const admin = getAdminClient();
+  const check = await assertProductDeletable(admin, productId);
+
+  if (!check.ok || !check.data) {
+    return { ok: false, error: check.error };
+  }
+
+  const { error } = await admin.from("products").delete().eq("id", productId);
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  return { ok: true, data: check.data };
+}
+
+export async function deleteAdminProductsBulk(
+  productIds: string[],
+): Promise<AdminMutationResult<AdminBulkDeleteProductsResult>> {
+  const uniqueIds = [...new Set(productIds.map((id) => id.trim()).filter(Boolean))];
+
+  if (uniqueIds.length === 0) {
+    return { ok: false, error: "Не выбрано ни одного продукта" };
+  }
+
+  const admin = getAdminClient();
+  const deleted: AdminBulkDeleteProductsResult["deleted"] = [];
+  const failures: AdminBulkDeleteProductsResult["failures"] = [];
+
+  for (const productId of uniqueIds) {
+    const check = await assertProductDeletable(admin, productId);
+
+    if (!check.ok || !check.data) {
+      failures.push({ id: productId, message: check.error ?? "Не удалось удалить" });
+      continue;
+    }
+
+    const { error } = await admin.from("products").delete().eq("id", productId);
+
+    if (error) {
+      failures.push({ id: productId, message: error.message });
+      continue;
+    }
+
+    deleted.push({ id: productId, slug: check.data.slug, kind: check.data.kind });
+  }
+
+  if (deleted.length === 0) {
+    return {
+      ok: false,
+      error: failures[0]?.message ?? "Не удалось удалить выбранные продукты",
+      data: { deleted, failures },
+    };
+  }
+
+  return {
+    ok: true,
+    data: { deleted, failures },
+  };
+}

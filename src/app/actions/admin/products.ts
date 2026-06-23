@@ -6,7 +6,10 @@ import { redirect } from "next/navigation";
 import { assertAdmin } from "@/lib/auth/admin";
 import {
   createAdminProduct,
+  deleteAdminProduct,
+  deleteAdminProductsBulk,
   updateAdminProduct,
+  type AdminBulkDeleteProductsResult,
 } from "@/lib/admin/products";
 import type {
   AdminMutationResult,
@@ -70,6 +73,64 @@ export async function updateProductAction(
   if (result.ok) {
     revalidateCatalogPaths(input.kind, input.slug.trim());
     revalidatePath(`/admin/products/${productId}`);
+  }
+
+  return result;
+}
+
+function revalidateAfterProductDelete(kind: "material" | "task", slug: string) {
+  revalidateCatalogPaths(kind, slug);
+  revalidatePath("/admin/products");
+  revalidatePath("/admin");
+}
+
+export async function deleteProductAction(
+  productId: string,
+): Promise<AdminMutationResult<{ slug: string; kind: "material" | "task" }>> {
+  try {
+    await assertAdmin();
+  } catch (error) {
+    return {
+      ok: false,
+      error:
+        error instanceof Error && error.message === "FORBIDDEN"
+          ? "Нет прав администратора"
+          : "Требуется вход",
+    };
+  }
+
+  const result = await deleteAdminProduct(productId);
+
+  if (result.ok && result.data) {
+    revalidateAfterProductDelete(result.data.kind, result.data.slug);
+  }
+
+  return result;
+}
+
+export async function deleteProductsBulkAction(
+  productIds: string[],
+): Promise<AdminMutationResult<AdminBulkDeleteProductsResult>> {
+  try {
+    await assertAdmin();
+  } catch (error) {
+    return {
+      ok: false,
+      error:
+        error instanceof Error && error.message === "FORBIDDEN"
+          ? "Нет прав администратора"
+          : "Требуется вход",
+    };
+  }
+
+  const result = await deleteAdminProductsBulk(productIds);
+
+  if (result.ok && result.data) {
+    for (const item of result.data.deleted) {
+      revalidateCatalogPaths(item.kind, item.slug);
+    }
+    revalidatePath("/admin/products");
+    revalidatePath("/admin");
   }
 
   return result;
