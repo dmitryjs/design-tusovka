@@ -46,6 +46,7 @@ export default async function AdminNewProductPage() {
           priceRubles: 0,
           status: "draft",
           sectionProductId: sections[0]?.id ?? "",
+          coverPath: null,
           tagIds: [],
           chapters: [],
           contentBlocks: [createMaterialBlock("paragraph")],

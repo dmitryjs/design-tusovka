@@ -82,7 +82,7 @@ export function buildAdminMaterialPreviewDetail(
     level: form.level,
     tags: resolveTags(form, options.tags),
     section: resolveSection(form, options.sections),
-    coverPath: null,
+    coverPath: form.coverPath ?? null,
     updatedAt: null,
     chapters: [
       {

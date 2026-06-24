@@ -23,6 +23,7 @@ export type AdminProductFormInput = {
   priceRubles: number;
   status: Database["public"]["Enums"]["product_status"];
   sectionProductId?: string;
+  coverPath?: string | null;
   tagIds: string[];
   chapters: AdminChapterInput[];
   contentBlocks: MaterialBlock[];

@@ -77,7 +77,7 @@ export async function getAdminProductDetail(
 
   const { data: product, error } = await admin
     .from("products")
-    .select("id, title, slug, description, kind, status, price_kopecks")
+    .select("id, title, slug, description, kind, status, price_kopecks, cover_path")
     .eq("id", productId)
     .in("kind", ["material", "task"])
     .maybeSingle();
@@ -130,6 +130,7 @@ export async function getAdminProductDetail(
       priceRubles: kopecksToRubles(product.price_kopecks),
       status: product.status,
       sectionProductId: material.section_product_id,
+      coverPath: product.cover_path,
       tagIds,
       chapters: (chapters ?? []).map((chapter) => ({
         id: chapter.id,
@@ -174,6 +175,7 @@ export async function getAdminProductDetail(
     priceKopecks: product.price_kopecks,
     priceRubles: kopecksToRubles(product.price_kopecks),
     status: product.status,
+    coverPath: product.cover_path,
     tagIds,
     chapters: [],
     contentBlocks: [],
@@ -284,6 +286,7 @@ export async function createAdminProduct(
       description: input.description.trim(),
       price_kopecks: priceKopecks,
       status: input.status,
+      cover_path: input.kind === "material" ? input.coverPath?.trim() || null : null,
       published_at: publishedAtForStatus(input.status),
     })
     .select("id")
@@ -383,6 +386,9 @@ export async function updateAdminProduct(
       price_kopecks: priceKopecks,
       status: input.status,
       published_at: publishedAtForStatus(input.status),
+      ...(input.kind === "material"
+        ? { cover_path: input.coverPath?.trim() || null }
+        : {}),
     })
     .eq("id", productId);
 

@@ -5,6 +5,7 @@ import type { AdminProductFormInput } from "@/lib/admin/types";
 import { cn } from "@/lib/utils";
 
 import { MaterialTagPicker } from "./material-tag-picker";
+import { MaterialCoverField } from "./material-cover-field";
 
 type SelectOption = { value: string; label: string };
 
@@ -132,6 +133,12 @@ export function MaterialBasicInfoTab({
           className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm"
         />
       </Field>
+
+      <MaterialCoverField
+        coverPath={form.coverPath ?? null}
+        disabled={isPending}
+        onChange={(coverPath) => onChange("coverPath", coverPath)}
+      />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Field label="Уровень" error={fieldErrors.level}>
