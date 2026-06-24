@@ -3,7 +3,12 @@
 import { revalidatePath } from "next/cache";
 
 import { assertAdmin } from "@/lib/auth/admin";
-import { createAdminTag, updateAdminTag } from "@/lib/admin/tags";
+import {
+  createAdminTag,
+  findOrCreateAdminTagByName,
+  updateAdminTag,
+  type AdminTagRecord,
+} from "@/lib/admin/tags";
 import type { AdminMutationResult, AdminTagFormInput } from "@/lib/admin/types";
 
 export async function createTagAction(
@@ -39,6 +44,26 @@ export async function updateTagAction(
 
   if (result.ok) {
     revalidatePath("/admin/tags");
+    revalidatePath("/catalog");
+  }
+
+  return result;
+}
+
+export async function findOrCreateTagByNameAction(
+  name: string,
+): Promise<AdminMutationResult<AdminTagRecord>> {
+  try {
+    await assertAdmin();
+  } catch {
+    return { ok: false, error: "Нет доступа" };
+  }
+
+  const result = await findOrCreateAdminTagByName(name);
+
+  if (result.ok) {
+    revalidatePath("/admin/tags");
+    revalidatePath("/admin/products");
     revalidatePath("/catalog");
   }
 

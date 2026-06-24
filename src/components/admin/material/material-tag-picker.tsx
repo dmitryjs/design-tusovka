@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { Search, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 
+import { findOrCreateTagByNameAction } from "@/app/actions/admin/tags";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +19,12 @@ type MaterialTagPickerProps = {
   disabled?: boolean;
 };
 
+function sortTags(tags: TagOption[]): TagOption[] {
+  return [...tags].sort((left, right) =>
+    left.label.localeCompare(right.label, "ru"),
+  );
+}
+
 export function MaterialTagPicker({
   tags,
   selectedTagIds,
@@ -26,27 +32,52 @@ export function MaterialTagPicker({
   disabled,
 }: MaterialTagPickerProps) {
   const [query, setQuery] = useState("");
+  const [catalog, setCatalog] = useState<TagOption[]>(() => sortTags(tags));
+  const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    setCatalog((current) => {
+      const merged = new Map<string, TagOption>();
+
+      for (const tag of [...current, ...tags]) {
+        merged.set(tag.value, tag);
+      }
+
+      return sortTags([...merged.values()]);
+    });
+  }, [tags]);
 
   const selectedTags = useMemo(
-    () => tags.filter((tag) => selectedTagIds.includes(tag.value)),
-    [tags, selectedTagIds],
+    () => catalog.filter((tag) => selectedTagIds.includes(tag.value)),
+    [catalog, selectedTagIds],
   );
 
   const suggestions = useMemo(() => {
     const normalized = query.trim().toLowerCase();
 
-    return tags.filter((tag) => {
+    return catalog.filter((tag) => {
       if (selectedTagIds.includes(tag.value)) {
         return false;
       }
 
       if (!normalized) {
-        return true;
+        return false;
       }
 
       return tag.label.toLowerCase().includes(normalized);
     });
-  }, [tags, query, selectedTagIds]);
+  }, [catalog, query, selectedTagIds]);
+
+  const trimmedQuery = query.trim();
+  const hasExactMatch = useMemo(() => {
+    if (!trimmedQuery) {
+      return false;
+    }
+
+    const normalized = trimmedQuery.toLowerCase();
+    return catalog.some((tag) => tag.label.toLowerCase() === normalized);
+  }, [catalog, trimmedQuery]);
 
   function addTag(tagId: string) {
     if (selectedTagIds.includes(tagId)) {
@@ -55,10 +86,48 @@ export function MaterialTagPicker({
 
     onChange([...selectedTagIds, tagId]);
     setQuery("");
+    setError(null);
   }
 
   function removeTag(tagId: string) {
     onChange(selectedTagIds.filter((id) => id !== tagId));
+  }
+
+  function commitQuery() {
+    const name = query.trim();
+    if (!name || disabled || isPending) {
+      return;
+    }
+
+    const existing = catalog.find(
+      (tag) => tag.label.toLowerCase() === name.toLowerCase(),
+    );
+
+    if (existing) {
+      addTag(existing.value);
+      return;
+    }
+
+    startTransition(async () => {
+      setError(null);
+      const result = await findOrCreateTagByNameAction(name);
+
+      if (!result.ok || !result.data) {
+        setError(result.error ?? "Не удалось добавить тег");
+        return;
+      }
+
+      const option = { value: result.data.id, label: result.data.name };
+      setCatalog((current) => {
+        if (current.some((tag) => tag.value === option.value)) {
+          return current;
+        }
+
+        return sortTags([...current, option]);
+      });
+      onChange([...selectedTagIds, result.data.id]);
+      setQuery("");
+    });
   }
 
   return (
@@ -75,35 +144,34 @@ export function MaterialTagPicker({
           <Input
             id="tag-search"
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            disabled={disabled || tags.length === 0}
-            placeholder="Найти тег и добавить…"
+            onChange={(event) => {
+              setQuery(event.target.value);
+              setError(null);
+            }}
+            disabled={disabled || isPending}
+            placeholder="Введите тег и нажмите Enter"
             className="pl-9"
             onKeyDown={(event) => {
-              if (event.key === "Enter" && suggestions[0]) {
+              if (event.key === "Enter") {
                 event.preventDefault();
-                addTag(suggestions[0].value);
+                commitQuery();
               }
             }}
           />
         </div>
-        {tags.length === 0 ? (
-          <p className="text-sm text-neutral-500">
-            Тегов пока нет.{" "}
-            <Link href="/admin/tags" className="text-primary hover:underline">
-              Создать тег
-            </Link>
-          </p>
-        ) : null}
+        <p className="text-xs text-neutral-500">
+          Любой текст станет тегом после Enter. Повторное имя подставит существующий тег.
+        </p>
+        {error ? <p className="text-sm text-destructive-foreground">{error}</p> : null}
       </div>
 
-      {query.trim() && suggestions.length > 0 ? (
+      {trimmedQuery && (suggestions.length > 0 || !hasExactMatch) ? (
         <ul className="overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm">
           {suggestions.slice(0, 8).map((tag) => (
             <li key={tag.value}>
               <button
                 type="button"
-                disabled={disabled}
+                disabled={disabled || isPending}
                 onClick={() => addTag(tag.value)}
                 className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm hover:bg-neutral-50"
               >
@@ -112,6 +180,19 @@ export function MaterialTagPicker({
               </button>
             </li>
           ))}
+          {!hasExactMatch ? (
+            <li>
+              <button
+                type="button"
+                disabled={disabled || isPending}
+                onClick={commitQuery}
+                className="flex w-full items-center justify-between border-t border-neutral-100 px-4 py-2.5 text-left text-sm hover:bg-neutral-50"
+              >
+                <span>Создать «{trimmedQuery}»</span>
+                <span className="text-xs text-neutral-400">Enter</span>
+              </button>
+            </li>
+          ) : null}
         </ul>
       ) : null}
 
