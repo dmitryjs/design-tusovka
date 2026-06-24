@@ -272,14 +272,6 @@ export function chaptersToMaterialBlocks(
   for (const chapter of chapters) {
     const chapterBlocks = parseMaterialBlocks(chapter.content);
 
-    if (chapter.title.trim()) {
-      blocks.push({
-        id: createId(),
-        type: "heading2",
-        data: { text: chapter.title.trim() },
-      });
-    }
-
     if (chapterBlocks.length > 0) {
       blocks.push(...chapterBlocks);
       continue;

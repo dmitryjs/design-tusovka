@@ -38,7 +38,7 @@ export function RichTextField({
 }: RichTextFieldProps) {
   const localRef = useRef<HTMLDivElement>(null);
   const ref = inputRef ?? localRef;
-  const lastHtmlRef = useRef(value);
+  const lastHtmlRef = useRef<string | null>(null);
 
   useEffect(() => {
     const node = ref.current;
@@ -46,10 +46,17 @@ export function RichTextField({
       return;
     }
 
-    if (lastHtmlRef.current !== value) {
-      node.innerHTML = normalizeRichTextValue(value);
-      lastHtmlRef.current = value;
+    if (lastHtmlRef.current === value) {
+      return;
     }
+
+    if (document.activeElement === node) {
+      lastHtmlRef.current = value;
+      return;
+    }
+
+    node.innerHTML = normalizeRichTextValue(value);
+    lastHtmlRef.current = value;
   }, [ref, value]);
 
   useEffect(() => {

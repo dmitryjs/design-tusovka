@@ -135,6 +135,7 @@ export function MaterialProductForm({
 
       clearDraftStorage();
       markSaved(payload);
+      setForm(payload);
       setSuccess(true);
       router.refresh();
     });
