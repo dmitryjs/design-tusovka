@@ -22,6 +22,8 @@ type MaterialHeroProps = {
   claimState: FreeProductClaimState;
   cartState: PaidProductCartState;
   reviewStats: ProductReviewStats;
+  /** Админский предпросмотр: цена как в каталоге, без «Куплено». */
+  adminPreview?: boolean;
 };
 
 function resolveOwnedBadge(
@@ -55,13 +57,25 @@ function resolvePriceBadgeLabel(
   return formatPrice(priceKopecks);
 }
 
-export function MaterialHero({ material, claimState, cartState, reviewStats }: MaterialHeroProps) {
-  const isOwned = resolveOwnedBadge(material, claimState, cartState);
-  const priceBadgeKind = resolveMaterialPriceBadgeKind(
-    material.priceKopecks,
-    material.hasFullAccess,
-    isOwned,
-  );
+export function MaterialHero({
+  material,
+  claimState,
+  cartState,
+  reviewStats,
+  adminPreview = false,
+}: MaterialHeroProps) {
+  const isOwned = adminPreview
+    ? false
+    : resolveOwnedBadge(material, claimState, cartState);
+  const priceBadgeKind = adminPreview
+    ? material.priceKopecks === 0
+      ? "free"
+      : "paid"
+    : resolveMaterialPriceBadgeKind(
+        material.priceKopecks,
+        material.hasFullAccess,
+        isOwned,
+      );
 
   return (
     <header className="space-y-4">

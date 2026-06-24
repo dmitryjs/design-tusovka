@@ -68,8 +68,6 @@ export function buildAdminMaterialPreviewDetail(
   },
 ): MaterialDetail {
   const priceKopecks = Math.round(form.priceRubles * 100);
-  const isFree = priceKopecks === 0;
-  const hasFullAccess = isFree;
   const contentBlocks = filterContentBlocks(form);
 
   return {
@@ -90,10 +88,10 @@ export function buildAdminMaterialPreviewDetail(
         title: "Контент",
         position: 0,
         contentText: null,
-        contentJson: hasFullAccess ? (contentBlocks as unknown as Json) : null,
+        contentJson: contentBlocks as unknown as Json,
       },
     ],
-    hasFullAccess,
-    isPreview: !hasFullAccess,
+    hasFullAccess: true,
+    isPreview: false,
   };
 }

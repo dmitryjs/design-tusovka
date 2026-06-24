@@ -2,18 +2,15 @@
 
 import { ArrowLeft, Eye } from "lucide-react";
 
-import { MaterialAccessCard } from "@/components/catalog/material/material-access-card";
 import { MaterialContent } from "@/components/catalog/material/material-content";
 import { MaterialCover } from "@/components/catalog/material/material-cover";
 import { MaterialHero } from "@/components/catalog/material/material-hero";
 import { MaterialMeta } from "@/components/catalog/material/material-meta";
-import { MaterialPreviewNotice } from "@/components/catalog/material/material-preview-notice";
 import { MaterialTableOfContents } from "@/components/catalog/material/material-table-of-contents";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { buildAdminMaterialPreviewDetail } from "@/lib/admin/material-preview";
 import type { AdminProductFormInput } from "@/lib/admin/types";
-import { getCatalogItemHref } from "@/lib/catalog/paths";
 import type { ProductReviewStats } from "@/lib/reviews/types";
 
 type SelectOption = { value: string; label: string };
@@ -43,15 +40,6 @@ export function MaterialAdminPreview({
     tags,
     sections,
   });
-  const signInReturnPath = getCatalogItemHref("material", material.slug);
-  const accessCardProps = {
-    slug: material.slug,
-    priceKopecks: material.priceKopecks,
-    hasFullAccess: material.hasFullAccess,
-    claimState: material.priceKopecks === 0 ? ("guest" as const) : ("hidden" as const),
-    cartState: material.priceKopecks === 0 ? ("hidden" as const) : ("guest" as const),
-    signInReturnPath,
-  };
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-white">
@@ -63,11 +51,7 @@ export function MaterialAdminPreview({
           </Button>
           <div className="flex items-center gap-2 text-sm text-neutral-600">
             <Eye className="size-4 shrink-0" aria-hidden />
-            <span>
-              {material.isPreview
-                ? "Предпросмотр для посетителя без доступа к платному материалу"
-                : "Предпросмотр для посетителя бесплатного материала"}
-            </span>
+            <span>Предпросмотр материала — полный доступ</span>
           </div>
         </Container>
       </header>
@@ -79,14 +63,11 @@ export function MaterialAdminPreview({
               <div className="flex min-w-0 flex-col gap-6 md:gap-8">
                 <MaterialHero
                   material={material}
-                  claimState={accessCardProps.claimState}
-                  cartState={accessCardProps.cartState}
+                  claimState="hidden"
+                  cartState="hidden"
                   reviewStats={GUEST_REVIEW_STATS}
+                  adminPreview
                 />
-
-                <div className="flex flex-col gap-6 md:gap-8 lg:hidden">
-                  <MaterialAccessCard {...accessCardProps} />
-                </div>
 
                 <MaterialCover
                   title={material.title}
@@ -94,19 +75,14 @@ export function MaterialAdminPreview({
                   coverPath={material.coverPath}
                 />
 
-                {material.isPreview ? <MaterialPreviewNotice /> : null}
-
-                {material.hasFullAccess ? (
-                  <MaterialContent chapters={material.chapters} />
-                ) : null}
+                <MaterialContent chapters={material.chapters} />
               </div>
 
               <aside className="hidden flex-col gap-6 lg:flex lg:self-start">
-                <MaterialAccessCard {...accessCardProps} />
                 <MaterialTableOfContents
                   chapters={material.chapters}
-                  isPreview={material.isPreview}
-                  anchorBaseHref={material.hasFullAccess ? "" : undefined}
+                  isPreview={false}
+                  anchorBaseHref=""
                 />
                 <MaterialMeta material={material} />
               </aside>
