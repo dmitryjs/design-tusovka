@@ -41,7 +41,8 @@ export async function listAdminProducts(): Promise<AdminProductListItem[]> {
       kind,
       status,
       price_kopecks,
-      materials ( level ),
+      cover_path,
+      materials ( level, format ),
       tasks ( level )
     `,
     )
@@ -66,6 +67,8 @@ export async function listAdminProducts(): Promise<AdminProductListItem[]> {
       status: row.status,
       priceKopecks: row.price_kopecks,
       level: material?.level ?? task?.level ?? null,
+      coverPath: row.cover_path,
+      materialFormat: material?.format ?? null,
     };
   });
 }

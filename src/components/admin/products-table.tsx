@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
@@ -15,12 +16,61 @@ import {
   formatPrice,
   getKindLabel,
   getLevelLabel,
+  getMaterialFormatLabel,
 } from "@/lib/catalog/format";
+import {
+  getMaterialCoverPlaceholderClass,
+  getMaterialFormatTagClass,
+  resolveMaterialCoverUrl,
+} from "@/lib/catalog/material-cover";
 import type { AdminProductListItem } from "@/lib/admin/types";
 import { cn } from "@/lib/utils";
 
 const checkboxClassName =
   "size-4 shrink-0 rounded border border-neutral-300 text-primary focus:ring-2 focus:ring-primary/20";
+
+function ProductCoverThumb({ item }: { item: AdminProductListItem }) {
+  const coverUrl = resolveMaterialCoverUrl(item.coverPath);
+
+  if (coverUrl) {
+    return (
+      <div className="relative h-10 w-16 shrink-0 overflow-hidden rounded-lg border border-neutral-200 bg-neutral-100">
+        <Image
+          src={coverUrl}
+          alt=""
+          fill
+          sizes="64px"
+          className="object-cover"
+        />
+      </div>
+    );
+  }
+
+  if (item.kind === "material" && item.materialFormat) {
+    return (
+      <div
+        className={cn(
+          "flex h-10 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-neutral-200 px-1 text-center text-[10px] leading-tight font-medium",
+          getMaterialCoverPlaceholderClass(item.materialFormat),
+        )}
+        aria-hidden
+      >
+        <span className={cn("line-clamp-2", getMaterialFormatTagClass(item.materialFormat))}>
+          {getMaterialFormatLabel(item.materialFormat)}
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="flex h-10 w-16 shrink-0 items-center justify-center rounded-lg border border-dashed border-neutral-200 bg-neutral-50 text-[10px] text-neutral-400"
+      aria-hidden
+    >
+      {item.kind === "task" ? "Задание" : "—"}
+    </div>
+  );
+}
 
 export function ProductsTable({ items }: { items: AdminProductListItem[] }) {
   const router = useRouter();
@@ -188,6 +238,9 @@ export function ProductsTable({ items }: { items: AdminProductListItem[] }) {
                   aria-label="Выбрать все"
                 />
               </th>
+              <th className="w-20 px-2 py-3 font-medium">
+                <span className="sr-only">Обложка</span>
+              </th>
               <th className="px-4 py-3 font-medium">Название</th>
               <th className="px-4 py-3 font-medium">Slug</th>
               <th className="px-4 py-3 font-medium">Тип</th>
@@ -215,6 +268,9 @@ export function ProductsTable({ items }: { items: AdminProductListItem[] }) {
                     onChange={(event) => toggleOne(item.id, event.target.checked)}
                     aria-label={`Выбрать ${item.title}`}
                   />
+                </td>
+                <td className="px-2 py-3">
+                  <ProductCoverThumb item={item} />
                 </td>
                 <td className="px-4 py-3 font-medium text-foreground">{item.title}</td>
                 <td className="px-4 py-3 text-neutral-600">{item.slug}</td>

@@ -39,6 +39,8 @@ export type AdminProductListItem = {
   status: Database["public"]["Enums"]["product_status"];
   priceKopecks: number;
   level: Database["public"]["Enums"]["designer_level"] | null;
+  coverPath: string | null;
+  materialFormat: Database["public"]["Enums"]["material_format"] | null;
 };
 
 export type AdminProductDetail = AdminProductFormInput & {
