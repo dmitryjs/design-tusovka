@@ -37,9 +37,7 @@ export function MaterialBlockEditor({
   const [dropIndex, setDropIndex] = useState<number | null>(null);
   const [focusBlockId, setFocusBlockId] = useState<string | null>(null);
   const [pickerTarget, setPickerTarget] = useState<PickerTarget | null>(null);
-  const [pickerPosition, setPickerPosition] = useState<{ top: number; left: number } | null>(
-    null,
-  );
+  const [pickerAnchor, setPickerAnchor] = useState<HTMLElement | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
 
   const displayBlocks = useMemo(
@@ -86,14 +84,13 @@ export function MaterialBlockEditor({
   );
 
   const openPicker = useCallback((index: number, anchor: HTMLElement, mode: PickerTarget["mode"]) => {
-    const rect = anchor.getBoundingClientRect();
-    setPickerPosition({ top: rect.bottom + 6, left: rect.left });
+    setPickerAnchor(anchor);
     setPickerTarget({ index, mode });
   }, []);
 
   const closePicker = useCallback(() => {
     setPickerTarget(null);
-    setPickerPosition(null);
+    setPickerAnchor(null);
   }, []);
 
   const handlePickerSelect = useCallback(
@@ -116,7 +113,7 @@ export function MaterialBlockEditor({
         setFocusBlockId(inserted.id);
       }
       setPickerTarget(null);
-      setPickerPosition(null);
+      setPickerAnchor(null);
     },
     [displayBlocks, onChange, pickerTarget],
   );
@@ -211,7 +208,7 @@ export function MaterialBlockEditor({
 
       <MaterialBlockPicker
         open={pickerTarget !== null}
-        position={pickerPosition}
+        anchor={pickerAnchor}
         onClose={closePicker}
         onSelect={handlePickerSelect}
       />

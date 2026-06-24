@@ -1,16 +1,21 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 import {
   MATERIAL_BLOCK_DEFINITIONS,
   type MaterialBlockDefinition,
   type MaterialBlockType,
 } from "@/lib/content/material-blocks";
+import {
+  computeFloatingPanelCoords,
+  type FloatingPanelCoords,
+} from "@/lib/ui/floating-panel-position";
 
 type MaterialBlockPickerProps = {
   open: boolean;
-  position: { top: number; left: number } | null;
+  anchor: HTMLElement | null;
   onClose: () => void;
   onSelect: (type: MaterialBlockType) => void;
 };
@@ -23,13 +28,16 @@ const CATEGORY_LABELS = {
 
 export function MaterialBlockPicker({
   open,
-  position,
+  anchor,
   onClose,
   onSelect,
 }: MaterialBlockPickerProps) {
   const panelRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState("");
+  const [coords, setCoords] = useState<FloatingPanelCoords | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   const filtered = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -59,12 +67,89 @@ export function MaterialBlockPicker({
   }, [filtered]);
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!open) {
+      setQuery("");
+      setCoords(null);
+    }
+  }, [open]);
+
+  useEffect(() => {
     if (!open) {
       return;
     }
 
     inputRef.current?.focus();
   }, [open]);
+
+  useLayoutEffect(() => {
+    if (!open || !anchor || !panelRef.current) {
+      return;
+    }
+
+    function updatePosition() {
+      if (!anchor || !panelRef.current) {
+        return;
+      }
+
+      const panel = panelRef.current;
+      const panelWidth = panel.offsetWidth || Math.min(352, window.innerWidth - 24);
+      const chromeHeight = headerRef.current?.offsetHeight ?? 52;
+
+      const next = computeFloatingPanelCoords({
+        anchorRect: anchor.getBoundingClientRect(),
+        panelWidth,
+        chromeHeight,
+      });
+
+      setCoords(next);
+
+      requestAnimationFrame(() => {
+        if (!anchor || !panelRef.current) {
+          return;
+        }
+
+        const measuredPanel = panelRef.current;
+        const actualHeight = measuredPanel.offsetHeight;
+        const anchorRect = anchor.getBoundingClientRect();
+        const viewportPadding = 12;
+        const gap = 8;
+        let top = next.top;
+
+        if (next.placement === "below") {
+          const bottom = top + actualHeight;
+          if (bottom > window.innerHeight - viewportPadding) {
+            top = Math.max(
+              viewportPadding,
+              window.innerHeight - viewportPadding - actualHeight,
+            );
+          }
+        } else {
+          top = anchorRect.top - gap - actualHeight;
+          if (top < viewportPadding) {
+            top = viewportPadding;
+          }
+        }
+
+        if (top !== next.top) {
+          setCoords({ ...next, top });
+        }
+      });
+    }
+
+    updatePosition();
+
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+    };
+  }, [anchor, filtered.length, open, query]);
 
   useEffect(() => {
     if (!open) {
@@ -73,7 +158,7 @@ export function MaterialBlockPicker({
 
     function handlePointerDown(event: MouseEvent) {
       const target = event.target as Node;
-      if (panelRef.current?.contains(target)) {
+      if (panelRef.current?.contains(target) || anchor?.contains(target)) {
         return;
       }
       onClose();
@@ -91,21 +176,33 @@ export function MaterialBlockPicker({
       document.removeEventListener("mousedown", handlePointerDown);
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [open, onClose]);
+  }, [anchor, onClose, open]);
 
-  if (!open || !position) {
+  if (!open || !anchor || !mounted) {
     return null;
   }
 
-  return (
+  const panel = (
     <div
       ref={panelRef}
-      className="fixed z-50 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-lg"
-      style={{ top: position.top, left: position.left }}
+      className="fixed z-[100] w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-lg"
+      style={
+        coords
+          ? {
+              top: coords.top,
+              left: coords.left,
+            }
+          : {
+              top: -9999,
+              left: -9999,
+              visibility: "hidden" as const,
+            }
+      }
       role="listbox"
       aria-label="Выбор блока"
+      data-placement={coords?.placement}
     >
-      <div className="border-b border-neutral-200 p-2">
+      <div ref={headerRef} className="border-b border-neutral-200 p-2">
         <input
           ref={inputRef}
           value={query}
@@ -115,7 +212,10 @@ export function MaterialBlockPicker({
         />
       </div>
 
-      <div className="max-h-80 overflow-y-auto p-1">
+      <div
+        className="overflow-y-auto overscroll-y-contain p-1"
+        style={{ maxHeight: coords?.listMaxHeight ?? 320 }}
+      >
         {(Object.keys(groups) as Array<keyof typeof groups>).map((category) =>
           groups[category].length > 0 ? (
             <section key={category} className="py-1">
@@ -158,4 +258,6 @@ export function MaterialBlockPicker({
       </div>
     </div>
   );
+
+  return createPortal(panel, document.body);
 }
