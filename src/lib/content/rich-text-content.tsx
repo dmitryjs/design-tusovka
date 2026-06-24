@@ -1,6 +1,10 @@
 import { sanitizeRichHtml } from "@/lib/content/rich-text";
 import { cn } from "@/lib/utils";
 
+/** Сохраняет жирный, курсив и другие inline-форматы поверх цвета родительского блока. */
+export const RICH_TEXT_FORMAT_CLASS =
+  "[&_b]:font-bold [&_strong]:font-bold [&_i]:italic [&_em]:italic [&_u]:underline [&_s]:line-through [&_strike]:line-through";
+
 type RichTextContentProps = {
   html: string;
   className?: string;
@@ -13,7 +17,7 @@ export function RichTextContent({ html, className, as: Tag = "span" }: RichTextC
   }
 
   if (!html.includes("<")) {
-    return <Tag className={className}>{html}</Tag>;
+    return <Tag className={cn(RICH_TEXT_FORMAT_CLASS, className)}>{html}</Tag>;
   }
 
   const safe = sanitizeRichHtml(html);
@@ -25,6 +29,7 @@ export function RichTextContent({ html, className, as: Tag = "span" }: RichTextC
   return (
     <Tag
       className={cn(
+        RICH_TEXT_FORMAT_CLASS,
         "[&_a]:text-primary [&_a]:underline",
         className,
       )}

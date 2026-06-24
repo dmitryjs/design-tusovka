@@ -165,15 +165,13 @@ function MaterialBlockItem({
       return (
         <blockquote
           className={cn(
-            "text-sm leading-6 text-neutral-700",
-            isReading
-              ? "border-l-4 border-neutral-900 pl-4"
-              : "rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-4",
+            "border-l-4 border-primary bg-blue-50 px-4 py-3 text-sm leading-6 text-primary",
+            isReading ? "rounded-r-lg" : "rounded-r-xl py-4",
           )}
         >
-          <RichTextContent as="p" html={block.data.text} className={isReading ? "italic" : undefined} />
+          <RichTextContent as="p" html={block.data.text} />
           {block.data.author ? (
-            <footer className="mt-2 text-neutral-500">— {block.data.author}</footer>
+            <footer className="mt-2 text-primary/70">— {block.data.author}</footer>
           ) : null}
         </blockquote>
       );

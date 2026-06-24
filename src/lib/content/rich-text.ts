@@ -69,7 +69,17 @@ function sanitizeAttributes(tag: string, attrs: string): string {
 }
 
 function sanitizeRichHtmlRegex(html: string): string {
-  return html.replace(/<\/?([a-z][a-z0-9]*)\b([^>]*)>/gi, (match, rawTag, rawAttrs) => {
+  const withFontSpans = html.replace(
+    /<font\b([^>]*)>([\s\S]*?)<\/font>/gi,
+    (_match, rawAttrs, inner) => {
+      const colorMatch = rawAttrs.match(/\bcolor\s*=\s*("([^"]*)"|'([^']*)'|([^\s>]+))/i);
+      const color = colorMatch?.[2] ?? colorMatch?.[3] ?? colorMatch?.[4] ?? "";
+      const style = color ? ` style="color: ${color.replace(/"/g, "&quot;")}"` : "";
+      return `<span${style}>${inner}</span>`;
+    },
+  );
+
+  return withFontSpans.replace(/<\/?([a-z][a-z0-9]*)\b([^>]*)>/gi, (match, rawTag, rawAttrs) => {
     const tag = rawTag.toLowerCase();
     const isClosing = match.startsWith("</");
 
@@ -107,8 +117,23 @@ function sanitizeRichHtmlDom(html: string): string {
       }
 
       const element = child as HTMLElement;
+      const tagName = element.tagName.toLowerCase();
 
-      if (!ALLOWED_TAGS.has(element.tagName.toLowerCase())) {
+      if (tagName === "font") {
+        const span = doc.createElement("span");
+        const color = element.getAttribute("color");
+        if (color) {
+          span.setAttribute("style", `color: ${color}`);
+        }
+        while (element.firstChild) {
+          span.appendChild(element.firstChild);
+        }
+        element.parentNode?.replaceChild(span, element);
+        walk(span);
+        continue;
+      }
+
+      if (!ALLOWED_TAGS.has(tagName)) {
         while (element.firstChild) {
           element.parentNode?.insertBefore(element.firstChild, element);
         }

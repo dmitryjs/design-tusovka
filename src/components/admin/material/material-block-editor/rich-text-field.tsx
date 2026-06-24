@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 
 import { normalizeRichTextValue, richTextToPlainText } from "@/lib/content/rich-text";
+import { RICH_TEXT_FORMAT_CLASS } from "@/lib/content/rich-text-content";
 import { cn } from "@/lib/utils";
 
 import { TextFormatToolbar } from "./text-format-toolbar";
@@ -119,6 +120,7 @@ export function RichTextField({
         }}
         className={cn(
           "notion-rich-text w-full border-0 bg-transparent p-0 shadow-none outline-none focus:ring-0",
+          RICH_TEXT_FORMAT_CLASS,
           "empty:before:pointer-events-none empty:before:text-neutral-300 empty:before:content-[attr(data-placeholder)]",
           className,
         )}

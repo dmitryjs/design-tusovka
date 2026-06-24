@@ -279,20 +279,20 @@ export function MaterialNotionBlockContent({
       );
     case "quote":
       return (
-        <div className="border-l-4 border-neutral-900 pl-4">
+        <div className="rounded-r-lg border-l-4 border-primary bg-blue-50 px-4 py-3 text-primary">
           <RichTextField
             value={block.data.text}
             onChange={(text) => onChange(updateData(block, { text }))}
             disabled={disabled}
             placeholder="Цитата"
-            className="text-sm leading-6 italic"
+            className="text-sm leading-6 text-primary"
           />
           <GhostInput
             value={block.data.author}
             onChange={(author) => onChange(updateData(block, { author }))}
             disabled={disabled}
             placeholder="Автор"
-            className="mt-2 text-xs text-neutral-500"
+            className="mt-2 text-xs text-primary/70"
           />
         </div>
       );

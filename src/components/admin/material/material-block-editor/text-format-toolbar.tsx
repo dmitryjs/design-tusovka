@@ -5,6 +5,7 @@ import { Bold, Italic, Link2, Strikethrough, Underline, X } from "lucide-react";
 
 const TEXT_COLORS = [
   { label: "По умолчанию", value: "" },
+  { label: "Чёрный", value: "#171717" },
   { label: "Серый", value: "#6B7280" },
   { label: "Коричневый", value: "#92400E" },
   { label: "Оранжевый", value: "#EA580C" },
@@ -128,9 +129,9 @@ export function TextFormatToolbar({ containerRef, disabled }: TextFormatToolbarP
                   type="button"
                   title={color.label}
                   className="flex h-7 items-center justify-center rounded-md border border-neutral-200 text-xs font-semibold hover:bg-neutral-50"
-                  style={{ color: color.value || "#111827" }}
+                  style={{ color: color.value || "#171717" }}
                   onClick={() => {
-                    exec("foreColor", color.value || "#111827");
+                    exec("foreColor", color.value || "#171717");
                     setShowColors(false);
                   }}
                 >
