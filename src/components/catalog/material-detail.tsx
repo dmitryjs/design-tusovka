@@ -56,6 +56,9 @@ function MaterialSidebar({
       <MaterialTableOfContents
         chapters={material.chapters}
         isPreview={material.isPreview}
+        anchorBaseHref={
+          material.hasFullAccess ? getMaterialReadHref(material.slug) : undefined
+        }
       />
       <MaterialMeta material={material} />
     </>
@@ -137,6 +140,9 @@ export function MaterialDetailView({
           <MaterialTableOfContents
             chapters={material.chapters}
             isPreview={material.isPreview}
+            anchorBaseHref={
+              material.hasFullAccess ? getMaterialReadHref(material.slug) : undefined
+            }
           />
           <MaterialMeta material={material} />
         </div>

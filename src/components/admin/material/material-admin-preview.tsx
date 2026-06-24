@@ -106,6 +106,7 @@ export function MaterialAdminPreview({
                 <MaterialTableOfContents
                   chapters={material.chapters}
                   isPreview={material.isPreview}
+                  anchorBaseHref={material.hasFullAccess ? "" : undefined}
                 />
                 <MaterialMeta material={material} />
               </aside>

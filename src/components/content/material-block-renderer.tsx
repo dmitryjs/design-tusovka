@@ -66,13 +66,14 @@ function MaterialBlockItem({
   variant: RenderVariant;
 }) {
   const isReading = variant === "reading";
-  const headingAnchorProps =
-    isReading && (block.type === "heading1" || block.type === "heading2" || block.type === "heading3")
-      ? {
-          id: getMaterialBlockAnchorId(block.id),
-          className: "scroll-mt-24",
-        }
-      : {};
+  const isHeading =
+    block.type === "heading1" || block.type === "heading2" || block.type === "heading3";
+  const headingAnchorProps = isHeading
+    ? {
+        id: getMaterialBlockAnchorId(block.id),
+        className: "scroll-mt-24",
+      }
+    : {};
 
   switch (block.type) {
     case "heading1":
