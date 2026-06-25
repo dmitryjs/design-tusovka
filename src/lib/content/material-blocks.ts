@@ -8,6 +8,7 @@ export const MATERIAL_BLOCK_TYPES = [
   "bulleted_list",
   "numbered_list",
   "checklist",
+  "checked_list",
   "quote",
   "image",
   "video",
@@ -38,6 +39,7 @@ export type MaterialBlockData = {
   bulleted_list: { items: string[] };
   numbered_list: { items: string[] };
   checklist: { items: ChecklistItem[] };
+  checked_list: { items: string[] };
   quote: { text: string; author: string };
   image: { url: string; alt: string; caption: string };
   video: { url: string; caption: string };
@@ -83,6 +85,13 @@ export const MATERIAL_BLOCK_DEFINITIONS: MaterialBlockDefinition[] = [
   { type: "bulleted_list", label: "Маркированный список", description: "• пункты", category: "text", icon: "•" },
   { type: "numbered_list", label: "Нумерованный список", description: "1. пункты", category: "text", icon: "1." },
   { type: "checklist", label: "Чек-лист", description: "Задачи с галочками", category: "text", icon: "☑" },
+  {
+    type: "checked_list",
+    label: "Список с галочками",
+    description: "✓ в синих кружках",
+    category: "text",
+    icon: "✓",
+  },
   { type: "quote", label: "Цитата", description: "Выделенная цитата", category: "text", icon: "“" },
   { type: "image", label: "Изображение", description: "Загрузка или ссылка", category: "media", icon: "🖼" },
   { type: "video", label: "Видео", description: "Встраивание по ссылке", category: "media", icon: "▶" },
@@ -118,6 +127,7 @@ export function defaultBlockData(type: MaterialBlockType): MaterialBlockData[typ
       return { text: "" };
     case "bulleted_list":
     case "numbered_list":
+    case "checked_list":
       return { items: [""] };
     case "checklist":
       return { items: [createChecklistItem()] };

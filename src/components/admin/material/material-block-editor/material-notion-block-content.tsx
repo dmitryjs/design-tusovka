@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 
+import { CheckedListMarker } from "@/components/content/checked-list-marker";
 import {
   type ChecklistItem,
   type MaterialBlock,
@@ -221,13 +222,18 @@ export function MaterialNotionBlockContent({
       );
     case "bulleted_list":
     case "numbered_list":
+    case "checked_list":
       return (
         <div className="space-y-1">
           {block.data.items.map((item, index) => (
             <div key={index} className="flex items-start gap-2">
-              <span className="mt-0.5 w-5 shrink-0 text-sm text-neutral-400">
-                {block.type === "numbered_list" ? `${index + 1}.` : "•"}
-              </span>
+              {block.type === "checked_list" ? (
+                <CheckedListMarker />
+              ) : (
+                <span className="mt-0.5 w-5 shrink-0 text-sm text-neutral-400">
+                  {block.type === "numbered_list" ? `${index + 1}.` : "•"}
+                </span>
+              )}
               <RichTextField
                 value={item}
                 onChange={(text) =>

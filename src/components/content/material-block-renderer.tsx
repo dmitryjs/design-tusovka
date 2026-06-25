@@ -2,6 +2,7 @@ import Link from "next/link";
 import { FileUp } from "lucide-react";
 
 import { CalloutIcon } from "@/components/content/callout-icon";
+import { CheckedListMarker } from "@/components/content/checked-list-marker";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import type { MaterialBlock } from "@/lib/content/material-blocks";
@@ -169,6 +170,22 @@ function MaterialBlockItem({
             <li key={item.id} className="flex items-start gap-2">
               <span aria-hidden>{item.checked ? "☑" : "☐"}</span>
               <RichTextContent html={item.text} />
+            </li>
+          ))}
+        </ul>
+      );
+    case "checked_list":
+      return (
+        <ul
+          className={cn(
+            "text-sm leading-6 text-neutral-700",
+            isReading ? "space-y-2" : "space-y-2.5",
+          )}
+        >
+          {block.data.items.filter(Boolean).map((item, index) => (
+            <li key={index} className="flex items-start gap-2.5">
+              <CheckedListMarker />
+              <RichTextContent html={item} className="min-w-0 flex-1" />
             </li>
           ))}
         </ul>
