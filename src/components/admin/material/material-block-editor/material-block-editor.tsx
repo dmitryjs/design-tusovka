@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   createMaterialBlock,
+  duplicateMaterialBlock,
   moveBlock,
   type MaterialBlock,
   type MaterialBlockType,
@@ -79,6 +80,25 @@ export function MaterialBlockEditor({
     (index: number) => {
       const next = displayBlocks.filter((_, itemIndex) => itemIndex !== index);
       onChange(next.length > 0 ? next : [createMaterialBlock("paragraph")]);
+    },
+    [displayBlocks, onChange],
+  );
+
+  const duplicateBlockAt = useCallback(
+    (index: number) => {
+      const source = displayBlocks[index];
+      if (!source) {
+        return;
+      }
+
+      const duplicated = duplicateMaterialBlock(source);
+      const next = [
+        ...displayBlocks.slice(0, index + 1),
+        duplicated,
+        ...displayBlocks.slice(index + 1),
+      ];
+      onChange(next);
+      setFocusBlockId(duplicated.id);
     },
     [displayBlocks, onChange],
   );
@@ -171,6 +191,7 @@ export function MaterialBlockEditor({
               isDropTarget={dropIndex === index && draggingIndex !== index}
               onChange={(nextBlock) => updateBlock(index, nextBlock)}
               onRemove={() => removeBlock(index)}
+              onDuplicate={() => duplicateBlockAt(index)}
               onInsertBelow={() => insertBlockAfter(index)}
               onOpenPicker={(anchor) => {
                 if (isBlockEmpty(block)) {

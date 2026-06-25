@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { GripVertical, Plus, Trash2 } from "lucide-react";
+import { GripVertical, Copy, Plus, Trash2 } from "lucide-react";
 
 import {
   type MaterialBlock,
@@ -22,6 +22,7 @@ type MaterialNotionBlockProps = {
   isDropTarget?: boolean;
   onChange: (block: MaterialBlock) => void;
   onRemove: () => void;
+  onDuplicate: () => void;
   onInsertBelow: () => void;
   onOpenPicker: (anchor: HTMLElement) => void;
   onEnter: () => void;
@@ -40,6 +41,7 @@ export function MaterialNotionBlock({
   isDropTarget,
   onChange,
   onRemove,
+  onDuplicate,
   onInsertBelow,
   onOpenPicker,
   onEnter,
@@ -119,15 +121,26 @@ export function MaterialNotionBlock({
         />
       </div>
 
-      <button
-        type="button"
-        disabled={disabled}
-        aria-label="Удалить блок"
-        onClick={onRemove}
-        className="mt-1 flex size-6 shrink-0 items-center justify-center rounded-md text-neutral-400 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-neutral-100 hover:text-neutral-700"
-      >
-        <Trash2 className="size-4" aria-hidden />
-      </button>
+      <div className="mt-1 flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
+        <button
+          type="button"
+          disabled={disabled}
+          aria-label="Дублировать блок"
+          onClick={onDuplicate}
+          className="flex size-6 items-center justify-center rounded-md text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700"
+        >
+          <Copy className="size-4" aria-hidden />
+        </button>
+        <button
+          type="button"
+          disabled={disabled}
+          aria-label="Удалить блок"
+          onClick={onRemove}
+          className="flex size-6 items-center justify-center rounded-md text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700"
+        >
+          <Trash2 className="size-4" aria-hidden />
+        </button>
+      </div>
     </div>
   );
 }

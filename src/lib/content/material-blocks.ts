@@ -118,6 +118,20 @@ export function createChecklistItem(text = ""): ChecklistItem {
   return { id: createId(), text, checked: false };
 }
 
+export function duplicateMaterialBlock(block: MaterialBlock): MaterialBlock {
+  const cloned = JSON.parse(JSON.stringify(block)) as MaterialBlock;
+  cloned.id = createId();
+
+  if (cloned.type === "checklist") {
+    cloned.data.items = cloned.data.items.map((item) => ({
+      ...item,
+      id: createId(),
+    }));
+  }
+
+  return cloned;
+}
+
 export function defaultBlockData(type: MaterialBlockType): MaterialBlockData[typeof type] {
   switch (type) {
     case "heading1":

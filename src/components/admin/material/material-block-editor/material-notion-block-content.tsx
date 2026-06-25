@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { CheckedListMarker } from "@/components/content/checked-list-marker";
 import {
+  createChecklistItem,
   type ChecklistItem,
   type MaterialBlock,
   type MaterialBlockData,
@@ -156,6 +157,17 @@ export function MaterialNotionBlockContent({
   onSlash,
   inputRef,
 }: MaterialNotionBlockContentProps) {
+  const [focusListIndex, setFocusListIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (focusListIndex === null) {
+      return;
+    }
+
+    const frame = requestAnimationFrame(() => setFocusListIndex(null));
+    return () => cancelAnimationFrame(frame);
+  }, [focusListIndex]);
+
   switch (block.type) {
     case "heading1":
       return (
@@ -246,18 +258,33 @@ export function MaterialNotionBlockContent({
                   )
                 }
                 disabled={disabled}
+                autoFocus={focusListIndex === index}
                 className="text-sm leading-6"
-                onEnter={() =>
+                onEnter={() => {
+                  const nextIndex = index + 1;
                   onChange(
                     updateData(block, {
                       items: [
-                        ...block.data.items.slice(0, index + 1),
+                        ...block.data.items.slice(0, nextIndex),
                         "",
-                        ...block.data.items.slice(index + 1),
+                        ...block.data.items.slice(nextIndex),
                       ],
                     }),
-                  )
-                }
+                  );
+                  setFocusListIndex(nextIndex);
+                }}
+                onBackspaceEmpty={() => {
+                  if (block.data.items.length <= 1) {
+                    return;
+                  }
+
+                  onChange(
+                    updateData(block, {
+                      items: block.data.items.filter((_, itemIndex) => itemIndex !== index),
+                    }),
+                  );
+                  setFocusListIndex(Math.max(0, index - 1));
+                }}
               />
             </div>
           ))}
@@ -266,11 +293,12 @@ export function MaterialNotionBlockContent({
     case "checklist":
       return (
         <div className="space-y-1">
-          {block.data.items.map((item) => (
+          {block.data.items.map((item, index) => (
             <ChecklistRow
               key={item.id}
               item={item}
               disabled={disabled}
+              autoFocus={focusListIndex === index}
               onChange={(nextItem) =>
                 onChange(
                   updateData(block, {
@@ -280,6 +308,31 @@ export function MaterialNotionBlockContent({
                   }),
                 )
               }
+              onEnter={() => {
+                const nextIndex = index + 1;
+                onChange(
+                  updateData(block, {
+                    items: [
+                      ...block.data.items.slice(0, nextIndex),
+                      createChecklistItem(),
+                      ...block.data.items.slice(nextIndex),
+                    ],
+                  }),
+                );
+                setFocusListIndex(nextIndex);
+              }}
+              onBackspaceEmpty={() => {
+                if (block.data.items.length <= 1) {
+                  return;
+                }
+
+                onChange(
+                  updateData(block, {
+                    items: block.data.items.filter((_, itemIndex) => itemIndex !== index),
+                  }),
+                );
+                setFocusListIndex(Math.max(0, index - 1));
+              }}
             />
           ))}
         </div>
@@ -336,11 +389,17 @@ export function MaterialNotionBlockContent({
 function ChecklistRow({
   item,
   disabled,
+  autoFocus,
   onChange,
+  onEnter,
+  onBackspaceEmpty,
 }: {
   item: ChecklistItem;
   disabled?: boolean;
+  autoFocus?: boolean;
   onChange: (item: ChecklistItem) => void;
+  onEnter?: () => void;
+  onBackspaceEmpty?: () => void;
 }) {
   return (
     <div className="flex items-start gap-2">
@@ -355,7 +414,10 @@ function ChecklistRow({
         value={item.text}
         onChange={(text) => onChange({ ...item, text })}
         disabled={disabled}
+        autoFocus={autoFocus}
         className="text-sm leading-6"
+        onEnter={onEnter}
+        onBackspaceEmpty={onBackspaceEmpty}
       />
     </div>
   );
