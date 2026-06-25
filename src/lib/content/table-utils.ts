@@ -82,3 +82,24 @@ export function deleteTableRowAt(rows: string[][], index: number): string[][] {
 
   return normalized.filter((_, rowIndex) => rowIndex !== index);
 }
+
+export function insertTableRowAt(rows: string[][], index: number): string[][] {
+  const normalized = normalizeTableRows(rows);
+  const safeIndex = Math.max(0, Math.min(index, normalized.length));
+  const next = [...normalized];
+  next.splice(safeIndex, 0, createEmptyRow(getTableColumnCount(normalized)));
+  return next;
+}
+
+export function duplicateTableRowAt(rows: string[][], index: number): string[][] {
+  const normalized = normalizeTableRows(rows);
+  const next = [...normalized];
+  next.splice(index + 1, 0, [...(normalized[index] ?? createEmptyRow(getTableColumnCount(normalized)))]);
+  return next;
+}
+
+export function clearTableRowAt(rows: string[][], index: number): string[][] {
+  return normalizeTableRows(rows).map((row, rowIndex) =>
+    rowIndex === index ? row.map(() => "") : row,
+  );
+}

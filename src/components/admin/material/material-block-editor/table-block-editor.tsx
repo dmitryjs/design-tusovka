@@ -7,11 +7,16 @@ import {
   addTableColumn,
   addTableRow,
   clearTableColumnAt,
+  clearTableRowAt,
   deleteTableColumnAt,
+  deleteTableRowAt,
   duplicateTableColumnAt,
+  duplicateTableRowAt,
   getTableColumnCount,
   insertTableColumnAt,
+  insertTableRowAt,
   MIN_TABLE_COLS,
+  MIN_TABLE_ROWS,
   normalizeTableRows,
 } from "@/lib/content/table-utils";
 import { cn } from "@/lib/utils";
@@ -19,6 +24,7 @@ import { cn } from "@/lib/utils";
 import { RichTextField } from "./rich-text-field";
 import { TableAddZone } from "./table-add-zone";
 import { TableColumnGrip, TableColumnMenu } from "./table-column-menu";
+import { TableRowGrip, TableRowMenu } from "./table-row-menu";
 
 type TableBlockEditorProps = {
   block: Extract<MaterialBlock, { type: "table" }>;
@@ -29,7 +35,9 @@ type TableBlockEditorProps = {
 export function TableBlockEditor({ block, disabled, onChange }: TableBlockEditorProps) {
   const [activeCell, setActiveCell] = useState<{ row: number; col: number } | null>(null);
   const [columnMenuOpen, setColumnMenuOpen] = useState(false);
+  const [rowMenuOpen, setRowMenuOpen] = useState(false);
   const columnGripRef = useRef<HTMLButtonElement>(null);
+  const rowGripRef = useRef<HTMLButtonElement>(null);
   const rows = normalizeTableRows(block.data.rows);
   const columnCount = getTableColumnCount(rows);
 
@@ -55,6 +63,7 @@ export function TableBlockEditor({ block, disabled, onChange }: TableBlockEditor
   };
 
   const activeColumn = activeCell?.col ?? null;
+  const activeRow = activeCell?.row ?? null;
 
   return (
     <div className="max-w-full">
@@ -64,6 +73,20 @@ export function TableBlockEditor({ block, disabled, onChange }: TableBlockEditor
             <tbody>
               {rows.map((row, rowIndex) => (
                 <tr key={rowIndex}>
+                  <td className="relative w-0 border-0 p-0 align-top">
+                    {activeRow === rowIndex ? (
+                      <div className="pointer-events-none absolute top-3 left-0 z-10 -translate-x-1/2">
+                        <TableRowGrip
+                          ref={rowGripRef}
+                          onClick={() => {
+                            setRowMenuOpen((open) => !open);
+                            setColumnMenuOpen(false);
+                          }}
+                          className="pointer-events-auto"
+                        />
+                      </div>
+                    ) : null}
+                  </td>
                   {row.map((cell, colIndex) => {
                     const isActive =
                       activeCell?.row === rowIndex && activeCell?.col === colIndex;
@@ -80,7 +103,10 @@ export function TableBlockEditor({ block, disabled, onChange }: TableBlockEditor
                           <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex justify-center">
                             <TableColumnGrip
                               ref={columnGripRef}
-                              onClick={() => setColumnMenuOpen((open) => !open)}
+                              onClick={() => {
+                                setColumnMenuOpen((open) => !open);
+                                setRowMenuOpen(false);
+                              }}
                               className="pointer-events-auto -translate-y-1/2"
                             />
                           </div>
@@ -93,6 +119,7 @@ export function TableBlockEditor({ block, disabled, onChange }: TableBlockEditor
                           onFocus={() => {
                             setActiveCell({ row: rowIndex, col: colIndex });
                             setColumnMenuOpen(false);
+                            setRowMenuOpen(false);
                           }}
                         />
                       </td>
@@ -132,6 +159,24 @@ export function TableBlockEditor({ block, disabled, onChange }: TableBlockEditor
           onClear={() => commitRows(clearTableColumnAt(rows, activeColumn))}
           onDelete={() => {
             commitRows(deleteTableColumnAt(rows, activeColumn));
+            setActiveCell(null);
+          }}
+        />
+      ) : null}
+
+      {activeRow !== null ? (
+        <TableRowMenu
+          open={rowMenuOpen}
+          anchorRef={rowGripRef}
+          rowIndex={activeRow}
+          canDelete={rows.length > MIN_TABLE_ROWS}
+          onClose={() => setRowMenuOpen(false)}
+          onInsertAbove={() => commitRows(insertTableRowAt(rows, activeRow))}
+          onInsertBelow={() => commitRows(insertTableRowAt(rows, activeRow + 1))}
+          onDuplicate={() => commitRows(duplicateTableRowAt(rows, activeRow))}
+          onClear={() => commitRows(clearTableRowAt(rows, activeRow))}
+          onDelete={() => {
+            commitRows(deleteTableRowAt(rows, activeRow));
             setActiveCell(null);
           }}
         />
