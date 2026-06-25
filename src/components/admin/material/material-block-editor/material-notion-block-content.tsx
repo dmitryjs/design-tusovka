@@ -12,6 +12,7 @@ import { richTextToPlainText } from "@/lib/content/rich-text";
 import { cn } from "@/lib/utils";
 
 import { FileBlockEditor } from "./file-block-editor";
+import { CalloutIconPicker } from "./callout-icon-picker";
 import { ImageBlockEditor } from "./image-block-editor";
 import { RichTextField } from "./rich-text-field";
 import { TableBlockEditor } from "./table-block-editor";
@@ -372,21 +373,29 @@ function CalloutEditor({
   }[tone];
 
   return (
-    <div className={cn("rounded-lg px-3 py-2", toneClass)}>
-      <GhostInput
-        value={block.data.title}
-        onChange={(title) => onChange(updateData(block, { title }))}
+    <div className={cn("flex gap-2 rounded-lg px-3 py-2", toneClass)}>
+      <CalloutIconPicker
+        value={block.data.icon ?? null}
+        onChange={(icon) => onChange(updateData(block, { icon }))}
         disabled={disabled}
-        placeholder="Заголовок"
-        className="font-medium"
+        tone={tone}
       />
-      <RichTextField
-        value={block.data.text}
-        onChange={(text) => onChange(updateData(block, { text }))}
-        disabled={disabled}
-        placeholder="Текст блока"
-        className="mt-1 text-sm leading-6"
-      />
+      <div className="min-w-0 flex-1">
+        <GhostInput
+          value={block.data.title}
+          onChange={(title) => onChange(updateData(block, { title }))}
+          disabled={disabled}
+          placeholder="Заголовок"
+          className="font-medium"
+        />
+        <RichTextField
+          value={block.data.text}
+          onChange={(text) => onChange(updateData(block, { text }))}
+          disabled={disabled}
+          placeholder="Текст блока"
+          className="mt-1 text-sm leading-6"
+        />
+      </div>
     </div>
   );
 }

@@ -44,9 +44,9 @@ export type MaterialBlockData = {
   table: { headers: string[]; rows: string[][] };
   file: { name: string; url: string; sizeLabel: string };
   embed: { url: string; title: string; description: string };
-  callout_info: { title: string; text: string };
-  callout_warning: { title: string; text: string };
-  callout_success: { title: string; text: string };
+  callout_info: { title: string; text: string; icon?: string | null };
+  callout_warning: { title: string; text: string; icon?: string | null };
+  callout_success: { title: string; text: string; icon?: string | null };
   divider: Record<string, never>;
   accordion: { title: string; text: string };
   cta: {
@@ -143,7 +143,7 @@ export function defaultBlockData(type: MaterialBlockType): MaterialBlockData[typ
     case "callout_info":
     case "callout_warning":
     case "callout_success":
-      return { title: "", text: "" };
+      return { title: "", text: "", icon: null };
     case "divider":
       return {};
     case "accordion":

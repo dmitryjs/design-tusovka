@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { FileUp } from "lucide-react";
 
+import { CalloutIcon } from "@/components/content/callout-icon";
+
 import { Button, buttonVariants } from "@/components/ui/button";
 import type { MaterialBlock } from "@/lib/content/material-blocks";
 import { getMaterialBlockAnchorId } from "@/lib/content/material-reading";
@@ -20,11 +22,13 @@ function Callout({
   variant,
   title,
   text,
+  icon,
   renderVariant,
 }: {
   variant: "info" | "warning" | "success";
   title?: string;
   text: string;
+  icon?: string | null;
   renderVariant: RenderVariant;
 }) {
   const styles = {
@@ -33,10 +37,21 @@ function Callout({
     success: "bg-emerald-50 text-emerald-950",
   } as const;
 
-  if (renderVariant === "reading") {
-    return (
-      <div className={cn("rounded-lg px-3 py-2", styles[variant])}>
-        {title ? <p className="text-sm font-medium">{title}</p> : null}
+  const iconToneClass = {
+    info: "text-blue-600",
+    warning: "text-amber-700",
+    success: "text-emerald-700",
+  } as const;
+
+  const body = (
+    <div className="flex gap-3">
+      <CalloutIcon icon={icon} className={cn("mt-0.5", iconToneClass[variant])} />
+      <div className="min-w-0 flex-1">
+        {title ? (
+          <p className={cn("text-sm", renderVariant === "reading" ? "font-medium" : "font-semibold")}>
+            {title}
+          </p>
+        ) : null}
         {text ? (
           <RichTextContent
             as="p"
@@ -45,17 +60,14 @@ function Callout({
           />
         ) : null}
       </div>
-    );
-  }
-
-  return (
-    <div className={cn("rounded-xl border px-4 py-4 sm:px-5", styles[variant])}>
-      {title ? <p className="text-sm font-semibold">{title}</p> : null}
-      {text ? (
-        <RichTextContent as="p" html={text} className={cn("text-sm leading-6", title && "mt-1")} />
-      ) : null}
     </div>
   );
+
+  if (renderVariant === "reading") {
+    return <div className={cn("rounded-lg px-3 py-2", styles[variant])}>{body}</div>;
+  }
+
+  return <div className={cn("rounded-xl border px-4 py-4 sm:px-5", styles[variant])}>{body}</div>;
 }
 
 function MaterialBlockItem({
@@ -273,6 +285,7 @@ function MaterialBlockItem({
           variant="info"
           title={block.data.title}
           text={block.data.text}
+          icon={block.data.icon}
           renderVariant={variant}
         />
       );
@@ -282,6 +295,7 @@ function MaterialBlockItem({
           variant="warning"
           title={block.data.title}
           text={block.data.text}
+          icon={block.data.icon}
           renderVariant={variant}
         />
       );
@@ -291,6 +305,7 @@ function MaterialBlockItem({
           variant="success"
           title={block.data.title}
           text={block.data.text}
+          icon={block.data.icon}
           renderVariant={variant}
         />
       );
