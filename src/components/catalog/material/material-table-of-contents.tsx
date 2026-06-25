@@ -28,11 +28,11 @@ function resolveAnchorHref(anchorId: string, anchorBaseHref?: string): string | 
 
 function headingIndentClass(level: MaterialHeadingAnchor["level"]): string {
   if (level === 2) {
-    return "pl-4";
+    return "pl-8";
   }
 
   if (level === 3) {
-    return "pl-7";
+    return "pl-11";
   }
 
   return "";
@@ -40,36 +40,41 @@ function headingIndentClass(level: MaterialHeadingAnchor["level"]): string {
 
 function HeadingTocItem({
   heading,
-  index,
+  sectionNumber,
   href,
 }: {
   heading: MaterialHeadingAnchor;
-  index: number;
+  sectionNumber: number | null;
   href: string | null;
 }) {
+  const isSubsection = heading.level !== 1;
   const itemClassName = cn(
     "flex items-start gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors",
     headingIndentClass(heading.level),
+    isSubsection ? "text-neutral-500" : "text-foreground",
+  );
+
+  const content = (
+    <>
+      {sectionNumber !== null ? (
+        <span className="w-5 shrink-0 tabular-nums text-neutral-400">{sectionNumber}</span>
+      ) : null}
+      <span className="leading-5">{heading.title}</span>
+    </>
   );
 
   if (href) {
     return (
       <Link
         href={href}
-        className={cn(itemClassName, "text-foreground hover:bg-neutral-50 hover:text-primary")}
+        className={cn(itemClassName, "hover:bg-neutral-50 hover:text-primary")}
       >
-        <span className="w-5 shrink-0 tabular-nums text-neutral-400">{index + 1}</span>
-        <span className="leading-5">{heading.title}</span>
+        {content}
       </Link>
     );
   }
 
-  return (
-    <div className={cn(itemClassName, "text-neutral-700")}>
-      <span className="w-5 shrink-0 tabular-nums text-neutral-400">{index + 1}</span>
-      <span className="leading-5">{heading.title}</span>
-    </div>
-  );
+  return <div className={itemClassName}>{content}</div>;
 }
 
 export function MaterialTableOfContents({
@@ -110,17 +115,26 @@ export function MaterialTableOfContents({
           </p>
         </div>
 
-        <ol className="flex flex-col gap-1 rounded-xl border border-neutral-200 bg-white p-2">
-          {headings.map((heading, index) => (
-            <li key={heading.blockId}>
-              <HeadingTocItem
-                heading={heading}
-                index={index}
-                href={linkable ? resolveAnchorHref(heading.id, anchorBaseHref) : null}
-              />
-            </li>
-          ))}
-        </ol>
+        <ul className="flex flex-col gap-1 rounded-xl border border-neutral-200 bg-white p-2">
+          {(() => {
+            let sectionNumber = 0;
+
+            return headings.map((heading) => {
+              const currentSectionNumber =
+                heading.level === 1 ? ++sectionNumber : null;
+
+              return (
+                <li key={heading.blockId}>
+                  <HeadingTocItem
+                    heading={heading}
+                    sectionNumber={currentSectionNumber}
+                    href={linkable ? resolveAnchorHref(heading.id, anchorBaseHref) : null}
+                  />
+                </li>
+              );
+            });
+          })()}
+        </ul>
       </section>
     );
   }
