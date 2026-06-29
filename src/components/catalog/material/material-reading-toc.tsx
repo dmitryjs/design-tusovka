@@ -56,7 +56,7 @@ export function MaterialReadingToc({ headings, className }: MaterialReadingTocPr
   if (headings.length === 0) {
     return (
       <nav aria-label="Содержание" className={className}>
-        <p className="text-sm text-neutral-500">Заголовки появятся после добавления блоков H1–H3.</p>
+        <p className="text-sm text-neutral-500">Заголовки появятся после добавления блоков H1.</p>
       </nav>
     );
   }

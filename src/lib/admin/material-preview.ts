@@ -1,6 +1,7 @@
 import type { Json } from "@/types/database.types";
 
 import type { MaterialDetail } from "@/lib/catalog/detail-queries";
+import { richTextToPlainText } from "@/lib/content/rich-text";
 import type { CatalogTag } from "@/lib/catalog/types";
 import type { AdminProductFormInput } from "@/lib/admin/types";
 
@@ -69,6 +70,15 @@ export function buildAdminMaterialPreviewDetail(
 ): MaterialDetail {
   const priceKopecks = Math.round(form.priceRubles * 100);
   const contentBlocks = filterContentBlocks(form);
+  const h1Headings = contentBlocks
+    .filter((block) => block.type === "heading1")
+    .map((block) => ({
+      id: `block-${block.id}`,
+      blockId: block.id,
+      level: 1 as const,
+      title: richTextToPlainText(block.data.text).trim(),
+    }))
+    .filter((heading) => heading.title.length > 0);
 
   return {
     id: options.productId ?? "preview",
@@ -91,6 +101,7 @@ export function buildAdminMaterialPreviewDetail(
         contentJson: contentBlocks as unknown as Json,
       },
     ],
+    h1Headings,
     hasFullAccess: true,
     isPreview: false,
   };

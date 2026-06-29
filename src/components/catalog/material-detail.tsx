@@ -14,6 +14,7 @@ import { MaterialTableOfContents } from "@/components/catalog/material/material-
 import { ProductReviewsSection } from "@/components/reviews/product-reviews-section";
 import type { MaterialDetail } from "@/lib/catalog/detail-queries";
 import { getCatalogItemHref, getMaterialReadHref } from "@/lib/catalog/paths";
+import { getPreferredSectionPageHref } from "@/lib/catalog/section-pages";
 import type { FreeProductClaimState } from "@/lib/entitlements/types";
 import type { PaidProductCartState } from "@/lib/cart/types";
 import type { ProductReviewsData } from "@/lib/reviews/types";
@@ -34,7 +35,7 @@ function buildBreadcrumbs(material: MaterialDetail): BreadcrumbItem[] {
   if (material.section) {
     items.push({
       label: material.section.title,
-      href: getCatalogItemHref("section", material.section.slug),
+      href: getPreferredSectionPageHref(material.section.slug),
     });
   }
 
@@ -55,6 +56,7 @@ function MaterialSidebar({
       <MaterialAccessCard {...accessCardProps} />
       <MaterialTableOfContents
         chapters={material.chapters}
+        h1Headings={material.h1Headings}
         isPreview={material.isPreview}
         anchorBaseHref={
           material.hasFullAccess ? getMaterialReadHref(material.slug) : undefined
@@ -139,6 +141,7 @@ export function MaterialDetailView({
         <div className="flex flex-col gap-6 lg:hidden">
           <MaterialTableOfContents
             chapters={material.chapters}
+            h1Headings={material.h1Headings}
             isPreview={material.isPreview}
             anchorBaseHref={
               material.hasFullAccess ? getMaterialReadHref(material.slug) : undefined

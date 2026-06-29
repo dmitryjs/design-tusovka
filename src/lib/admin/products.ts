@@ -11,6 +11,11 @@ import {
   chaptersToMaterialBlocks,
   materialBlocksToJson,
 } from "@/lib/content/material-blocks";
+import {
+  isPublishedCatalogSectionSlug,
+  resolveSectionCatalogSlug,
+  resolveSectionDisplayTitle,
+} from "@/lib/catalog/section-pages";
 import type {
   AdminMutationResult,
   AdminProductDetail,
@@ -463,15 +468,34 @@ export async function listAdminSectionOptions(): Promise<
 
   const { data, error } = await admin
     .from("products")
-    .select("id, title")
+    .select("id, slug, title")
     .eq("kind", "section")
+    .eq("status", "published")
     .order("title");
 
   if (error) {
     throw new Error(error.message);
   }
 
-  return data ?? [];
+  const options = new Map<string, { id: string; title: string }>();
+
+  for (const row of data ?? []) {
+    const catalogSlug = resolveSectionCatalogSlug(row.slug);
+    if (!isPublishedCatalogSectionSlug(catalogSlug)) {
+      continue;
+    }
+
+    const title = resolveSectionDisplayTitle(row.slug, row.title);
+    const existing = options.get(catalogSlug);
+
+    if (!existing || row.slug === catalogSlug) {
+      options.set(catalogSlug, { id: row.id, title });
+    }
+  }
+
+  return [...options.values()].sort((left, right) =>
+    left.title.localeCompare(right.title, "ru"),
+  );
 }
 
 export async function listAdminTagOptions(): Promise<

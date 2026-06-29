@@ -7,6 +7,7 @@ import { jsonbToParagraphs, jsonbToStringList } from "./content";
 import {
   isAllowedSectionSlug,
   resolveSectionCatalogSlug,
+  resolveSectionDisplayTitle,
   resolveSectionPageConfig,
   resolveSectionPriceKopecks,
 } from "./section-pages";
@@ -39,6 +40,12 @@ export type MaterialDetail = {
   coverPath: string | null;
   updatedAt: string | null;
   chapters: MaterialChapterView[];
+  h1Headings: Array<{
+    id: string;
+    blockId: string;
+    level: 1;
+    title: string;
+  }>;
   hasFullAccess: boolean;
   isPreview: boolean;
 };
@@ -207,10 +214,28 @@ export async function getMaterialBySlug(
       if (sectionProduct) {
         section = {
           slug: sectionProduct.slug,
-          title: sectionProduct.title,
+          title: resolveSectionDisplayTitle(sectionProduct.slug, sectionProduct.title),
         };
       }
     }
+
+    const { data: h1Outline, error: h1OutlineError } = await supabase.rpc(
+      "get_material_h1_outline",
+      {
+        p_material_product_id: product.id,
+      },
+    );
+
+    if (h1OutlineError) {
+      console.error("get_material_h1_outline failed:", h1OutlineError.message);
+    }
+
+    const h1Headings = (h1Outline ?? []).map((row) => ({
+      id: row.anchor_id,
+      blockId: row.anchor_id.replace(/^block-/, ""),
+      level: 1 as const,
+      title: row.title,
+    }));
 
     const { data: toc, error: tocError } = await supabase.rpc("get_material_toc", {
       p_material_product_id: product.id,
@@ -271,6 +296,7 @@ export async function getMaterialBySlug(
         coverPath: product.cover_path,
         updatedAt: product.updated_at,
         chapters,
+        h1Headings,
         hasFullAccess,
         isPreview: !hasFullAccess,
       },
@@ -419,21 +445,31 @@ export async function getSectionBySlug(
     const catalogSlug = resolveSectionCatalogSlug(requestedSlug);
     const supabase = createSupabaseAnonServerClient();
 
-    const { data: product, error: productError } = await supabase
+    const { data: sectionProducts, error: sectionProductsError } = await supabase
       .from("products")
       .select("id, slug, title, description, price_kopecks, cover_path")
-      .eq("slug", catalogSlug)
       .eq("kind", "section")
-      .eq("status", "published")
-      .maybeSingle();
+      .eq("status", "published");
 
-    if (productError) {
-      return { data: null, error: productError.message };
+    if (sectionProductsError) {
+      return { data: null, error: sectionProductsError.message };
     }
+
+    const matchingProducts = (sectionProducts ?? []).filter(
+      (row) => resolveSectionCatalogSlug(row.slug) === catalogSlug,
+    );
+
+    const product =
+      matchingProducts.find((row) => row.slug === catalogSlug) ??
+      matchingProducts.find((row) => row.slug === requestedSlug) ??
+      matchingProducts[0] ??
+      null;
 
     if (!product) {
       return { data: null, error: null };
     }
+
+    const sectionProductIds = matchingProducts.map((row) => row.id);
 
     const { data: section, error: sectionError } = await supabase
       .from("sections")
@@ -467,7 +503,7 @@ export async function getSectionBySlug(
         )
       `,
       )
-      .eq("section_product_id", product.id)
+      .in("section_product_id", sectionProductIds)
       .eq("products.status", "published");
 
     if (materialsError) {

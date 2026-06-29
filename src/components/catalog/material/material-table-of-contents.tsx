@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 
 type MaterialTableOfContentsProps = {
   chapters: MaterialChapterView[];
+  h1Headings?: MaterialHeadingAnchor[];
   isPreview: boolean;
   /** Пустая строка — якоря на текущей странице; путь — якоря на странице чтения */
   anchorBaseHref?: string;
@@ -26,39 +27,21 @@ function resolveAnchorHref(anchorId: string, anchorBaseHref?: string): string | 
   return `${anchorBaseHref}#${anchorId}`;
 }
 
-function headingIndentClass(level: MaterialHeadingAnchor["level"]): string {
-  if (level === 2) {
-    return "pl-8";
-  }
-
-  if (level === 3) {
-    return "pl-11";
-  }
-
-  return "";
-}
-
 function HeadingTocItem({
   heading,
   sectionNumber,
   href,
 }: {
   heading: MaterialHeadingAnchor;
-  sectionNumber: number | null;
+  sectionNumber: number;
   href: string | null;
 }) {
-  const isSubsection = heading.level !== 1;
-  const itemClassName = cn(
-    "flex items-start gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors",
-    headingIndentClass(heading.level),
-    isSubsection ? "text-neutral-500" : "text-foreground",
-  );
+  const itemClassName =
+    "flex items-start gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground transition-colors";
 
   const content = (
     <>
-      {sectionNumber !== null ? (
-        <span className="w-5 shrink-0 tabular-nums text-neutral-400">{sectionNumber}</span>
-      ) : null}
+      <span className="w-5 shrink-0 tabular-nums text-neutral-400">{sectionNumber}</span>
       <span className="leading-5">{heading.title}</span>
     </>
   );
@@ -77,13 +60,29 @@ function HeadingTocItem({
   return <div className={itemClassName}>{content}</div>;
 }
 
+function resolveH1Headings(
+  chapters: MaterialChapterView[],
+  h1Headings?: MaterialHeadingAnchor[],
+): MaterialHeadingAnchor[] {
+  const fromContent = extractHeadingAnchors(collectBlocksFromChapters(chapters)).filter(
+    (heading) => heading.level === 1,
+  );
+
+  if (fromContent.length > 0) {
+    return fromContent;
+  }
+
+  return h1Headings ?? [];
+}
+
 export function MaterialTableOfContents({
   chapters,
+  h1Headings,
   isPreview,
   anchorBaseHref,
   className,
 }: MaterialTableOfContentsProps) {
-  const headings = extractHeadingAnchors(collectBlocksFromChapters(chapters));
+  const headings = resolveH1Headings(chapters, h1Headings);
 
   if (chapters.length === 0) {
     return (
@@ -91,7 +90,7 @@ export function MaterialTableOfContents({
         <h2 className="text-base font-semibold text-foreground">Содержание</h2>
         <CatalogEmptyPanel
           title="Содержание пока не добавлено"
-          description="Добавьте блоки H1–H3 в контент материала."
+          description="Добавьте блоки H1 в контент материала."
         />
       </section>
     );
@@ -107,33 +106,24 @@ export function MaterialTableOfContents({
           <p className="text-sm text-neutral-500">
             {headings.length}{" "}
             {headings.length === 1
-              ? "заголовок"
+              ? "раздел"
               : headings.length < 5
-                ? "заголовка"
-                : "заголовков"}
+                ? "раздела"
+                : "разделов"}
             {isPreview ? " · доступны только названия" : null}
           </p>
         </div>
 
         <ul className="flex flex-col gap-1 rounded-xl border border-neutral-200 bg-white p-2">
-          {(() => {
-            let sectionNumber = 0;
-
-            return headings.map((heading) => {
-              const currentSectionNumber =
-                heading.level === 1 ? ++sectionNumber : null;
-
-              return (
-                <li key={heading.blockId}>
-                  <HeadingTocItem
-                    heading={heading}
-                    sectionNumber={currentSectionNumber}
-                    href={linkable ? resolveAnchorHref(heading.id, anchorBaseHref) : null}
-                  />
-                </li>
-              );
-            });
-          })()}
+          {headings.map((heading, index) => (
+            <li key={heading.blockId}>
+              <HeadingTocItem
+                heading={heading}
+                sectionNumber={index + 1}
+                href={linkable ? resolveAnchorHref(heading.id, anchorBaseHref) : null}
+              />
+            </li>
+          ))}
         </ul>
       </section>
     );

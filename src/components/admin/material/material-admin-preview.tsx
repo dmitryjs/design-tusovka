@@ -81,6 +81,7 @@ export function MaterialAdminPreview({
               <aside className="hidden flex-col gap-6 lg:flex lg:self-start">
                 <MaterialTableOfContents
                   chapters={material.chapters}
+                  h1Headings={material.h1Headings}
                   isPreview={false}
                   anchorBaseHref=""
                 />

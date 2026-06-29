@@ -119,6 +119,36 @@ export function resolveSectionPageConfig(
   return null;
 }
 
+export function getSectionCatalogSlugCandidates(catalogSlug: string): string[] {
+  const slugs = new Set<string>([catalogSlug]);
+
+  for (const page of SECTION_PAGES) {
+    if (page.catalogSlug === catalogSlug) {
+      slugs.add(page.pageSlug);
+    }
+  }
+
+  return [...slugs];
+}
+
+export function resolveSectionDisplayTitle(
+  sectionSlug: string,
+  dbTitle?: string | null,
+): string {
+  const catalogSlug = resolveSectionCatalogSlug(sectionSlug);
+  const byPageSlug = SECTION_PAGES.find((page) => page.pageSlug === sectionSlug);
+  if (byPageSlug) {
+    return byPageSlug.heroTitle;
+  }
+
+  const byCatalog = SECTION_PAGES.find((page) => page.catalogSlug === catalogSlug);
+  if (byCatalog) {
+    return byCatalog.heroTitle;
+  }
+
+  return dbTitle?.trim() || catalogSlug;
+}
+
 export function resolveSectionPriceKopecks(
   dbPriceKopecks: number,
   pageConfig: SectionPageConfig | null,
@@ -139,8 +169,12 @@ export function getSectionPageHref(pageSlug: string): string {
   return getCatalogItemHref("section", pageSlug);
 }
 
-export function getPreferredSectionPageHref(catalogSlug: string): string {
-  return getSectionPageHref(getPreferredSectionPageSlug(catalogSlug));
+export function getPreferredSectionPageHref(sectionSlug: string): string {
+  if (PAGE_BY_SLUG.has(sectionSlug)) {
+    return getSectionPageHref(sectionSlug);
+  }
+
+  return getSectionPageHref(getPreferredSectionPageSlug(resolveSectionCatalogSlug(sectionSlug)));
 }
 
 export function buildHomeSectionCards(_items?: unknown): Array<{

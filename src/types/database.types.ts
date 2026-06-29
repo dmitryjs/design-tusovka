@@ -669,6 +669,14 @@ export type Database = {
       create_pending_order_from_cart: { Args: Record<PropertyKey, never>; Returns: Json }
       delete_my_product_review: { Args: { p_product_id: string }; Returns: Json }
       fulfill_paid_order: { Args: { p_order_id: string }; Returns: Json }
+      get_material_h1_outline: {
+        Args: { p_material_product_id: string }
+        Returns: {
+          anchor_id: string
+          sort_order: number
+          title: string
+        }[]
+      }
       get_material_toc: {
         Args: { p_material_product_id: string }
         Returns: {
