@@ -1,7 +1,6 @@
+import { MaterialBlockRenderer } from "@/components/content/material-block-renderer";
 import type { MaterialChapterContentSource } from "@/lib/content/material-reading";
 import { collectBlocksFromChapters } from "@/lib/content/material-reading";
-
-import { MaterialBlockRenderer } from "@/components/content/material-block-renderer";
 
 type MaterialReadingContentProps = {
   chapters: MaterialChapterContentSource[];

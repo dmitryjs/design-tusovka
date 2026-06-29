@@ -7,6 +7,7 @@ import { CheckedListMarker } from "@/components/content/checked-list-marker";
 import { Button, buttonVariants } from "@/components/ui/button";
 import type { MaterialBlock } from "@/lib/content/material-blocks";
 import { getMaterialBlockAnchorId } from "@/lib/content/material-reading";
+import { materialBodyType, calloutLayout } from "@/lib/catalog/material-typography";
 import { RichTextContent } from "@/lib/content/rich-text-content";
 import { normalizeTableRows } from "@/lib/content/table-utils";
 import { cn } from "@/lib/utils";
@@ -45,7 +46,7 @@ function Callout({
   } as const;
 
   const body = (
-    <div className="flex gap-3">
+    <div className={calloutLayout.body}>
       <CalloutIcon icon={icon} className={cn("mt-0.5", iconToneClass[variant])} />
       <div className="min-w-0 flex-1">
         {title ? (
@@ -57,7 +58,7 @@ function Callout({
           <RichTextContent
             as="p"
             html={text}
-            className={cn("text-sm leading-6", title && "mt-1")}
+            className={cn(materialBodyType, title && calloutLayout.titleToText)}
           />
         ) : null}
       </div>
@@ -65,10 +66,10 @@ function Callout({
   );
 
   if (renderVariant === "reading") {
-    return <div className={cn("rounded-lg px-3 py-2", styles[variant])}>{body}</div>;
+    return <div className={cn(calloutLayout.reading, styles[variant])}>{body}</div>;
   }
 
-  return <div className={cn("rounded-xl border px-4 py-4 sm:px-5", styles[variant])}>{body}</div>;
+  return <div className={cn(calloutLayout.default, styles[variant])}>{body}</div>;
 }
 
 function MaterialBlockItem({
@@ -130,14 +131,15 @@ function MaterialBlockItem({
         <RichTextContent
           as="p"
           html={block.data.text}
-          className="whitespace-pre-wrap text-sm leading-6 text-neutral-700"
+          className={cn("whitespace-pre-wrap text-neutral-700", materialBodyType)}
         />
       );
     case "bulleted_list":
       return (
         <ul
           className={cn(
-            "text-sm leading-6 text-neutral-700",
+            "text-neutral-700",
+            materialBodyType,
             isReading ? "space-y-1 pl-5" : "list-disc space-y-2 pl-5",
           )}
         >
@@ -152,7 +154,8 @@ function MaterialBlockItem({
       return (
         <ol
           className={cn(
-            "text-sm leading-6 text-neutral-700",
+            "text-neutral-700",
+            materialBodyType,
             isReading ? "space-y-1 pl-5" : "list-decimal space-y-2 pl-5",
           )}
         >
@@ -165,7 +168,7 @@ function MaterialBlockItem({
       );
     case "checklist":
       return (
-        <ul className={cn("text-sm leading-6 text-neutral-700", isReading ? "space-y-1" : "space-y-2")}>
+        <ul className={cn("text-neutral-700", materialBodyType, isReading ? "space-y-1" : "space-y-2")}>
           {block.data.items.map((item) => (
             <li key={item.id} className="flex items-start gap-2">
               <span aria-hidden>{item.checked ? "☑" : "☐"}</span>
@@ -178,7 +181,8 @@ function MaterialBlockItem({
       return (
         <ul
           className={cn(
-            "text-sm leading-6 text-neutral-700",
+            "text-neutral-700",
+            materialBodyType,
             isReading ? "space-y-2" : "space-y-2.5",
           )}
         >
@@ -194,13 +198,16 @@ function MaterialBlockItem({
       return (
         <blockquote
           className={cn(
-            "border-l-4 border-primary bg-blue-50 px-4 py-3 text-sm leading-6 text-primary",
+            "border-l-4 border-primary bg-blue-50 px-4 py-3 text-primary",
+            materialBodyType,
             isReading ? "rounded-r-lg" : "rounded-r-xl py-4",
           )}
         >
           <RichTextContent as="p" html={block.data.text} />
           {block.data.author ? (
-            <footer className="mt-2 text-primary/70">— {block.data.author}</footer>
+            <footer className={cn("mt-2 text-primary/70", materialBodyType)}>
+              — {block.data.author}
+            </footer>
           ) : null}
         </blockquote>
       );
@@ -245,7 +252,7 @@ function MaterialBlockItem({
       const rows = normalizeTableRows(block.data.rows);
       return (
         <div className="overflow-x-auto">
-          <table className="min-w-full border-collapse text-sm">
+          <table className={cn("min-w-full border-collapse", materialBodyType)}>
             <tbody>
               {rows.map((row, rowIndex) => (
                 <tr key={rowIndex}>
@@ -392,15 +399,9 @@ export function MaterialBlockRenderer({
   }
 
   return (
-    <div
-      className={cn(
-        "flex flex-col",
-        variant === "reading" ? "gap-0.5" : "gap-6",
-        className,
-      )}
-    >
+    <div className={cn("flex flex-col gap-6", className)}>
       {blocks.map((block) => (
-        <div key={block.id} className={variant === "reading" ? "py-0.5" : undefined}>
+        <div key={block.id}>
           <MaterialBlockItem block={block} variant={variant} />
         </div>
       ))}
