@@ -1,4 +1,4 @@
--- Apply on Supabase Cloud SQL editor to restore H2/H3 in material preview TOC.
+-- Extend material heading outline RPC to include H2 and H3 for preview TOC.
 
 create or replace function public.get_material_h1_outline(p_material_product_id uuid)
 returns table (

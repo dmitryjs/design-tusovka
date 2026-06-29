@@ -764,7 +764,8 @@ create or replace function public.get_material_h1_outline (p_material_product_id
 returns table (
   anchor_id text,
   title text,
-  sort_order integer
+  sort_order integer,
+  level smallint
 )
 language sql
 stable
@@ -776,7 +777,13 @@ as $$
     trim(
       regexp_replace(coalesce(elem.block->'data'->>'text', ''), '<[^>]+>', '', 'g')
     ) as title,
-    (row_number() over (order by elem.chapter_position, elem.block_ord))::integer - 1 as sort_order
+    (row_number() over (order by elem.chapter_position, elem.block_ord))::integer - 1 as sort_order,
+    case elem.block->>'type'
+      when 'heading1' then 1
+      when 'heading2' then 2
+      when 'heading3' then 3
+      else 1
+    end::smallint as level
   from (
     select
       mc.position as chapter_position,
@@ -795,7 +802,7 @@ as $$
       and p.status = 'published'::public.product_status
       and p.kind = 'material'::public.product_kind
   ) elem
-  where elem.block->>'type' = 'heading1'
+  where elem.block->>'type' in ('heading1', 'heading2', 'heading3')
     and trim(
       regexp_replace(coalesce(elem.block->'data'->>'text', ''), '<[^>]+>', '', 'g')
     ) <> ''
@@ -803,7 +810,7 @@ as $$
 $$;
 
 comment on function public.get_material_h1_outline (uuid) is
-  'Returns H1 headings for a published material without exposing full chapter content.';
+  'Returns H1–H3 headings for a published material without exposing full chapter content.';
 
 grant execute on function public.get_material_h1_outline (uuid) to anon, authenticated;
 

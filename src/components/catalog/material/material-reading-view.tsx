@@ -73,10 +73,9 @@ export function MaterialReadingView({
 }: MaterialReadingViewProps) {
   const signInReturnPath = `${getCatalogItemHref("material", material.slug)}/read`;
   const blocks = collectBlocksFromChapters(material.chapters);
+  const headingsFromContent = extractHeadingAnchors(blocks);
   const headings =
-    material.h1Headings.length > 0
-      ? material.h1Headings
-      : extractHeadingAnchors(blocks).filter((heading) => heading.level === 1);
+    headingsFromContent.length > 0 ? headingsFromContent : material.h1Headings;
   const pdfAttachment = findPdfAttachment(blocks);
   const showActions = canShowMaterialReadingActions(
     material.priceKopecks,

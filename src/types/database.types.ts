@@ -673,6 +673,7 @@ export type Database = {
         Args: { p_material_product_id: string }
         Returns: {
           anchor_id: string
+          level: number
           sort_order: number
           title: string
         }[]

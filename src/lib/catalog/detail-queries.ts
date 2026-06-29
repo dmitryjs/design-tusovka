@@ -43,7 +43,7 @@ export type MaterialDetail = {
   h1Headings: Array<{
     id: string;
     blockId: string;
-    level: 1;
+    level: 1 | 2 | 3;
     title: string;
   }>;
   hasFullAccess: boolean;
@@ -233,7 +233,7 @@ export async function getMaterialBySlug(
     const h1Headings = (h1Outline ?? []).map((row) => ({
       id: row.anchor_id,
       blockId: row.anchor_id.replace(/^block-/, ""),
-      level: 1 as const,
+      level: (row.level === 2 ? 2 : row.level === 3 ? 3 : 1) as 1 | 2 | 3,
       title: row.title,
     }));
 
