@@ -189,4 +189,9 @@
     letter-spacing: 0.02em;
     text-wrap: pretty;
   }
+
+  .notion-rich-text :where(div, p) {
+    margin: 0;
+    background-color: transparent;
+  }
 }

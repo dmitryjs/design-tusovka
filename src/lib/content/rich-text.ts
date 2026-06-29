@@ -13,8 +13,66 @@ const ALLOWED_TAGS = new Set([
 
 const ALLOWED_LINK_PROTOCOLS = ["http:", "https:", "mailto:"];
 
+function shouldStripBackgroundColor(raw: string): boolean {
+  const value = raw.trim().toLowerCase();
+
+  if (
+    !value ||
+    value === "transparent" ||
+    value === "inherit" ||
+    value === "initial" ||
+    value === "unset" ||
+    value === "none" ||
+    value === "white" ||
+    value === "#fff" ||
+    value === "#ffffff" ||
+    value === "rgb(255, 255, 255)" ||
+    value === "rgba(255, 255, 255, 1)" ||
+    value === "rgb(255,255,255)" ||
+    value === "rgba(255,255,255,1)"
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+function cleanInlineStyle(style: string): string {
+  const parts = style
+    .split(";")
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  const kept: string[] = [];
+
+  for (const part of parts) {
+    const colonIndex = part.indexOf(":");
+    if (colonIndex === -1) {
+      continue;
+    }
+
+    const property = part.slice(0, colonIndex).trim().toLowerCase();
+    const rawValue = part.slice(colonIndex + 1).trim();
+
+    if (property === "background-color" || property === "background") {
+      if (shouldStripBackgroundColor(rawValue)) {
+        continue;
+      }
+    }
+
+    kept.push(`${property}: ${rawValue}`);
+  }
+
+  return kept.join("; ");
+}
+
 function isAllowedStyle(style: string): boolean {
-  const parts = style.split(";").map((part) => part.trim().toLowerCase());
+  const cleaned = cleanInlineStyle(style);
+  if (!cleaned) {
+    return false;
+  }
+
+  const parts = cleaned.split(";").map((part) => part.trim().toLowerCase());
   return parts.every((part) => {
     if (!part) {
       return true;
@@ -60,8 +118,9 @@ function sanitizeAttributes(tag: string, attrs: string): string {
   if (tag === "span") {
     const styleMatch = attrs.match(/\bstyle\s*=\s*("([^"]*)"|'([^']*)')/i);
     const style = styleMatch?.[2] ?? styleMatch?.[3] ?? "";
-    if (style && isAllowedStyle(style)) {
-      return ` style="${style.replace(/"/g, "&quot;")}"`;
+    const cleaned = style ? cleanInlineStyle(style) : "";
+    if (cleaned && isAllowedStyle(cleaned)) {
+      return ` style="${cleaned.replace(/"/g, "&quot;")}"`;
     }
   }
 
@@ -153,8 +212,13 @@ function sanitizeRichHtmlDom(html: string): string {
 
       if (element.tagName === "SPAN") {
         const style = element.getAttribute("style");
-        if (style && !isAllowedStyle(style)) {
-          element.removeAttribute("style");
+        if (style) {
+          const cleaned = cleanInlineStyle(style);
+          if (cleaned && isAllowedStyle(cleaned)) {
+            element.setAttribute("style", cleaned);
+          } else {
+            element.removeAttribute("style");
+          }
         }
       }
 

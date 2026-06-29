@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 
-import { normalizeRichTextValue, richTextToPlainText } from "@/lib/content/rich-text";
+import { normalizeRichTextValue, richTextToPlainText, sanitizeRichHtml } from "@/lib/content/rich-text";
 import { RICH_TEXT_FORMAT_CLASS } from "@/lib/content/rich-text-content";
 import { cn } from "@/lib/utils";
 
@@ -42,6 +42,14 @@ export function RichTextField({
   const lastHtmlRef = useRef<string | null>(null);
 
   useEffect(() => {
+    try {
+      document.execCommand("defaultParagraphSeparator", false, "br");
+    } catch {
+      // execCommand may be unavailable in some environments
+    }
+  }, []);
+
+  useEffect(() => {
     const node = ref.current;
     if (!node) {
       return;
@@ -56,7 +64,7 @@ export function RichTextField({
       return;
     }
 
-    node.innerHTML = normalizeRichTextValue(value);
+    node.innerHTML = sanitizeRichHtml(normalizeRichTextValue(value));
     lastHtmlRef.current = value;
   }, [ref, value]);
 
@@ -87,6 +95,19 @@ export function RichTextField({
         suppressContentEditableWarning
         data-placeholder={placeholder}
         onFocus={() => onFocus?.()}
+        onBlur={() => {
+          const node = ref.current;
+          if (!node) {
+            return;
+          }
+
+          const cleaned = sanitizeRichHtml(node.innerHTML);
+          if (cleaned !== node.innerHTML) {
+            node.innerHTML = cleaned;
+            lastHtmlRef.current = cleaned;
+            onChange(cleaned);
+          }
+        }}
         onInput={() => {
           const html = ref.current?.innerHTML ?? "";
           lastHtmlRef.current = html;

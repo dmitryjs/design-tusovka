@@ -33,7 +33,7 @@ function updateData<T extends MaterialBlockType>(
 }
 
 const bareField =
-  "w-full resize-none border-0 bg-transparent p-0 shadow-none outline-none focus:ring-0 placeholder:text-neutral-300";
+  "w-full resize-none appearance-none border-0 bg-transparent p-0 shadow-none outline-none [background-color:transparent] focus:ring-0 placeholder:text-neutral-300";
 
 type MaterialNotionBlockContentProps = {
   block: MaterialBlock;
