@@ -2,6 +2,7 @@ import type { Json } from "@/types/database.types";
 
 import type { MaterialDetail } from "@/lib/catalog/detail-queries";
 import { extractHeadingAnchors } from "@/lib/content/material-reading";
+import { isPersistableMaterialBlock } from "@/lib/content/material-blocks";
 import type { CatalogTag } from "@/lib/catalog/types";
 import type { AdminProductFormInput } from "@/lib/admin/types";
 
@@ -44,20 +45,7 @@ function resolveSection(
 }
 
 function filterContentBlocks(form: AdminProductFormInput) {
-  return form.contentBlocks.filter((block) => {
-    const data = block.data as Record<string, unknown>;
-    return Object.values(data).some((value) => {
-      if (typeof value === "string") {
-        return value.trim().length > 0;
-      }
-
-      if (Array.isArray(value)) {
-        return value.length > 0;
-      }
-
-      return false;
-    });
-  });
+  return form.contentBlocks.filter(isPersistableMaterialBlock);
 }
 
 export function buildAdminMaterialPreviewDetail(

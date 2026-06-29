@@ -6,6 +6,7 @@ import { CheckedListMarker } from "@/components/content/checked-list-marker";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import type { MaterialBlock } from "@/lib/content/material-blocks";
+import { materialBlockDividerClassName } from "@/lib/content/material-blocks";
 import { getMaterialBlockAnchorId } from "@/lib/content/material-reading";
 import { materialBodyType, calloutLayout } from "@/lib/catalog/material-typography";
 import { RichTextContent } from "@/lib/content/rich-text-content";
@@ -334,7 +335,7 @@ function MaterialBlockItem({
         />
       );
     case "divider":
-      return <hr className="border-neutral-200" />;
+      return <hr className={materialBlockDividerClassName} aria-hidden />;
     case "accordion":
       return (
         <details

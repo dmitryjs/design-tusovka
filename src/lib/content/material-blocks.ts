@@ -196,6 +196,28 @@ export function createMaterialBlock<T extends MaterialBlockType>(
   } as Extract<MaterialBlock, { type: T }>;
 }
 
+/** Blocks that should be kept on save even when `data` has no scalar fields (e.g. divider). */
+export function isPersistableMaterialBlock(block: MaterialBlock): boolean {
+  if (block.type === "divider") {
+    return true;
+  }
+
+  const data = block.data as Record<string, unknown>;
+  return Object.values(data).some((value) => {
+    if (typeof value === "string") {
+      return value.trim().length > 0;
+    }
+
+    if (Array.isArray(value)) {
+      return value.length > 0;
+    }
+
+    return false;
+  });
+}
+
+export const materialBlockDividerClassName = "border-0 border-t border-neutral-300";
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
@@ -223,11 +245,22 @@ export function parseMaterialBlocks(value: Json | unknown): MaterialBlock[] {
       continue;
     }
 
-    if (isBlockType(item.type) && isRecord(item.data)) {
+    if (isBlockType(item.type)) {
+      const data =
+        item.type === "divider"
+          ? {}
+          : isRecord(item.data)
+            ? item.data
+            : null;
+
+      if (data === null) {
+        continue;
+      }
+
       blocks.push({
         id: typeof item.id === "string" ? item.id : createId(),
         type: item.type,
-        data: item.data,
+        data,
       } as MaterialBlock);
       continue;
     }

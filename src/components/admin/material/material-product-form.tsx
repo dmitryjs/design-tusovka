@@ -12,7 +12,7 @@ import {
 import { AdminAlert } from "@/components/admin/admin-shell";
 import { AdminUnderlineTabs } from "@/components/admin/admin-underline-tabs";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { createMaterialBlock } from "@/lib/content/material-blocks";
+import { createMaterialBlock, isPersistableMaterialBlock } from "@/lib/content/material-blocks";
 import type { AdminProductFormInput } from "@/lib/admin/types";
 import { cn } from "@/lib/utils";
 
@@ -40,20 +40,7 @@ const TABS: Array<{ id: MaterialEditorTab; label: string }> = [
 ];
 
 function buildSubmitPayload(form: AdminProductFormInput): AdminProductFormInput {
-  const contentBlocks = form.contentBlocks.filter((block) => {
-    const data = block.data as Record<string, unknown>;
-    return Object.values(data).some((value) => {
-      if (typeof value === "string") {
-        return value.trim().length > 0;
-      }
-
-      if (Array.isArray(value)) {
-        return value.length > 0;
-      }
-
-      return false;
-    });
-  });
+  const contentBlocks = form.contentBlocks.filter(isPersistableMaterialBlock);
 
   return {
     ...form,
