@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { CheckedListMarker } from "@/components/content/checked-list-marker";
 import {
   createChecklistItem,
+  materialBlockDividerClassName,
   type ChecklistItem,
   type MaterialBlock,
   type MaterialBlockData,
@@ -15,6 +16,7 @@ import { cn } from "@/lib/utils";
 
 import { FileBlockEditor } from "./file-block-editor";
 import { CalloutIconPicker } from "./callout-icon-picker";
+import { CtaBlockEditor } from "./cta-block-editor";
 import { ImageBlockEditor } from "./image-block-editor";
 import { RichTextField } from "./rich-text-field";
 import { TableBlockEditor } from "./table-block-editor";
@@ -46,81 +48,6 @@ type MaterialNotionBlockContentProps = {
   onSlash?: () => void;
   inputRef?: React.RefObject<HTMLDivElement | null>;
 };
-
-function TextAreaBlock({
-  value,
-  onChange,
-  disabled,
-  placeholder,
-  className,
-  autoFocus,
-  onEnter,
-  onBackspaceEmpty,
-  onSlash,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  disabled?: boolean;
-  placeholder?: string;
-  className?: string;
-  autoFocus?: boolean;
-  onEnter?: () => void;
-  onBackspaceEmpty?: () => void;
-  onSlash?: () => void;
-}) {
-  const ref = useRef<HTMLTextAreaElement>(null);
-
-  useEffect(() => {
-    if (!autoFocus) {
-      return;
-    }
-
-    const node = ref.current;
-    if (!node) {
-      return;
-    }
-
-    node.focus();
-    const length = node.value.length;
-    node.setSelectionRange(length, length);
-    node.style.height = "auto";
-    node.style.height = `${node.scrollHeight}px`;
-  }, [autoFocus]);
-
-  return (
-    <textarea
-      ref={ref}
-      value={value}
-      disabled={disabled}
-      autoFocus={autoFocus}
-      rows={1}
-      placeholder={placeholder}
-      onChange={(event) => onChange(event.target.value)}
-      onInput={(event) => {
-        const target = event.currentTarget;
-        target.style.height = "auto";
-        target.style.height = `${target.scrollHeight}px`;
-      }}
-      onKeyDown={(event) => {
-        if (event.key === "Enter" && !event.shiftKey) {
-          event.preventDefault();
-          onEnter?.();
-        }
-
-        if (event.key === "Backspace" && value.length === 0) {
-          event.preventDefault();
-          onBackspaceEmpty?.();
-        }
-
-        if (event.key === "/" && value.length === 0) {
-          event.preventDefault();
-          onSlash?.();
-        }
-      }}
-      className={cn(bareField, className)}
-    />
-  );
-}
 
 function GhostInput({
   value,
@@ -367,7 +294,7 @@ export function MaterialNotionBlockContent({
         <CalloutEditor block={block} onChange={onChange} disabled={disabled} tone="success" />
       );
     case "divider":
-      return <hr className="border-neutral-200" />;
+      return <hr className={materialBlockDividerClassName} aria-hidden />;
     case "image":
       return <ImageBlockEditor block={block} disabled={disabled} onChange={onChange} />;
     case "file":
@@ -377,9 +304,16 @@ export function MaterialNotionBlockContent({
     case "video":
     case "embed":
     case "accordion":
-    case "cta":
       return (
         <ComplexBlockEditor block={block} onChange={onChange} disabled={disabled} />
+      );
+    case "cta":
+      return (
+        <CtaBlockEditor
+          block={block as Extract<MaterialBlock, { type: "cta" }>}
+          onChange={onChange}
+          disabled={disabled}
+        />
       );
     default:
       return null;
@@ -522,27 +456,6 @@ function ComplexBlockEditor({
           onChange={(text) => onChange(updateData(block, { text }))}
           disabled={disabled}
           placeholder="Содержимое"
-          className="text-sm leading-6"
-        />
-      </div>
-    );
-  }
-
-  if (block.type === "cta") {
-    return (
-      <div className="space-y-2 rounded-lg bg-blue-50 px-3 py-3">
-        <GhostInput
-          value={block.data.title}
-          onChange={(title) => onChange(updateData(block, { title }))}
-          disabled={disabled}
-          placeholder="Заголовок CTA"
-          className="font-semibold"
-        />
-        <TextAreaBlock
-          value={block.data.description}
-          onChange={(description) => onChange(updateData(block, { description }))}
-          disabled={disabled}
-          placeholder="Описание"
           className="text-sm leading-6"
         />
       </div>

@@ -8,12 +8,14 @@ import {
   createAdminProduct,
   deleteAdminProduct,
   deleteAdminProductsBulk,
+  listAdminPromoTargets,
   updateAdminProduct,
   type AdminBulkDeleteProductsResult,
 } from "@/lib/admin/products";
 import type {
   AdminMutationResult,
   AdminProductFormInput,
+  AdminPromoTargetOption,
 } from "@/lib/admin/types";
 import { getCatalogItemHref } from "@/lib/catalog/paths";
 
@@ -134,4 +136,27 @@ export async function deleteProductsBulkAction(
   }
 
   return result;
+}
+
+export async function searchPromoTargetsAction(
+  query?: string,
+): Promise<AdminPromoTargetOption[] | { error: string }> {
+  try {
+    await assertAdmin();
+  } catch (error) {
+    return {
+      error:
+        error instanceof Error && error.message === "FORBIDDEN"
+          ? "Нет прав администратора"
+          : "Требуется вход",
+    };
+  }
+
+  try {
+    return await listAdminPromoTargets(query);
+  } catch (loadError) {
+    return {
+      error: loadError instanceof Error ? loadError.message : "Не удалось загрузить материалы",
+    };
+  }
 }

@@ -1,4 +1,5 @@
 import type { Database } from "@/types/database.types";
+import type { CatalogItemKind } from "@/lib/catalog/types";
 import type { MaterialBlock } from "@/lib/content/material-blocks";
 
 export type ProductKind = Extract<
@@ -29,6 +30,17 @@ export type AdminProductFormInput = {
   contentBlocks: MaterialBlock[];
   taskBriefText: string;
   taskSubmissionText: string;
+};
+
+export type AdminPromoTargetOption = {
+  id: string;
+  slug: string;
+  kind: CatalogItemKind;
+  title: string;
+  description: string;
+  coverPath: string | null;
+  href: string;
+  materialFormat: Database["public"]["Enums"]["material_format"] | null;
 };
 
 export type AdminProductListItem = {

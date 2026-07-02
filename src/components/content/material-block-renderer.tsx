@@ -1,12 +1,12 @@
-import Link from "next/link";
 import { FileUp } from "lucide-react";
 
 import { CalloutIcon } from "@/components/content/callout-icon";
 import { CheckedListMarker } from "@/components/content/checked-list-marker";
 
-import { Button, buttonVariants } from "@/components/ui/button";
+import { MaterialCtaBanner } from "@/components/content/material-cta-banner";
 import type { MaterialBlock } from "@/lib/content/material-blocks";
 import { materialBlockDividerClassName } from "@/lib/content/material-blocks";
+import { normalizeCtaBlockData } from "@/lib/content/cta-block";
 import { getMaterialBlockAnchorId } from "@/lib/content/material-reading";
 import { materialBodyType, calloutLayout } from "@/lib/catalog/material-typography";
 import { RichTextContent } from "@/lib/content/rich-text-content";
@@ -354,37 +354,7 @@ function MaterialBlockItem({
         </details>
       );
     case "cta":
-      return (
-        <div className={cn("bg-blue-50 px-5 py-5", isReading ? "rounded-lg" : "rounded-xl border border-blue-100")}>
-          <h3 className="text-base font-semibold text-foreground">{block.data.title}</h3>
-          {block.data.description ? (
-            <p className="mt-2 text-sm leading-6 text-neutral-600">{block.data.description}</p>
-          ) : null}
-          <div className="mt-4 flex flex-wrap gap-2">
-            {block.data.primaryUrl ? (
-              <Link href={block.data.primaryUrl} className={buttonVariants()}>
-                {block.data.primaryLabel}
-              </Link>
-            ) : (
-              <Button disabled>{block.data.primaryLabel}</Button>
-            )}
-            {block.data.secondaryLabel ? (
-              block.data.secondaryUrl ? (
-                <Link
-                  href={block.data.secondaryUrl}
-                  className={buttonVariants({ variant: "outline" })}
-                >
-                  {block.data.secondaryLabel}
-                </Link>
-              ) : (
-                <Button variant="outline" disabled>
-                  {block.data.secondaryLabel}
-                </Button>
-              )
-            ) : null}
-          </div>
-        </div>
-      );
+      return <MaterialCtaBanner data={normalizeCtaBlockData(block.data)} />;
     default:
       return null;
   }

@@ -1,5 +1,11 @@
 import type { Json } from "@/types/database.types";
 
+import {
+  defaultCtaBlockData,
+  normalizeCtaBlockData,
+  type CtaBlockData,
+} from "@/lib/content/cta-block";
+
 export const MATERIAL_BLOCK_TYPES = [
   "heading1",
   "heading2",
@@ -51,14 +57,7 @@ export type MaterialBlockData = {
   callout_success: { title: string; text: string; icon?: string | null };
   divider: Record<string, never>;
   accordion: { title: string; text: string };
-  cta: {
-    title: string;
-    description: string;
-    primaryLabel: string;
-    primaryUrl: string;
-    secondaryLabel: string;
-    secondaryUrl: string;
-  };
+  cta: CtaBlockData;
 };
 
 export type MaterialBlock = {
@@ -103,7 +102,7 @@ export const MATERIAL_BLOCK_DEFINITIONS: MaterialBlockDefinition[] = [
   { type: "callout_success", label: "Успех", description: "Позитивный акцент", category: "layout", icon: "✓" },
   { type: "divider", label: "Разделитель", description: "Горизонтальная линия", category: "layout", icon: "—" },
   { type: "accordion", label: "Спойлер", description: "Сворачиваемый блок", category: "layout", icon: "⌄" },
-  { type: "cta", label: "CTA / Баннер", description: "Призыв к действию", category: "layout", icon: "→" },
+  { type: "cta", label: "Вставка материала", description: "Баннер с обложкой и ссылкой", category: "layout", icon: "→" },
 ];
 
 function createId(): string {
@@ -173,14 +172,7 @@ export function defaultBlockData(type: MaterialBlockType): MaterialBlockData[typ
     case "accordion":
       return { title: "Заголовок спойлера", text: "" };
     case "cta":
-      return {
-        title: "Готов продолжить?",
-        description: "Перейдите к следующему шагу или сохраните материал.",
-        primaryLabel: "Перейти",
-        primaryUrl: "",
-        secondaryLabel: "Сохранить",
-        secondaryUrl: "",
-      };
+      return defaultCtaBlockData();
     default:
       return { text: "" } as MaterialBlockData[typeof type];
   }
@@ -247,11 +239,13 @@ export function parseMaterialBlocks(value: Json | unknown): MaterialBlock[] {
 
     if (isBlockType(item.type)) {
       const data =
-        item.type === "divider"
-          ? {}
-          : isRecord(item.data)
-            ? item.data
-            : null;
+        item.type === "cta"
+          ? normalizeCtaBlockData(item.data)
+          : item.type === "divider"
+            ? {}
+            : isRecord(item.data)
+              ? item.data
+              : null;
 
       if (data === null) {
         continue;
