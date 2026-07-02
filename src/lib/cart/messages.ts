@@ -5,6 +5,7 @@ const MESSAGES: Record<CartMutationCode, string> = {
   already_in_cart: "Товар уже в корзине.",
   removed: "Товар удалён из корзины.",
   created: "Заказ создан.",
+  cancelled: "Заказ отменён. Товары возвращены в корзину.",
   unauthenticated: "Войдите в аккаунт, чтобы продолжить.",
   not_found: "Товар не найден.",
   free_product: "Бесплатные продукты получают через «Получить бесплатно».",
@@ -12,6 +13,8 @@ const MESSAGES: Record<CartMutationCode, string> = {
   unsupported_kind: "Этот тип продукта нельзя добавить в корзину.",
   empty_cart: "Корзина пуста.",
   product_unavailable: "Один из товаров больше недоступен.",
+  invalid_status: "Этот заказ нельзя отменить.",
+  payment_in_progress: "Оплата уже обрабатывается. Дождитесь результата или обратитесь в поддержку.",
   rpc_error: "Не удалось выполнить операцию. Попробуйте позже.",
 };
 

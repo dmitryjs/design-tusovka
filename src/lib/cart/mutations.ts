@@ -25,6 +25,7 @@ function parseCode(value: string | undefined): CartMutationCode {
     case "already_in_cart":
     case "removed":
     case "created":
+    case "cancelled":
     case "unauthenticated":
     case "not_found":
     case "free_product":
@@ -32,6 +33,8 @@ function parseCode(value: string | undefined): CartMutationCode {
     case "unsupported_kind":
     case "empty_cart":
     case "product_unavailable":
+    case "invalid_status":
+    case "payment_in_progress":
       return value;
     default:
       return "rpc_error";
@@ -98,6 +101,25 @@ export async function removeFromCart(
 export async function createPendingOrderFromCart(): Promise<CartMutationResult> {
   const supabase = await getAuthedClient();
   const { data, error } = await supabase.rpc("create_pending_order_from_cart");
+
+  return mapRpcResult(data as RpcPayload | null, error);
+}
+
+export async function cancelPendingOrder(orderId: string): Promise<CartMutationResult> {
+  const trimmed = orderId.trim();
+
+  if (!trimmed) {
+    return {
+      ok: false,
+      code: "not_found",
+      message: getCartMutationMessage("not_found"),
+    };
+  }
+
+  const supabase = await getAuthedClient();
+  const { data, error } = await supabase.rpc("cancel_pending_order", {
+    p_order_id: trimmed,
+  });
 
   return mapRpcResult(data as RpcPayload | null, error);
 }

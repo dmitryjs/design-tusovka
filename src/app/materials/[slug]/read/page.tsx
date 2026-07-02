@@ -16,7 +16,7 @@ type MaterialReadPageProps = {
 
 export default async function MaterialReadPage({ params }: MaterialReadPageProps) {
   const { slug } = await params;
-  const { data, error } = await getMaterialBySlug(slug);
+  const { data, error } = await getMaterialBySlug(slug, { includeChapterContent: true });
 
   if (error) {
     return <CatalogErrorState message={error} />;

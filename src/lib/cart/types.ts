@@ -12,6 +12,7 @@ export type CartMutationCode =
   | "already_in_cart"
   | "removed"
   | "created"
+  | "cancelled"
   | "unauthenticated"
   | "not_found"
   | "free_product"
@@ -19,6 +20,8 @@ export type CartMutationCode =
   | "unsupported_kind"
   | "empty_cart"
   | "product_unavailable"
+  | "invalid_status"
+  | "payment_in_progress"
   | "rpc_error";
 
 export type CartMutationResult = {

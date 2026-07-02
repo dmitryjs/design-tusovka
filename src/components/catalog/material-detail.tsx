@@ -12,12 +12,14 @@ import { MaterialMeta } from "@/components/catalog/material/material-meta";
 import { MaterialPreviewNotice } from "@/components/catalog/material/material-preview-notice";
 import { MaterialTableOfContents } from "@/components/catalog/material/material-table-of-contents";
 import { ProductReviewsSection } from "@/components/reviews/product-reviews-section";
+import { buttonVariants } from "@/components/ui/button";
 import type { MaterialDetail } from "@/lib/catalog/detail-queries";
 import { getCatalogItemHref, getMaterialReadHref } from "@/lib/catalog/paths";
 import { getPreferredSectionPageHref } from "@/lib/catalog/section-pages";
 import type { FreeProductClaimState } from "@/lib/entitlements/types";
 import type { PaidProductCartState } from "@/lib/cart/types";
 import type { ProductReviewsData } from "@/lib/reviews/types";
+import { cn } from "@/lib/utils";
 
 type MaterialDetailViewProps = {
   material: MaterialDetail;
@@ -111,15 +113,17 @@ export function MaterialDetailView({
 
             {material.hasFullAccess ? (
               <section className="rounded-xl border border-neutral-200 bg-white px-5 py-5">
-                <h2 className="text-lg font-semibold text-foreground">Текст материала</h2>
+                <h2 className="text-lg font-semibold text-foreground">Чтение материала</h2>
                 <p className="mt-2 text-sm leading-6 text-neutral-600">
-                  Полный контент открыт в режиме чтения с навигацией по заголовкам.
+                  {material.priceKopecks === 0
+                    ? "На этой странице — описание и содержание. Полный текст открывается в режиме чтения с навигацией по заголовкам."
+                    : "Полный контент открыт в режиме чтения с навигацией по заголовкам."}
                 </p>
                 <Link
                   href={getMaterialReadHref(material.slug)}
-                  className="mt-4 inline-flex text-sm font-medium text-primary hover:underline"
+                  className={cn(buttonVariants(), "mt-4 inline-flex")}
                 >
-                  Открыть чтение материала
+                  Читать материал
                 </Link>
               </section>
             ) : null}

@@ -666,6 +666,7 @@ export type Database = {
       add_to_cart: { Args: { p_slug: string }; Returns: Json }
       can_review_product: { Args: { p_product_id: string }; Returns: boolean }
       claim_free_product: { Args: { p_slug: string }; Returns: Json }
+      cancel_pending_order: { Args: { p_order_id: string }; Returns: Json }
       create_pending_order_from_cart: { Args: Record<PropertyKey, never>; Returns: Json }
       delete_my_product_review: { Args: { p_product_id: string }; Returns: Json }
       fulfill_paid_order: { Args: { p_order_id: string }; Returns: Json }

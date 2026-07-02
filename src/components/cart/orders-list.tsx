@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { PayOrderButton } from "@/components/payments/pay-order-button";
+import { PendingOrderActions } from "@/components/cart/pending-order-actions";
 import { CatalogEmptyPanel } from "@/components/catalog/catalog-detail-shell";
 import { getOrderStatusLabel } from "@/lib/cart/messages";
 import { formatPrice, getKindLabel } from "@/lib/catalog/format";
@@ -76,13 +76,7 @@ export function OrdersList({
           </ul>
           {order.status === "pending_payment" ? (
             <div className="mt-4 border-t border-neutral-200 pt-4">
-              {paymentsEnabled ? (
-                <PayOrderButton orderId={order.id} size="sm" />
-              ) : (
-                <p className="text-sm text-neutral-600">
-                  Платежи не настроены. Заказ сохранён — оплата будет доступна позже.
-                </p>
-              )}
+              <PendingOrderActions orderId={order.id} paymentsEnabled={paymentsEnabled} />
             </div>
           ) : null}
         </li>

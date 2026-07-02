@@ -148,7 +148,9 @@ export async function fetchTagsForProducts(
 
 export async function getMaterialBySlug(
   slug: string,
+  options?: { includeChapterContent?: boolean },
 ): Promise<DetailQueryResult<MaterialDetail>> {
+  const includeChapterContent = options?.includeChapterContent ?? false;
   try {
     const supabase = createSupabaseAnonServerClient();
 
@@ -248,7 +250,7 @@ export async function getMaterialBySlug(
     const chapters: MaterialChapterView[] = [];
     const contentByChapterId = new Map<string, { text: string; json: Json }>();
 
-    if (hasFullAccess) {
+    if (hasFullAccess && includeChapterContent) {
       const chaptersClient = isFree
         ? supabase
         : ((await createSupabaseServerClient()) as unknown as SupabaseClient<Database>);
@@ -277,8 +279,8 @@ export async function getMaterialBySlug(
         id: row.id,
         title: row.title,
         position: row.position,
-        contentText: hasFullAccess ? (content?.text ?? null) : null,
-        contentJson: hasFullAccess ? (content?.json ?? null) : null,
+        contentText: hasFullAccess && includeChapterContent ? (content?.text ?? null) : null,
+        contentJson: hasFullAccess && includeChapterContent ? (content?.json ?? null) : null,
       });
     }
 

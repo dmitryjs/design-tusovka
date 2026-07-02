@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import {
   addToCart,
+  cancelPendingOrder,
   createPendingOrderFromCart,
   removeFromCart,
 } from "@/lib/cart/mutations";
@@ -57,6 +58,18 @@ export async function removeFromCartAction(
 
 export async function createPendingOrderAction(): Promise<CartMutationResult> {
   const result = await createPendingOrderFromCart();
+
+  if (result.ok) {
+    revalidateCartPaths();
+  }
+
+  return result;
+}
+
+export async function cancelPendingOrderAction(
+  orderId: string,
+): Promise<CartMutationResult> {
+  const result = await cancelPendingOrder(orderId);
 
   if (result.ok) {
     revalidateCartPaths();
