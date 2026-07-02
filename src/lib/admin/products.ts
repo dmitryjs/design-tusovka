@@ -21,7 +21,9 @@ import type {
   AdminProductDetail,
   AdminProductFormInput,
   AdminProductListItem,
+  AdminPromoTargetOption,
 } from "./types";
+import { getCatalogItemHref } from "@/lib/catalog/paths";
 import {
   kopecksToRubles,
   publishedAtForStatus,
@@ -76,6 +78,66 @@ export async function listAdminProducts(): Promise<AdminProductListItem[]> {
       materialFormat: material?.format ?? null,
     };
   });
+}
+
+export async function listAdminPromoTargets(query?: string): Promise<AdminPromoTargetOption[]> {
+  const admin = getAdminClient();
+  const normalizedQuery = query?.trim().toLowerCase() ?? "";
+
+  const { data, error } = await admin
+    .from("products")
+    .select(
+      `
+      id,
+      title,
+      slug,
+      description,
+      kind,
+      status,
+      cover_path,
+      materials ( format )
+    `,
+    )
+    .eq("status", "published")
+    .in("kind", ["material", "task", "section"])
+    .order("title");
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const options = (data ?? [])
+    .map((row) => {
+      if (row.kind !== "material" && row.kind !== "task" && row.kind !== "section") {
+        return null;
+      }
+
+      const material = Array.isArray(row.materials) ? row.materials[0] : row.materials;
+
+      return {
+        id: row.id,
+        slug: row.slug,
+        kind: row.kind,
+        title: row.title,
+        description: row.description ?? "",
+        coverPath: row.cover_path,
+        href: getCatalogItemHref(row.kind, row.slug),
+        materialFormat: material?.format ?? null,
+      } satisfies AdminPromoTargetOption;
+    })
+    .filter((item): item is AdminPromoTargetOption => item !== null);
+
+  if (!normalizedQuery) {
+    return options.slice(0, 40);
+  }
+
+  return options
+    .filter(
+      (item) =>
+        item.title.toLowerCase().includes(normalizedQuery) ||
+        item.slug.toLowerCase().includes(normalizedQuery),
+    )
+    .slice(0, 40);
 }
 
 export async function getAdminProductDetail(
@@ -520,7 +582,7 @@ export type AdminBulkDeleteProductsResult = {
   failures: Array<{ id: string; message: string }>;
 };
 
-async function assertProductDeletable(
+async function getAdminProductForDeletion(
   admin: ReturnType<typeof getAdminClient>,
   productId: string,
 ): Promise<AdminMutationResult<{ slug: string; kind: "material" | "task" }>> {
@@ -539,37 +601,38 @@ async function assertProductDeletable(
     return { ok: false, error: "Продукт не найден" };
   }
 
-  const { count, error: orderError } = await admin
-    .from("order_items")
-    .select("*", { count: "exact", head: true })
-    .eq("product_id", productId);
-
-  if (orderError) {
-    return { ok: false, error: orderError.message };
-  }
-
-  if ((count ?? 0) > 0) {
-    return {
-      ok: false,
-      error:
-        "Нельзя удалить продукт из заказов. Установите статус «Скрыт», если нужно убрать с витрины.",
-    };
-  }
-
   return {
     ok: true,
     data: { slug: product.slug, kind: product.kind },
   };
 }
 
+async function purgeProductOrderItems(
+  admin: ReturnType<typeof getAdminClient>,
+  productId: string,
+): Promise<AdminMutationResult> {
+  const { error } = await admin.from("order_items").delete().eq("product_id", productId);
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  return { ok: true };
+}
+
 export async function deleteAdminProduct(
   productId: string,
 ): Promise<AdminMutationResult<{ slug: string; kind: "material" | "task" }>> {
   const admin = getAdminClient();
-  const check = await assertProductDeletable(admin, productId);
+  const check = await getAdminProductForDeletion(admin, productId);
 
   if (!check.ok || !check.data) {
     return { ok: false, error: check.error };
+  }
+
+  const purge = await purgeProductOrderItems(admin, productId);
+  if (!purge.ok) {
+    return { ok: false, error: purge.error };
   }
 
   const { error } = await admin.from("products").delete().eq("id", productId);
@@ -595,10 +658,16 @@ export async function deleteAdminProductsBulk(
   const failures: AdminBulkDeleteProductsResult["failures"] = [];
 
   for (const productId of uniqueIds) {
-    const check = await assertProductDeletable(admin, productId);
+    const check = await getAdminProductForDeletion(admin, productId);
 
     if (!check.ok || !check.data) {
       failures.push({ id: productId, message: check.error ?? "Не удалось удалить" });
+      continue;
+    }
+
+    const purge = await purgeProductOrderItems(admin, productId);
+    if (!purge.ok) {
+      failures.push({ id: productId, message: purge.error ?? "Не удалось удалить" });
       continue;
     }
 

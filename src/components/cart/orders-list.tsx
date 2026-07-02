@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { PendingOrderActions } from "@/components/cart/pending-order-actions";
+import { RemoveOrderButton } from "@/components/cart/remove-order-button";
 import { CatalogEmptyPanel } from "@/components/catalog/catalog-detail-shell";
 import { getOrderStatusLabel } from "@/lib/cart/messages";
 import { formatPrice, getKindLabel } from "@/lib/catalog/format";
@@ -77,6 +78,11 @@ export function OrdersList({
           {order.status === "pending_payment" ? (
             <div className="mt-4 border-t border-neutral-200 pt-4">
               <PendingOrderActions orderId={order.id} paymentsEnabled={paymentsEnabled} />
+            </div>
+          ) : null}
+          {order.status === "cancelled" || order.status === "failed" ? (
+            <div className="mt-4 border-t border-neutral-200 pt-4">
+              <RemoveOrderButton orderId={order.id} />
             </div>
           ) : null}
         </li>

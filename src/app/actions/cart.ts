@@ -6,6 +6,7 @@ import {
   addToCart,
   cancelPendingOrder,
   createPendingOrderFromCart,
+  deleteMyOrder,
   removeFromCart,
 } from "@/lib/cart/mutations";
 import type { CartMutationResult } from "@/lib/cart/types";
@@ -70,6 +71,16 @@ export async function cancelPendingOrderAction(
   orderId: string,
 ): Promise<CartMutationResult> {
   const result = await cancelPendingOrder(orderId);
+
+  if (result.ok) {
+    revalidateCartPaths();
+  }
+
+  return result;
+}
+
+export async function deleteMyOrderAction(orderId: string): Promise<CartMutationResult> {
+  const result = await deleteMyOrder(orderId);
 
   if (result.ok) {
     revalidateCartPaths();

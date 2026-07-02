@@ -13,6 +13,7 @@ export type CartMutationCode =
   | "removed"
   | "created"
   | "cancelled"
+  | "deleted"
   | "unauthenticated"
   | "not_found"
   | "free_product"

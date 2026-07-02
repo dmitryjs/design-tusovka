@@ -668,6 +668,7 @@ export type Database = {
       claim_free_product: { Args: { p_slug: string }; Returns: Json }
       cancel_pending_order: { Args: { p_order_id: string }; Returns: Json }
       create_pending_order_from_cart: { Args: Record<PropertyKey, never>; Returns: Json }
+      delete_my_order: { Args: { p_order_id: string }; Returns: Json }
       delete_my_product_review: { Args: { p_product_id: string }; Returns: Json }
       fulfill_paid_order: { Args: { p_order_id: string }; Returns: Json }
       get_material_h1_outline: {

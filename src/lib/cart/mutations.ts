@@ -26,6 +26,7 @@ function parseCode(value: string | undefined): CartMutationCode {
     case "removed":
     case "created":
     case "cancelled":
+    case "deleted":
     case "unauthenticated":
     case "not_found":
     case "free_product":
@@ -118,6 +119,25 @@ export async function cancelPendingOrder(orderId: string): Promise<CartMutationR
 
   const supabase = await getAuthedClient();
   const { data, error } = await supabase.rpc("cancel_pending_order", {
+    p_order_id: trimmed,
+  });
+
+  return mapRpcResult(data as RpcPayload | null, error);
+}
+
+export async function deleteMyOrder(orderId: string): Promise<CartMutationResult> {
+  const trimmed = orderId.trim();
+
+  if (!trimmed) {
+    return {
+      ok: false,
+      code: "not_found",
+      message: getCartMutationMessage("not_found"),
+    };
+  }
+
+  const supabase = await getAuthedClient();
+  const { data, error } = await supabase.rpc("delete_my_order", {
     p_order_id: trimmed,
   });
 

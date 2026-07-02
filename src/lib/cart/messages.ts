@@ -6,6 +6,7 @@ const MESSAGES: Record<CartMutationCode, string> = {
   removed: "Товар удалён из корзины.",
   created: "Заказ создан.",
   cancelled: "Заказ отменён. Товары возвращены в корзину.",
+  deleted: "Заказ удалён из списка.",
   unauthenticated: "Войдите в аккаунт, чтобы продолжить.",
   not_found: "Товар не найден.",
   free_product: "Бесплатные продукты получают через «Получить бесплатно».",
