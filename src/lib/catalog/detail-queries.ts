@@ -4,11 +4,11 @@ import { createSupabaseAnonServerClient, createSupabaseServerClient } from "@/li
 import type { Database, Json } from "@/types/database.types";
 
 import { jsonbToParagraphs, jsonbToStringList } from "./content";
+import { calculateSectionPriceKopecks } from "./section-pricing";
 import {
   resolveSectionCatalogSlug,
   resolveSectionDisplayTitle,
   resolveSectionPageConfig,
-  resolveSectionPriceKopecks,
 } from "./section-pages";
 import { getSectionCoverPath } from "./section-covers";
 import type { CatalogTag } from "./types";
@@ -83,6 +83,7 @@ export type SectionMaterialSummary = {
   priceKopecks: number;
   format: Database["public"]["Enums"]["material_format"];
   level: Database["public"]["Enums"]["designer_level"];
+  coverPath: string | null;
 };
 
 export type SectionStats = {
@@ -516,6 +517,7 @@ export async function getSectionBySlug(
           title,
           description,
           price_kopecks,
+          cover_path,
           status,
           kind
         )
@@ -545,6 +547,7 @@ export async function getSectionBySlug(
           priceKopecks: productRow.price_kopecks,
           format: row.format,
           level: row.level,
+          coverPath: productRow.cover_path,
         };
       })
       .filter((item): item is SectionMaterialSummary => item !== null)
@@ -561,7 +564,7 @@ export async function getSectionBySlug(
       product.cover_path ??
       pageConfig?.coverPath ??
       getSectionCoverPath(product.slug);
-    const priceKopecks = resolveSectionPriceKopecks(product.price_kopecks, pageConfig);
+    const priceKopecks = calculateSectionPriceKopecks(materials);
 
     const stats: SectionStats = {
       materialCount: materials.length,

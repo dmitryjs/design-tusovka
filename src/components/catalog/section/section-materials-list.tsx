@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Check, Lock } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
 import { CatalogEmptyPanel } from "@/components/catalog/catalog-detail-shell";
@@ -9,6 +10,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatPrice, getMaterialFormatLabel } from "@/lib/catalog/format";
 import { getCatalogItemHref } from "@/lib/catalog/paths";
+import {
+  getMaterialCoverPlaceholderClass,
+  resolveMaterialCoverUrl,
+} from "@/lib/catalog/material-cover";
 import {
   getSectionMaterialFormatBadgeClass,
   sectionMaterialsCountLabel,
@@ -20,11 +25,22 @@ const INITIAL_VISIBLE_COUNT = 6;
 
 type SectionMaterialsListProps = {
   materials: SectionMaterialSummary[];
+  hasSectionAccess?: boolean;
+  accessibleMaterialIds?: ReadonlySet<string>;
 };
 
-function MaterialRow({ material }: { material: SectionMaterialSummary }) {
+function MaterialRow({
+  material,
+  hasAccess,
+}: {
+  material: SectionMaterialSummary;
+  hasAccess: boolean;
+}) {
   const isFree = material.priceKopecks === 0;
+  const isUnlocked = isFree || hasAccess;
   const formatLabel = getMaterialFormatLabel(material.format);
+  const coverUrl = resolveMaterialCoverUrl(material.coverPath);
+  const placeholderClass = getMaterialCoverPlaceholderClass(material.format);
 
   return (
     <li>
@@ -34,12 +50,22 @@ function MaterialRow({ material }: { material: SectionMaterialSummary }) {
       >
         <div
           className={cn(
-            "flex size-14 shrink-0 items-center justify-center rounded-lg text-xs font-medium",
-            getSectionMaterialFormatBadgeClass(material.format),
+            "relative size-14 shrink-0 overflow-hidden rounded-lg",
+            !coverUrl && cn("flex items-center justify-center text-xs font-medium", placeholderClass),
           )}
           aria-hidden
         >
-          {formatLabel.slice(0, 1)}
+          {coverUrl ? (
+            <Image
+              src={coverUrl}
+              alt=""
+              fill
+              sizes="56px"
+              className="object-cover"
+            />
+          ) : (
+            formatLabel.slice(0, 1)
+          )}
         </div>
 
         <div className="min-w-0 flex-1">
@@ -62,10 +88,12 @@ function MaterialRow({ material }: { material: SectionMaterialSummary }) {
         </div>
 
         <div className="flex shrink-0 items-center gap-2 text-sm font-semibold">
-          {isFree ? (
+          {isUnlocked ? (
             <>
               <Check className="size-4 text-primary" aria-hidden />
-              <span className="text-primary">Бесплатно</span>
+              <span className={isFree ? "text-primary" : "text-foreground"}>
+                {isFree ? "Бесплатно" : formatPrice(material.priceKopecks)}
+              </span>
             </>
           ) : (
             <>
@@ -79,7 +107,11 @@ function MaterialRow({ material }: { material: SectionMaterialSummary }) {
   );
 }
 
-export function SectionMaterialsList({ materials }: SectionMaterialsListProps) {
+export function SectionMaterialsList({
+  materials,
+  hasSectionAccess = false,
+  accessibleMaterialIds,
+}: SectionMaterialsListProps) {
   const [showAll, setShowAll] = useState(false);
 
   const visibleMaterials = useMemo(
@@ -112,7 +144,13 @@ export function SectionMaterialsList({ materials }: SectionMaterialsListProps) {
 
       <ul className="flex flex-col gap-2">
         {visibleMaterials.map((material) => (
-          <MaterialRow key={material.id} material={material} />
+          <MaterialRow
+            key={material.id}
+            material={material}
+            hasAccess={
+              hasSectionAccess || Boolean(accessibleMaterialIds?.has(material.id))
+            }
+          />
         ))}
       </ul>
 

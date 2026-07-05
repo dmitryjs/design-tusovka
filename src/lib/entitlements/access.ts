@@ -38,3 +38,24 @@ export async function getFreeProductClaimState(
 
   return hasAccess ? "claimed" : "available";
 }
+
+export async function hasProductAccess(productId: string): Promise<boolean> {
+  const supabase = await getAuthedClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return false;
+  }
+
+  const { data: hasAccess, error } = await supabase.rpc("has_product_access", {
+    product_id: productId,
+  });
+
+  if (error) {
+    return false;
+  }
+
+  return Boolean(hasAccess);
+}

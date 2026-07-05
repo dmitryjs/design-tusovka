@@ -4,6 +4,7 @@ import { CatalogErrorState } from "@/components/catalog/catalog-states";
 import { SectionDetailView } from "@/components/catalog/section/section-detail-view";
 import { getPaidProductCartState } from "@/lib/cart/access";
 import { getSectionBySlug } from "@/lib/catalog/detail-queries";
+import { hasProductAccess } from "@/lib/entitlements/access";
 import { getProductReviewsData } from "@/lib/reviews/queries";
 
 export const dynamic = "force-dynamic";
@@ -25,6 +26,19 @@ export default async function SectionPage({ params }: SectionPageProps) {
   }
 
   const reviewsData = await getProductReviewsData(data.id);
+  const hasSectionAccess = await hasProductAccess(data.id);
+  const accessibleMaterialIds = new Set<string>();
+
+  if (!hasSectionAccess) {
+    await Promise.all(
+      data.materials.map(async (material) => {
+        if (material.priceKopecks > 0 && (await hasProductAccess(material.id))) {
+          accessibleMaterialIds.add(material.id);
+        }
+      }),
+    );
+  }
+
   const cartState = await getPaidProductCartState(data.id, data.priceKopecks);
 
   return (
@@ -32,6 +46,8 @@ export default async function SectionPage({ params }: SectionPageProps) {
       section={data}
       reviewsData={reviewsData}
       cartState={cartState}
+      hasSectionAccess={hasSectionAccess}
+      accessibleMaterialIds={[...accessibleMaterialIds]}
     />
   );
 }

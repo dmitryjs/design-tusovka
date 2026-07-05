@@ -17,6 +17,8 @@ type SectionDetailViewProps = {
   section: SectionDetail;
   reviewsData: ProductReviewsData;
   cartState: PaidProductCartState;
+  hasSectionAccess?: boolean;
+  accessibleMaterialIds?: string[];
 };
 
 function buildBreadcrumbs(section: SectionDetail): BreadcrumbItem[] {
@@ -31,7 +33,10 @@ export function SectionDetailView({
   section,
   reviewsData,
   cartState,
+  hasSectionAccess = false,
+  accessibleMaterialIds = [],
 }: SectionDetailViewProps) {
+  const unlockedMaterialIds = new Set(accessibleMaterialIds);
   const signInReturnPath = getSectionPageHref(section.pageSlug);
 
   return (
@@ -57,7 +62,11 @@ export function SectionDetailView({
             </div>
 
             <SectionRoadmapFromSection section={section} />
-            <SectionMaterialsList materials={section.materials} />
+            <SectionMaterialsList
+              materials={section.materials}
+              hasSectionAccess={hasSectionAccess}
+              accessibleMaterialIds={unlockedMaterialIds}
+            />
 
             <ProductReviewsSection
               productId={section.id}

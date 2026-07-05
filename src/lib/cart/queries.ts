@@ -6,6 +6,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database.types";
 
 import type { CartItemView } from "./types";
+import { calculateSectionPriceKopecks } from "@/lib/catalog/section-pricing";
 
 type ServerSupabase = Awaited<ReturnType<typeof createSupabaseServerClient>>;
 
@@ -31,6 +32,46 @@ type CartRow = {
       | null;
   };
 };
+
+async function resolveSectionPricesForCart(
+  client: SupabaseClient<Database>,
+  sectionProductIds: string[],
+): Promise<Map<string, number>> {
+  if (!sectionProductIds.length) {
+    return new Map();
+  }
+
+  const { data, error } = await client
+    .from("materials")
+    .select("section_product_id, products!inner(price_kopecks, status)")
+    .in("section_product_id", sectionProductIds)
+    .eq("products.status", "published");
+
+  if (error) {
+    return new Map();
+  }
+
+  const materialsBySection = new Map<string, Array<{ priceKopecks: number }>>();
+
+  for (const row of data ?? []) {
+    const product = firstOrNull(row.products);
+    if (!product) {
+      continue;
+    }
+
+    const list = materialsBySection.get(row.section_product_id) ?? [];
+    list.push({ priceKopecks: product.price_kopecks });
+    materialsBySection.set(row.section_product_id, list);
+  }
+
+  const prices = new Map<string, number>();
+
+  for (const [sectionProductId, materials] of materialsBySection) {
+    prices.set(sectionProductId, calculateSectionPriceKopecks(materials));
+  }
+
+  return prices;
+}
 
 function firstOrNull<T>(value: T | T[] | null | undefined): T | null {
   if (!value) {
@@ -89,9 +130,16 @@ export async function getCart(
     return { items: [], error: error.message };
   }
 
+  const rows = (data as CartRow[] | null) ?? [];
+  const sectionProductIds = rows
+    .map((row) => row.products)
+    .filter((product) => product?.kind === "section")
+    .map((product) => product!.id);
+  const sectionPrices = await resolveSectionPricesForCart(client, sectionProductIds);
+
   const items: CartItemView[] = [];
 
-  for (const row of (data as CartRow[] | null) ?? []) {
+  for (const row of rows) {
     const product = row.products;
 
     if (
@@ -99,9 +147,17 @@ export async function getCart(
       product.status !== "published" ||
       (product.kind !== "material" &&
         product.kind !== "task" &&
-        product.kind !== "section") ||
-      product.price_kopecks <= 0
+        product.kind !== "section")
     ) {
+      continue;
+    }
+
+    const priceKopecks =
+      product.kind === "section"
+        ? (sectionPrices.get(product.id) ?? 0)
+        : product.price_kopecks;
+
+    if (priceKopecks <= 0) {
       continue;
     }
 
@@ -115,7 +171,7 @@ export async function getCart(
       title: product.title,
       description: product.description,
       kind: product.kind,
-      priceKopecks: product.price_kopecks,
+      priceKopecks,
       createdAt: row.created_at,
       coverPath: product.cover_path,
       materialFormat: material?.format,
