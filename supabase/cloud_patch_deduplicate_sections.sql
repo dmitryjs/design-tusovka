@@ -1,5 +1,6 @@
 -- Patch: deduplicate section products (merge legacy slugs into canonical sections).
 -- Safe to re-run. Run in Supabase SQL Editor after cloud_bootstrap + dev_seed.
+-- Skips optional tables (product_reviews, cart_items, order_items, …) if not deployed yet.
 
 insert into public.products (id, kind, status, slug, title, description, price_kopecks, published_at)
 values
@@ -151,6 +152,12 @@ declare
   rec record;
   v_dup_id uuid;
   v_canon_id uuid;
+  v_has_section_updates boolean := to_regclass('public.section_updates') is not null;
+  v_has_section_update_materials boolean := to_regclass('public.section_update_materials') is not null;
+  v_has_entitlements boolean := to_regclass('public.entitlements') is not null;
+  v_has_cart_items boolean := to_regclass('public.cart_items') is not null;
+  v_has_product_reviews boolean := to_regclass('public.product_reviews') is not null;
+  v_has_order_items boolean := to_regclass('public.order_items') is not null;
 begin
   for rec in
     select r.duplicate_slug, r.canonical_slug
@@ -178,87 +185,100 @@ begin
         updated_at = now()
     where section_product_id = v_dup_id;
 
-    delete from public.section_update_materials sum
-    using public.section_updates su_dup, public.section_updates su_canon
-    where sum.section_update_product_id = su_dup.product_id
-      and su_dup.section_product_id = v_dup_id
-      and su_canon.section_product_id = v_canon_id
-      and su_canon.release_number = su_dup.release_number
-      and exists (
-        select 1
-        from public.section_update_materials sum2
-        where sum2.section_update_product_id = su_canon.product_id
-          and sum2.material_product_id = sum.material_product_id
-      );
+    if v_has_section_updates and v_has_section_update_materials then
+      delete from public.section_update_materials sum
+      using public.section_updates su_dup, public.section_updates su_canon
+      where sum.section_update_product_id = su_dup.product_id
+        and su_dup.section_product_id = v_dup_id
+        and su_canon.section_product_id = v_canon_id
+        and su_canon.release_number = su_dup.release_number
+        and exists (
+          select 1
+          from public.section_update_materials sum2
+          where sum2.section_update_product_id = su_canon.product_id
+            and sum2.material_product_id = sum.material_product_id
+        );
 
-    update public.section_updates
-    set section_product_id = v_canon_id,
-        updated_at = now()
-    where section_product_id = v_dup_id
-      and not exists (
-        select 1
-        from public.section_updates su2
-        where su2.section_product_id = v_canon_id
-          and su2.release_number = section_updates.release_number
-      );
+      update public.section_updates
+      set section_product_id = v_canon_id,
+          updated_at = now()
+      where section_product_id = v_dup_id
+        and not exists (
+          select 1
+          from public.section_updates su2
+          where su2.section_product_id = v_canon_id
+            and su2.release_number = section_updates.release_number
+        );
 
-    delete from public.section_updates
-    where section_product_id = v_dup_id;
+      delete from public.section_updates
+      where section_product_id = v_dup_id;
+    elsif v_has_section_updates then
+      delete from public.section_updates
+      where section_product_id = v_dup_id;
+    end if;
 
-    delete from public.entitlements e_dup
-    where e_dup.product_id = v_dup_id
-      and exists (
-        select 1
-        from public.entitlements e_canon
-        where e_canon.user_id = e_dup.user_id
-          and e_canon.product_id = v_canon_id
-          and e_canon.source_type = e_dup.source_type
-          and e_canon.source_id = e_dup.source_id
-      );
+    if v_has_entitlements then
+      delete from public.entitlements e_dup
+      where e_dup.product_id = v_dup_id
+        and exists (
+          select 1
+          from public.entitlements e_canon
+          where e_canon.user_id = e_dup.user_id
+            and e_canon.product_id = v_canon_id
+            and e_canon.source_type = e_dup.source_type
+            and e_canon.source_id = e_dup.source_id
+        );
 
-    update public.entitlements
-    set product_id = v_canon_id
-    where product_id = v_dup_id;
+      update public.entitlements
+      set product_id = v_canon_id
+      where product_id = v_dup_id;
+    end if;
 
-    delete from public.cart_items c_dup
-    where c_dup.product_id = v_dup_id
-      and exists (
-        select 1
-        from public.cart_items c_canon
-        where c_canon.user_id = c_dup.user_id
-          and c_canon.product_id = v_canon_id
-      );
+    if v_has_cart_items then
+      delete from public.cart_items c_dup
+      where c_dup.product_id = v_dup_id
+        and exists (
+          select 1
+          from public.cart_items c_canon
+          where c_canon.user_id = c_dup.user_id
+            and c_canon.product_id = v_canon_id
+        );
 
-    update public.cart_items
-    set product_id = v_canon_id
-    where product_id = v_dup_id;
+      update public.cart_items
+      set product_id = v_canon_id
+      where product_id = v_dup_id;
+    end if;
 
-    delete from public.product_reviews r_dup
-    where r_dup.product_id = v_dup_id
-      and exists (
-        select 1
-        from public.product_reviews r_canon
-        where r_canon.user_id = r_dup.user_id
-          and r_canon.product_id = v_canon_id
-      );
+    if v_has_product_reviews then
+      delete from public.product_reviews r_dup
+      where r_dup.product_id = v_dup_id
+        and exists (
+          select 1
+          from public.product_reviews r_canon
+          where r_canon.user_id = r_dup.user_id
+            and r_canon.product_id = v_canon_id
+        );
 
-    update public.product_reviews
-    set product_id = v_canon_id,
-        updated_at = now()
-    where product_id = v_dup_id;
+      update public.product_reviews
+      set product_id = v_canon_id,
+          updated_at = now()
+      where product_id = v_dup_id;
+    end if;
 
-    delete from public.order_items oi_dup
-    where oi_dup.product_id = v_dup_id
-      and exists (
-        select 1
-        from public.order_items oi_canon
-        where oi_canon.order_id = oi_dup.order_id
-          and oi_canon.product_id = v_canon_id
-      );
+    if v_has_order_items then
+      delete from public.order_items oi_dup
+      where oi_dup.product_id = v_dup_id
+        and exists (
+          select 1
+          from public.order_items oi_canon
+          where oi_canon.order_id = oi_dup.order_id
+            and oi_canon.product_id = v_canon_id
+        );
 
-    update public.order_items
-    set product_id = v_canon_id
-    where product_id = v_dup_id;
+      update public.order_items
+      set product_id = v_canon_id
+      where product_id = v_dup_id;
+    end if;
 
     delete from public.products
     where id = v_dup_id
