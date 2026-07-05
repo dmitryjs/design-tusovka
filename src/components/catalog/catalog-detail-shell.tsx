@@ -249,10 +249,10 @@ export function CatalogDetailFooterCta() {
   return (
     <div className="border-t border-neutral-200 pt-8">
       <Link
-        href="/catalog"
+        href="/#materials"
         className={cn(buttonVariants({ variant: "secondary" }), "w-full sm:w-auto")}
       >
-        Вернуться в каталог
+        Вернуться к материалам
       </Link>
     </div>
   );

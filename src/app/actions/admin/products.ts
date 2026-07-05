@@ -24,7 +24,7 @@ function revalidateCatalogPaths(
   slug: string,
 ) {
   revalidatePath("/");
-  revalidatePath("/catalog");
+  revalidatePath("/");
   revalidatePath("/tasks");
   revalidatePath(getCatalogItemHref(kind, slug));
 }

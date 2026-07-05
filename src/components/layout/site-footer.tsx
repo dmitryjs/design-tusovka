@@ -20,9 +20,8 @@ const LEGAL_LINKS = [
 ] as const;
 
 const PLATFORM_LINKS = [
-  { href: "/catalog", label: "Материалы" },
+  { href: "/#materials", label: "Материалы" },
   { href: "/tasks", label: "Задания" },
-  { href: "/catalog", label: "Разделы" },
   { href: "/profile", label: "Моя библиотека" },
 ] as const;
 

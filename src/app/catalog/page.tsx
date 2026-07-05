@@ -1,7 +1,4 @@
-import { CatalogPage } from "@/components/catalog/catalog-page";
-import { getCatalogItems } from "@/lib/catalog/queries";
-
-export const dynamic = "force-dynamic";
+import { redirect } from "next/navigation";
 
 type CatalogRouteProps = {
   searchParams: Promise<{ q?: string }>;
@@ -9,13 +6,7 @@ type CatalogRouteProps = {
 
 export default async function CatalogRoute({ searchParams }: CatalogRouteProps) {
   const { q } = await searchParams;
-  const { items, error } = await getCatalogItems();
+  const query = q?.trim();
 
-  return (
-    <CatalogPage
-      initialItems={items}
-      initialQuery={q ?? ""}
-      error={error}
-    />
-  );
+  redirect(query ? `/?q=${encodeURIComponent(query)}` : "/");
 }

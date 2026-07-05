@@ -20,5 +20,3 @@ export function getSectionCoverPath(slug: string): string | null {
 export function formatSectionRating(rating: number): string {
   return Math.min(5, Math.max(0, rating)).toFixed(1);
 }
-
-export { buildHomeSectionCards } from "@/lib/catalog/section-pages";

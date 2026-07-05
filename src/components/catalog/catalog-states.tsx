@@ -20,7 +20,7 @@ export function CatalogErrorState({
         <Breadcrumbs
           items={[
             { label: "Главная", href: "/" },
-            { label: "Каталог", href: "/catalog" },
+            { label: "Материалы", href: "/#materials" },
             { label: "Ошибка" },
           ]}
         />
@@ -32,13 +32,13 @@ export function CatalogErrorState({
             {message}
           </p>
           <Link
-            href="/catalog"
+            href="/#materials"
             className={cn(
               buttonVariants({ variant: "secondary" }),
               "mt-6 inline-flex w-full sm:w-auto",
             )}
           >
-            Вернуться в каталог
+            Вернуться к материалам
           </Link>
         </div>
       </div>
@@ -53,7 +53,7 @@ export function CatalogNotFoundState() {
         <Breadcrumbs
           items={[
             { label: "Главная", href: "/" },
-            { label: "Каталог", href: "/catalog" },
+            { label: "Материалы", href: "/#materials" },
             { label: "Не найдено" },
           ]}
         />
@@ -65,13 +65,13 @@ export function CatalogNotFoundState() {
             Возможно, материал снят с публикации или ссылка устарела.
           </p>
           <Link
-            href="/catalog"
+            href="/#materials"
             className={cn(
               buttonVariants({ variant: "secondary" }),
               "mt-6 inline-flex w-full sm:w-auto",
             )}
           >
-            Вернуться в каталог
+            Вернуться к материалам
           </Link>
         </div>
       </div>

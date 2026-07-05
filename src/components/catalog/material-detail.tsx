@@ -31,7 +31,7 @@ type MaterialDetailViewProps = {
 function buildBreadcrumbs(material: MaterialDetail): BreadcrumbItem[] {
   const items: BreadcrumbItem[] = [
     { label: "Главная", href: "/" },
-    { label: "Материалы", href: "/catalog" },
+    { label: "Материалы", href: "/#materials" },
   ];
 
   if (material.section) {

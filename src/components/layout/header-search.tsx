@@ -21,7 +21,7 @@ export function HeaderSearch({ className }: HeaderSearchProps) {
 
   function submitSearch() {
     const trimmed = value.trim();
-    const searchPath = pathname.startsWith("/tasks") ? "/tasks" : "/catalog";
+    const searchPath = pathname.startsWith("/tasks") ? "/tasks" : "/";
 
     if (!trimmed) {
       if (pathname === searchPath) {

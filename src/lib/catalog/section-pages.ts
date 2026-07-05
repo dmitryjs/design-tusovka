@@ -1,4 +1,6 @@
 import { getCatalogItemHref } from "@/lib/catalog/paths";
+import { buildVisibleSectionCards } from "@/lib/catalog/section-cards";
+import type { CatalogItem } from "@/lib/catalog/types";
 
 export type SectionPageConfig = {
   pageSlug: string;
@@ -135,6 +137,10 @@ export function resolveSectionDisplayTitle(
   sectionSlug: string,
   dbTitle?: string | null,
 ): string {
+  if (dbTitle?.trim()) {
+    return dbTitle.trim();
+  }
+
   const catalogSlug = resolveSectionCatalogSlug(sectionSlug);
   const byPageSlug = SECTION_PAGES.find((page) => page.pageSlug === sectionSlug);
   if (byPageSlug) {
@@ -146,7 +152,7 @@ export function resolveSectionDisplayTitle(
     return byCatalog.heroTitle;
   }
 
-  return dbTitle?.trim() || catalogSlug;
+  return catalogSlug;
 }
 
 export function resolveSectionPriceKopecks(
@@ -170,27 +176,19 @@ export function getSectionPageHref(pageSlug: string): string {
 }
 
 export function getPreferredSectionPageHref(sectionSlug: string): string {
-  if (PAGE_BY_SLUG.has(sectionSlug)) {
-    return getSectionPageHref(sectionSlug);
-  }
-
-  return getSectionPageHref(getPreferredSectionPageSlug(resolveSectionCatalogSlug(sectionSlug)));
+  return getSectionPageHref(sectionSlug);
 }
 
-export function buildHomeSectionCards(_items?: unknown): Array<{
+export function buildHomeSectionCards(items: CatalogItem[]): Array<{
   slug: string;
   cardTitleLines: readonly string[];
   coverPath: string;
   href: string;
 }> {
-  return SECTION_PAGES.map((page) => ({
-    slug: page.pageSlug,
-    cardTitleLines: page.cardTitleLines,
-    coverPath: page.coverPath,
-    href: getSectionPageHref(page.pageSlug),
-  }));
+  return buildVisibleSectionCards(items);
 }
 
+/** @deprecated Используйте isVisibleCatalogSection из section-visibility */
 export function isPublishedCatalogSectionSlug(catalogSlug: string): boolean {
   return ALLOWED_CATALOG_SLUGS.has(catalogSlug);
 }

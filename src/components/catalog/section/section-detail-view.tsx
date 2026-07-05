@@ -22,7 +22,7 @@ type SectionDetailViewProps = {
 function buildBreadcrumbs(section: SectionDetail): BreadcrumbItem[] {
   return [
     { label: "Главная", href: "/" },
-    { label: "Разделы", href: "/catalog" },
+    { label: "Разделы", href: "/#sections" },
     { label: section.title },
   ];
 }

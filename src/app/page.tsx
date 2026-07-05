@@ -4,7 +4,12 @@ import { getCatalogItems } from "@/lib/catalog/queries";
 
 export const dynamic = "force-dynamic";
 
-export default async function Home() {
+type HomeProps = {
+  searchParams: Promise<{ q?: string }>;
+};
+
+export default async function Home({ searchParams }: HomeProps) {
+  const { q } = await searchParams;
   const { items, error } = await getCatalogItems();
 
   if (error) {
@@ -20,5 +25,5 @@ export default async function Home() {
     );
   }
 
-  return <HomePage items={items} />;
+  return <HomePage items={items} initialQuery={q ?? ""} />;
 }

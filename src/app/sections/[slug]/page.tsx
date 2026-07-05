@@ -1,13 +1,9 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 
 import { CatalogErrorState } from "@/components/catalog/catalog-states";
 import { SectionDetailView } from "@/components/catalog/section/section-detail-view";
 import { getPaidProductCartState } from "@/lib/cart/access";
 import { getSectionBySlug } from "@/lib/catalog/detail-queries";
-import {
-  getPreferredSectionPageSlug,
-  getSectionPageHref,
-} from "@/lib/catalog/section-pages";
 import { getProductReviewsData } from "@/lib/reviews/queries";
 
 export const dynamic = "force-dynamic";
@@ -26,11 +22,6 @@ export default async function SectionPage({ params }: SectionPageProps) {
 
   if (!data) {
     notFound();
-  }
-
-  const preferredSlug = getPreferredSectionPageSlug(data.catalogSlug);
-  if (slug === data.catalogSlug && slug !== preferredSlug) {
-    redirect(getSectionPageHref(preferredSlug));
   }
 
   const reviewsData = await getProductReviewsData(data.id);

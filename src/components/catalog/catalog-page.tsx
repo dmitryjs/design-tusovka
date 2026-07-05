@@ -19,8 +19,8 @@ import {
   isCatalogMaterial,
   resultCountLabel,
 } from "@/lib/catalog/catalog-filters";
-import { buildHomeSectionCards } from "@/lib/catalog/section-covers";
-import { isPublishedCatalogSectionSlug } from "@/lib/catalog/section-pages";
+import { buildVisibleSectionCards } from "@/lib/catalog/section-cards";
+import { filterVisibleCatalogSections } from "@/lib/catalog/section-visibility";
 import type { CatalogFiltersState, CatalogItem } from "@/lib/catalog/types";
 
 type CatalogPageProps = {
@@ -35,7 +35,7 @@ export function CatalogPage({
   error,
 }: CatalogPageProps) {
   const sectionCards = useMemo(
-    () => buildHomeSectionCards(initialItems),
+    () => buildVisibleSectionCards(initialItems),
     [initialItems],
   );
 
@@ -45,10 +45,7 @@ export function CatalogPage({
   );
 
   const catalogSections = useMemo(
-    () =>
-      initialItems.filter(
-        (item) => item.kind === "section" && isPublishedCatalogSectionSlug(item.slug),
-      ),
+    () => filterVisibleCatalogSections(initialItems),
     [initialItems],
   );
 

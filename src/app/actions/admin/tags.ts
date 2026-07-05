@@ -24,7 +24,7 @@ export async function createTagAction(
 
   if (result.ok) {
     revalidatePath("/admin/tags");
-    revalidatePath("/catalog");
+    revalidatePath("/");
   }
 
   return result;
@@ -44,7 +44,7 @@ export async function updateTagAction(
 
   if (result.ok) {
     revalidatePath("/admin/tags");
-    revalidatePath("/catalog");
+    revalidatePath("/");
   }
 
   return result;
@@ -64,7 +64,7 @@ export async function findOrCreateTagByNameAction(
   if (result.ok) {
     revalidatePath("/admin/tags");
     revalidatePath("/admin/products");
-    revalidatePath("/catalog");
+    revalidatePath("/");
   }
 
   return result;

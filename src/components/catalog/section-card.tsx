@@ -3,11 +3,12 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { materialCountLabel } from "@/lib/catalog/format";
-import { getPreferredSectionPageHref, isPublishedCatalogSectionSlug } from "@/lib/catalog/section-pages";
+import { getPreferredSectionPageHref } from "@/lib/catalog/section-pages";
 import {
   formatSectionRating,
   getSectionCoverPath,
 } from "@/lib/catalog/section-covers";
+import { isVisibleCatalogSection } from "@/lib/catalog/section-visibility";
 import type { CatalogItem } from "@/lib/catalog/types";
 import { cn } from "@/lib/utils";
 
@@ -18,7 +19,7 @@ type SectionCardProps = {
 };
 
 export function SectionCard({ section, coverPath, className }: SectionCardProps) {
-  if (!isPublishedCatalogSectionSlug(section.slug)) {
+  if (!isVisibleCatalogSection(section)) {
     return null;
   }
 

@@ -5,7 +5,6 @@ import type { Database, Json } from "@/types/database.types";
 
 import { jsonbToParagraphs, jsonbToStringList } from "./content";
 import {
-  isAllowedSectionSlug,
   resolveSectionCatalogSlug,
   resolveSectionDisplayTitle,
   resolveSectionPageConfig,
@@ -214,10 +213,29 @@ export async function getMaterialBySlug(
         .maybeSingle();
 
       if (sectionProduct) {
-        section = {
-          slug: sectionProduct.slug,
-          title: resolveSectionDisplayTitle(sectionProduct.slug, sectionProduct.title),
-        };
+        const { count: sectionMaterialCount, error: sectionMaterialCountError } =
+          await supabase
+            .from("materials")
+            .select("product_id, products!inner(status)", {
+              count: "exact",
+              head: true,
+            })
+            .eq("section_product_id", material.section_product_id)
+            .eq("products.status", "published");
+
+        if (sectionMaterialCountError) {
+          return { data: null, error: sectionMaterialCountError.message };
+        }
+
+        if ((sectionMaterialCount ?? 0) > 0) {
+          section = {
+            slug: sectionProduct.slug,
+            title: resolveSectionDisplayTitle(
+              sectionProduct.slug,
+              sectionProduct.title,
+            ),
+          };
+        }
       }
     }
 
@@ -440,38 +458,36 @@ export async function getSectionBySlug(
   requestedSlug: string,
 ): Promise<DetailQueryResult<SectionDetail>> {
   try {
-    if (!isAllowedSectionSlug(requestedSlug)) {
-      return { data: null, error: null };
-    }
-
-    const catalogSlug = resolveSectionCatalogSlug(requestedSlug);
     const supabase = createSupabaseAnonServerClient();
 
-    const { data: sectionProducts, error: sectionProductsError } = await supabase
-      .from("products")
-      .select("id, slug, title, description, price_kopecks, cover_path")
-      .eq("kind", "section")
-      .eq("status", "published");
+    async function loadPublishedSection(slug: string) {
+      const { data, error } = await supabase
+        .from("products")
+        .select("id, slug, title, description, price_kopecks, cover_path")
+        .eq("kind", "section")
+        .eq("status", "published")
+        .eq("slug", slug)
+        .maybeSingle();
 
-    if (sectionProductsError) {
-      return { data: null, error: sectionProductsError.message };
+      if (error) {
+        throw error;
+      }
+
+      return data;
     }
 
-    const matchingProducts = (sectionProducts ?? []).filter(
-      (row) => resolveSectionCatalogSlug(row.slug) === catalogSlug,
-    );
+    let product = await loadPublishedSection(requestedSlug);
 
-    const product =
-      matchingProducts.find((row) => row.slug === catalogSlug) ??
-      matchingProducts.find((row) => row.slug === requestedSlug) ??
-      matchingProducts[0] ??
-      null;
+    if (!product) {
+      const legacyCatalogSlug = resolveSectionCatalogSlug(requestedSlug);
+      if (legacyCatalogSlug !== requestedSlug) {
+        product = await loadPublishedSection(legacyCatalogSlug);
+      }
+    }
 
     if (!product) {
       return { data: null, error: null };
     }
-
-    const sectionProductIds = matchingProducts.map((row) => row.id);
 
     const { data: section, error: sectionError } = await supabase
       .from("sections")
@@ -505,7 +521,7 @@ export async function getSectionBySlug(
         )
       `,
       )
-      .in("section_product_id", sectionProductIds)
+      .eq("section_product_id", product.id)
       .eq("products.status", "published");
 
     if (materialsError) {
@@ -534,14 +550,17 @@ export async function getSectionBySlug(
       .filter((item): item is SectionMaterialSummary => item !== null)
       .sort((a, b) => a.title.localeCompare(b.title, "ru"));
 
-    const pageConfig = resolveSectionPageConfig(requestedSlug, catalogSlug);
-    const pageSlug = pageConfig?.pageSlug ?? requestedSlug;
-    const displayTitle = pageConfig?.heroTitle ?? product.title;
-    const displayDescription = pageConfig?.heroDescription ?? product.description;
+    if (materials.length === 0) {
+      return { data: null, error: null };
+    }
+
+    const pageConfig = resolveSectionPageConfig(product.slug, product.slug);
+    const displayTitle = resolveSectionDisplayTitle(product.slug, product.title);
+    const displayDescription = product.description || pageConfig?.heroDescription || "";
     const coverPath =
-      pageConfig?.coverPath ??
       product.cover_path ??
-      getSectionCoverPath(catalogSlug);
+      pageConfig?.coverPath ??
+      getSectionCoverPath(product.slug);
     const priceKopecks = resolveSectionPriceKopecks(product.price_kopecks, pageConfig);
 
     const stats: SectionStats = {
@@ -556,9 +575,9 @@ export async function getSectionBySlug(
     return {
       data: {
         id: product.id,
-        pageSlug,
-        catalogSlug,
-        slug: pageSlug,
+        pageSlug: product.slug,
+        catalogSlug: product.slug,
+        slug: product.slug,
         title: displayTitle,
         description: displayDescription,
         priceKopecks,

@@ -20,7 +20,7 @@ export function HomeHeroBanner() {
           </div>
 
           <Link
-            href="/catalog"
+            href="#materials"
             className={cn(buttonVariants({ size: "lg" }), "text-sm font-normal")}
           >
             Смотреть материалы

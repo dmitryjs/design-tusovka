@@ -5,21 +5,16 @@ export type NavItem = {
 
 export const MAIN_NAV: NavItem[] = [
   { href: "/", label: "Главная" },
-  { href: "/catalog", label: "Каталог" },
   { href: "/tasks", label: "Задания" },
   { href: "/profile", label: "Моя библиотека" },
 ];
 
 export function isNavItemActive(href: string, pathname: string): boolean {
   if (href === "/") {
-    return pathname === "/";
-  }
-
-  if (href === "/catalog") {
     return (
+      pathname === "/" ||
       pathname === "/catalog" ||
-      pathname.startsWith("/materials/") ||
-      pathname.startsWith("/sections/")
+      pathname.startsWith("/materials/")
     );
   }
 

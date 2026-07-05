@@ -28,7 +28,7 @@ export function CartHeader({ itemCount }: CartHeaderProps) {
       </div>
 
       <Link
-        href="/catalog"
+        href="/#materials"
         className="inline-flex shrink-0 items-center gap-1.5 text-sm font-medium text-primary hover:underline"
       >
         <ArrowLeft className="size-4" aria-hidden />

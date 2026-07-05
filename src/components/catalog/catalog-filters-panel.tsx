@@ -23,6 +23,7 @@ type CatalogFiltersPanelProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onChange: (filters: CatalogFiltersState) => void;
+  hideSectionFilter?: boolean;
 };
 
 const LEVEL_OPTIONS: Array<Database["public"]["Enums"]["designer_level"]> = [
@@ -37,6 +38,7 @@ export function CatalogFiltersPanel({
   open,
   onOpenChange,
   onChange,
+  hideSectionFilter = false,
 }: CatalogFiltersPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const activeCount = countActiveCatalogFilters(filters);
@@ -138,26 +140,28 @@ export function CatalogFiltersPanel({
               </div>
             </div>
 
-            <div className="space-y-2">
-              <p className="text-sm font-semibold text-foreground">Раздел</p>
-              <select
-                value={filters.sectionProductId ?? ""}
-                onChange={(event) =>
-                  updateFilters({
-                    sectionProductId: event.target.value || null,
-                  })
-                }
-                className="h-10 w-full rounded-lg border border-neutral-300 bg-white px-3 text-sm text-foreground outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-blue-100"
-                aria-label="Фильтр по разделу"
-              >
-                <option value="">Все разделы</option>
-                {sections.map((section) => (
-                  <option key={section.id} value={section.id}>
-                    {section.title}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {hideSectionFilter ? null : (
+              <div className="space-y-2">
+                <p className="text-sm font-semibold text-foreground">Раздел</p>
+                <select
+                  value={filters.sectionProductId ?? ""}
+                  onChange={(event) =>
+                    updateFilters({
+                      sectionProductId: event.target.value || null,
+                    })
+                  }
+                  className="h-10 w-full rounded-lg border border-neutral-300 bg-white px-3 text-sm text-foreground outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-blue-100"
+                  aria-label="Фильтр по разделу"
+                >
+                  <option value="">Все разделы</option>
+                  {sections.map((section) => (
+                    <option key={section.id} value={section.id}>
+                      {section.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             <div className="space-y-2">
               <p className="text-sm font-semibold text-foreground">Цена</p>

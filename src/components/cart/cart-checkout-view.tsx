@@ -92,7 +92,7 @@ export function CartCheckoutView({ items, error }: CartCheckoutViewProps) {
       ) : null}
 
       <div className="flex flex-col gap-4 border-t border-neutral-200 pt-4 sm:flex-row sm:items-center sm:justify-between">
-        <Link href="/catalog" className={cn(buttonVariants({ variant: "secondary" }), "w-full sm:w-auto")}>
+        <Link href="/#materials" className={cn(buttonVariants({ variant: "secondary" }), "w-full sm:w-auto")}>
           Продолжить покупки
         </Link>
         <div className="flex w-full flex-col gap-2 sm:w-auto sm:items-end">

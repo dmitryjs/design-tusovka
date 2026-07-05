@@ -12,7 +12,7 @@ import type { AdminMutationResult, AdminSectionFormInput } from "@/lib/admin/typ
 
 function revalidateSectionPaths() {
   revalidatePath("/");
-  revalidatePath("/catalog");
+  revalidatePath("/");
   revalidatePath("/admin/sections");
 }
 
