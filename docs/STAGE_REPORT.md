@@ -2,6 +2,57 @@
 
 ## Этап
 
+**Юридические данные: переход с ИП на продавца-самозанятого (НПД)**
+
+**Статус: завершён**
+
+## Результат
+
+Реквизиты и юридические страницы переведены с ИП на самозанятую — плательщика налога на профессиональный доход. ОГРНИП удалён из UI и централизованных данных. Оплата, webhook, Supabase, auth, cart и admin не менялись.
+
+## Изменённые файлы
+
+| Файл | Изменение |
+|------|-----------|
+| `src/lib/legal/seller-info.ts` | Новая структура: `sellerName`, `sellerStatus`, `sellerInn`, `sellerEmail`, `taxMode`, `receiptInfo`, `correspondenceAddress` |
+| `src/app/requisites/page.tsx` | Реквизиты самозанятой, НПД, чек |
+| `src/app/offer/page.tsx` | Продавец — НПД, без ИП/ОГРНИП, чеки и возвраты |
+| `src/app/privacy/page.tsx` | Оператор — НПД, без ОГРНИП |
+| `src/app/payment-and-refund/page.tsx` | Продавец, чеки НПД, возвраты |
+| `src/app/support/page.tsx` | Продавец и контакты |
+| `src/components/legal/legal-page-layout.tsx` | `LegalCorrespondenceAddress`, `sellerEmail` |
+| `src/components/layout/site-footer.tsx` | ФИО, «Плательщик НПД», ИНН в футере |
+| `docs/VERCEL_DEPLOY.md` | Ссылка на реквизиты НПД |
+
+## Реквизиты продавца
+
+Заполнены в `src/lib/legal/seller-info.ts`:
+
+| Поле | Значение |
+|------|----------|
+| `sellerName` | Галкина Александра Германовна |
+| `sellerInn` | 782003241079 |
+| `sellerEmail` | designtusovka@yandex.ru |
+| `correspondenceAddress` | по запросу через email поддержки |
+
+Перед подключением оплат: магазин ЮKassa и `NEXT_PUBLIC_SITE_URL` должны совпадать с продавцом на сайте.
+
+## Примечания
+
+- ОГРНИП больше не используется: у самозанятого его нет.
+- Чеки формируются по режиму НПД (не 54-ФЗ через кассу ИП).
+- Данные Дмитрия Галкина и формулировки «ИП» удалены с юридических страниц.
+
+## Проверки
+
+- `npm run typecheck` — OK
+- `npm run lint` — ошибки в admin/material (существовали до этапа; юридические файлы без новых замечаний)
+- `npm run build` — OK
+
+---
+
+## Этап
+
 **Страница раздела `/sections/[slug]` — новый layout**
 
 **Статус: завершён**

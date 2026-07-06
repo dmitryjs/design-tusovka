@@ -13,6 +13,13 @@ export default function PaymentAndRefundPage() {
       title="Оплата и возврат"
       description="Условия оплаты цифровых материалов и порядок возврата средств."
     >
+      <LegalSection title="Продавец">
+        <p>
+          Оплата принимается в пользу самозанятой {SELLER_INFO.sellerName},{" "}
+          {SELLER_INFO.sellerStatus.toLowerCase()}, ИНН {SELLER_INFO.sellerInn}.
+        </p>
+      </LegalSection>
+
       <LegalSection title="Способы оплаты">
         <p>
           На сайте «Дизайн Тусовка» можно оплатить цифровые материалы онлайн через ЮKassa.
@@ -25,6 +32,14 @@ export default function PaymentAndRefundPage() {
         </ul>
         <p>Валюта оплаты — российские рубли.</p>
         <p>Сайт не хранит данные банковских карт.</p>
+      </LegalSection>
+
+      <LegalSection title="Чеки">
+        <p>{SELLER_INFO.receiptInfo}.</p>
+        <p>
+          Чек формируется продавцом как плательщиком налога на профессиональный доход и
+          направляется покупателю.
+        </p>
       </LegalSection>
 
       <LegalSection title="Когда заказ считается оплаченным">
@@ -105,6 +120,10 @@ export default function PaymentAndRefundPage() {
         <p>
           Мы не используем правило «возвратов нет» автоматически. Каждый запрос проверяется
           отдельно.
+        </p>
+        <p>
+          После предоставления доступа к цифровому материалу возврат рассматривается
+          индивидуально.
         </p>
       </LegalSection>
 

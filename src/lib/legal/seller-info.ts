@@ -1,18 +1,19 @@
+/** Fallback URL, если `NEXT_PUBLIC_SITE_URL` не задан. */
+const FALLBACK_SITE_URL = "https://design-tusovka.vercel.app";
+
 export const SELLER_INFO = {
-  legalName: "Индивидуальный предприниматель Галкин Дмитрий Николаевич",
-  /** Краткое ФИО для формулировок «ИП …» */
-  shortLegalName: "Галкин Дмитрий Николаевич",
-  inn: "780529265784",
-  ogrnip: "323784700280971",
-  /**
-   * TODO: указать юридический адрес регистрации ИП.
-   * Пока null — на юридических страницах показывается пометка для замены.
-   */
-  legalAddress: null as string | null,
-  supportEmail: "galkin.products@gmail.com",
-  siteUrl: "https://design-tusovka.vercel.app",
+  sellerName: "Галкина Александра Германовна",
+  sellerStatus: "Плательщик налога на профессиональный доход",
+  sellerInn: "782003241079",
+  sellerEmail: "designtusovka@yandex.ru",
+  /** Fallback; на страницах предпочтительнее `getPublicSiteUrl()`. */
+  siteUrl: FALLBACK_SITE_URL,
+  taxMode: "Налог на профессиональный доход",
+  receiptInfo:
+    "Чек формируется и направляется покупателю в порядке, предусмотренном режимом НПД",
+  correspondenceAddress: "по запросу через email поддержки",
   /** Дата публикации оферты и политики конфиденциальности */
-  legalPublishedAt: "19.06.2026",
+  legalPublishedAt: "06.07.2026",
   supportResponseNote: "до 3 рабочих дней",
   refundReviewDays: "10 календарных дней",
 } as const;
@@ -21,7 +22,7 @@ export function getSupportResponseText(): string {
   return SELLER_INFO.supportResponseNote;
 }
 
-/** Production URLs для ЮKassa и документации (без payment logic). */
+/** Production URLs для документации (без payment logic). */
 export const PRODUCTION_URLS = {
   site: SELLER_INFO.siteUrl,
   authCallback: `${SELLER_INFO.siteUrl}/auth/callback`,

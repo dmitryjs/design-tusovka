@@ -1,5 +1,5 @@
 import {
-  LegalAddress,
+  LegalCorrespondenceAddress,
   LegalMailto,
   LegalPageLayout,
   LegalSection,
@@ -27,11 +27,11 @@ export default function PrivacyPage() {
       </p>
 
       <LegalSection title="1. Оператор персональных данных">
-        <p>Оператор: {SELLER_INFO.legalName}</p>
-        <p>ИНН: {SELLER_INFO.inn}</p>
-        <p>ОГРНИП: {SELLER_INFO.ogrnip}</p>
+        <p>Оператор: {SELLER_INFO.sellerName}</p>
+        <p>Статус: {SELLER_INFO.sellerStatus}</p>
+        <p>ИНН: {SELLER_INFO.sellerInn}</p>
         <p>
-          Адрес: <LegalAddress />
+          Адрес для корреспонденции: <LegalCorrespondenceAddress />
         </p>
         <p>
           Email для обращений по персональным данным: <LegalMailto />
@@ -257,7 +257,10 @@ export default function PrivacyPage() {
         <p>
           По вопросам персональных данных: <LegalMailto />
         </p>
-        <p>Оператор: ИП {SELLER_INFO.shortLegalName}</p>
+        <p>
+          Оператор: {SELLER_INFO.sellerName}, {SELLER_INFO.sellerStatus.toLowerCase()}
+        </p>
+        <p>ИНН: {SELLER_INFO.sellerInn}</p>
         <p>
           Сайт: <LegalSiteLink href={siteUrl} />
         </p>

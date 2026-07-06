@@ -18,6 +18,17 @@ export default function SupportPage() {
         <LegalMailto />.
       </p>
 
+      <LegalSection title="Продавец">
+        <p>
+          Продавец: {SELLER_INFO.sellerName}, {SELLER_INFO.sellerStatus.toLowerCase()},
+          ИНН {SELLER_INFO.sellerInn}.
+        </p>
+        <p>
+          По вопросам оплаты, доступа к материалам, возвратов и работы сайта обращайтесь
+          на <LegalMailto />.
+        </p>
+      </LegalSection>
+
       <LegalSection title="По каким вопросам можно обращаться">
         <p>Мы помогаем с вопросами:</p>
         <ul className="list-disc space-y-2 pl-5">

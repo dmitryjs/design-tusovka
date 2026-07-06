@@ -64,10 +64,10 @@ export function LegalPlaceholder({ children }: { children: React.ReactNode }) {
 export function LegalMailto() {
   return (
     <a
-      href={`mailto:${SELLER_INFO.supportEmail}`}
+      href={`mailto:${SELLER_INFO.sellerEmail}`}
       className="text-neutral-800 underline-offset-2 hover:underline"
     >
-      {SELLER_INFO.supportEmail}
+      {SELLER_INFO.sellerEmail}
     </a>
   );
 }
@@ -94,10 +94,23 @@ export function LegalInternalLink({
   );
 }
 
-export function LegalAddress() {
-  const address = SELLER_INFO.legalAddress;
-  if (address) {
-    return <>{address}</>;
+const CORRESPONDENCE_PLACEHOLDER = "АДРЕС_ДЛЯ_КОРРЕСПОНДЕНЦИИ_ЕСЛИ_НУЖЕН";
+
+function isCorrespondencePlaceholder(address: string): boolean {
+  return !address || address.includes("АДРЕС_") || address.includes("_ЕСЛИ_НУЖЕН");
+}
+
+export function LegalCorrespondenceAddress() {
+  const address = SELLER_INFO.correspondenceAddress;
+
+  if (isCorrespondencePlaceholder(address)) {
+    return <LegalPlaceholder>{CORRESPONDENCE_PLACEHOLDER}</LegalPlaceholder>;
   }
-  return <LegalPlaceholder>адрес регистрации ИП — указать в seller-info.ts</LegalPlaceholder>;
+
+  return <>{address}</>;
+}
+
+/** @deprecated Используйте LegalCorrespondenceAddress */
+export function LegalAddress() {
+  return <LegalCorrespondenceAddress />;
 }

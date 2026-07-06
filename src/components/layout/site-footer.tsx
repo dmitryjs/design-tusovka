@@ -9,6 +9,7 @@ import {
 } from "@/components/icons/social-icons";
 import { Container } from "@/components/layout/container";
 import { FooterNewsletter } from "@/components/layout/footer-newsletter";
+import { SELLER_INFO } from "@/lib/legal/seller-info";
 import { cn } from "@/lib/utils";
 
 const LEGAL_LINKS = [
@@ -115,7 +116,12 @@ export function SiteFooter() {
 
       <div className="border-t border-neutral-200">
         <Container className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-neutral-500">© {year} Дизайн Тусовка</p>
+          <div className="space-y-1">
+            <p className="text-sm text-neutral-500">© {year} Дизайн Тусовка</p>
+            <p className="text-xs text-neutral-400">
+              {SELLER_INFO.sellerName} · Плательщик НПД · ИНН {SELLER_INFO.sellerInn}
+            </p>
+          </div>
           <nav
             className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-neutral-400"
             aria-label="Юридическая информация"

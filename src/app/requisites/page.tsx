@@ -1,5 +1,5 @@
 import {
-  LegalAddress,
+  LegalCorrespondenceAddress,
   LegalPageLayout,
   LegalSection,
 } from "@/components/legal/legal-page-layout";
@@ -17,11 +17,11 @@ export default function RequisitesPage() {
       description="Сведения о продавце цифровых материалов и контакт для обращений."
     >
       <LegalSection title="Продавец">
-        <p>ИП: {SELLER_INFO.legalName}</p>
-        <p>ИНН: {SELLER_INFO.inn}</p>
-        <p>ОГРНИП: {SELLER_INFO.ogrnip}</p>
+        <p>Продавец: {SELLER_INFO.sellerName}</p>
+        <p>Статус: {SELLER_INFO.sellerStatus}</p>
+        <p>ИНН: {SELLER_INFO.sellerInn}</p>
         <p>
-          Адрес: <LegalAddress />
+          Адрес для корреспонденции: <LegalCorrespondenceAddress />
         </p>
       </LegalSection>
 
@@ -29,10 +29,10 @@ export default function RequisitesPage() {
         <p>
           Email поддержки:{" "}
           <a
-            href={`mailto:${SELLER_INFO.supportEmail}`}
+            href={`mailto:${SELLER_INFO.sellerEmail}`}
             className="text-neutral-800 underline-offset-2 hover:underline"
           >
-            {SELLER_INFO.supportEmail}
+            {SELLER_INFO.sellerEmail}
           </a>
         </p>
         <p>
@@ -46,6 +46,10 @@ export default function RequisitesPage() {
         </p>
       </LegalSection>
 
+      <LegalSection title="Налоговый режим">
+        <p>{SELLER_INFO.taxMode}</p>
+      </LegalSection>
+
       <LegalSection title="Вид деятельности">
         <p>
           Продажа цифровых материалов, гайдов, шаблонов и заданий для дизайнеров
@@ -55,8 +59,16 @@ export default function RequisitesPage() {
 
       <LegalSection title="Формат товара">
         <p>
-          Цифровой контент. Доступ предоставляется в личном кабинете пользователя
-          после подтверждения оплаты на сервере.
+          Цифровые материалы, гайды, шаблоны и задания для дизайнеров. Доступ
+          предоставляется онлайн в личном кабинете после оплаты или бесплатного
+          получения.
+        </p>
+      </LegalSection>
+
+      <LegalSection title="Чек">
+        <p>
+          {SELLER_INFO.receiptInfo}. Чек формируется продавцом как плательщиком
+          НПД и направляется покупателю.
         </p>
       </LegalSection>
     </LegalPageLayout>

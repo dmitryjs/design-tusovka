@@ -1,5 +1,5 @@
 import {
-  LegalAddress,
+  LegalCorrespondenceAddress,
   LegalInternalLink,
   LegalMailto,
   LegalPageLayout,
@@ -26,11 +26,12 @@ export default function OfferPage() {
       </p>
 
       <LegalSection title="1. Продавец">
-        <p>Продавец: {SELLER_INFO.legalName}</p>
-        <p>ИНН: {SELLER_INFO.inn}</p>
-        <p>ОГРНИП: {SELLER_INFO.ogrnip}</p>
         <p>
-          Адрес: <LegalAddress />
+          Продавец: {SELLER_INFO.sellerName}, {SELLER_INFO.sellerStatus.toLowerCase()},
+          ИНН {SELLER_INFO.sellerInn}.
+        </p>
+        <p>
+          Адрес для корреспонденции: <LegalCorrespondenceAddress />
         </p>
         <p>
           Email поддержки: <LegalMailto />
@@ -38,6 +39,7 @@ export default function OfferPage() {
         <p>
           Сайт: <LegalSiteLink href={siteUrl} />
         </p>
+        <p>Налоговый режим: {SELLER_INFO.taxMode}.</p>
       </LegalSection>
 
       <LegalSection title="2. Покупатель">
@@ -143,6 +145,7 @@ export default function OfferPage() {
           Переход пользователя на страницу успешной оплаты не является самостоятельным
           подтверждением оплаты.
         </p>
+        <p>{SELLER_INFO.receiptInfo}.</p>
       </LegalSection>
 
       <LegalSection title="9. Предоставление доступа">
@@ -234,6 +237,10 @@ export default function OfferPage() {
         </ul>
         <p>Каждый запрос рассматривается индивидуально.</p>
         <p>
+          После предоставления доступа к цифровому материалу возврат рассматривается
+          индивидуально с учётом обстоятельств обращения.
+        </p>
+        <p>
           Если возврат подтверждён, деньги возвращаются тем же способом, которым была
           проведена оплата, если иной способ не согласован сторонами.
         </p>
@@ -306,10 +313,9 @@ export default function OfferPage() {
 
       <LegalSection title="19. Контакты">
         <p>
-          Продавец: ИП {SELLER_INFO.shortLegalName}
+          Продавец: {SELLER_INFO.sellerName}, {SELLER_INFO.sellerStatus.toLowerCase()}
         </p>
-        <p>ИНН: {SELLER_INFO.inn}</p>
-        <p>ОГРНИП: {SELLER_INFO.ogrnip}</p>
+        <p>ИНН: {SELLER_INFO.sellerInn}</p>
         <p>
           Email: <LegalMailto />
         </p>
