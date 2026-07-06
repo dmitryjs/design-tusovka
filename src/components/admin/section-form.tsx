@@ -1,26 +1,50 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { Trash2 } from "lucide-react";
+import { ExternalLink, Trash2 } from "lucide-react";
 
 import {
   createSectionAction,
   deleteSectionAction,
   updateSectionAction,
+  updateSectionStatusAction,
 } from "@/app/actions/admin/sections";
 import { AdminAlert } from "@/components/admin/admin-shell";
 import { SectionCoverField } from "@/components/admin/section-cover-field";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import type { AdminSectionFormInput } from "@/lib/admin/types";
+import {
+  SECTION_SITE_VISIBILITY_LABELS,
+  type SectionSiteVisibilityState,
+} from "@/lib/catalog/section-visibility";
+import type { AdminSectionFormInput, AdminSectionListItem } from "@/lib/admin/types";
 import { cn } from "@/lib/utils";
 
-const STATUS_OPTIONS = [
-  { value: "draft", label: "Черновик" },
-  { value: "published", label: "Опубликован" },
-  { value: "hidden", label: "Скрыт" },
-];
+const STATUS_LABELS: Record<AdminSectionFormInput["status"], string> = {
+  draft: "Черновик",
+  published: "Опубликован",
+  hidden: "Скрыт",
+};
+
+const STATUS_OPTIONS = (
+  Object.entries(STATUS_LABELS) as Array<[AdminSectionFormInput["status"], string]>
+).map(([value, label]) => ({ value, label }));
+
+function siteVisibilityBadgeClass(state: SectionSiteVisibilityState): string {
+  switch (state) {
+    case "on_site":
+      return "bg-emerald-50 text-emerald-700";
+    case "no_materials":
+      return "bg-amber-50 text-amber-700";
+    case "draft":
+      return "bg-neutral-100 text-neutral-600";
+    case "hidden":
+      return "bg-neutral-100 text-neutral-600";
+  }
+}
 
 type SectionFormProps = {
   mode: "create" | "edit";
@@ -221,13 +245,33 @@ export function SectionForm({
 export function SectionsManager({
   sections,
 }: {
-  sections: Array<AdminSectionFormInput & { id: string }>;
+  sections: AdminSectionListItem[];
 }) {
+  const router = useRouter();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
 
-  const sortedSections = [...sections].sort((a, b) => a.position - b.position);
+  const sortedSections = [...sections].sort(
+    (left, right) =>
+      left.position - right.position || left.title.localeCompare(right.title, "ru"),
+  );
   const editing = sortedSections.find((section) => section.id === editingId);
+
+  function setSectionStatus(sectionId: string, status: AdminSectionFormInput["status"]) {
+    setError(null);
+    startTransition(async () => {
+      const result = await updateSectionStatusAction(sectionId, status);
+
+      if (!result.ok) {
+        setError(result.error ?? "Не удалось обновить статус");
+        return;
+      }
+
+      router.refresh();
+    });
+  }
 
   return (
     <div className="grid gap-8 lg:grid-cols-2">
@@ -246,30 +290,113 @@ export function SectionsManager({
             Создать
           </Button>
         </div>
+
+        <p className="text-sm text-neutral-500">
+          Раздел появляется на главной и в каталоге, если он опубликован и в нём есть
+          хотя бы один опубликованный материал. Скрытый или черновой раздел не виден
+          посетителям.
+        </p>
+
+        {error ? <AdminAlert variant="error">{error}</AdminAlert> : null}
+
         {sortedSections.length === 0 ? (
           <p className="text-sm text-neutral-500">Разделов пока нет.</p>
         ) : (
           <ul className="space-y-2">
             {sortedSections.map((section) => (
               <li key={section.id}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEditingId(section.id);
-                    setShowCreate(false);
-                  }}
+                <div
                   className={cn(
-                    "w-full rounded-lg border px-4 py-3 text-left text-sm transition-colors",
+                    "rounded-lg border px-4 py-3 text-sm transition-colors",
                     editingId === section.id
                       ? "border-primary bg-blue-50"
-                      : "border-neutral-300 hover:bg-neutral-50",
+                      : "border-neutral-300",
                   )}
                 >
-                  <p className="font-medium text-foreground">{section.title}</p>
-                  <p className="text-neutral-500">
-                    {section.slug} · {section.status}
-                  </p>
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingId(section.id);
+                      setShowCreate(false);
+                    }}
+                    className="w-full text-left"
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <p className="font-medium text-foreground">{section.title}</p>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <Badge
+                          variant="secondary"
+                          className={cn(
+                            "border-0",
+                            siteVisibilityBadgeClass(section.siteVisibility),
+                          )}
+                        >
+                          {SECTION_SITE_VISIBILITY_LABELS[section.siteVisibility]}
+                        </Badge>
+                        <Badge variant="secondary" className="border-0 bg-neutral-100">
+                          {STATUS_LABELS[section.status]}
+                        </Badge>
+                      </div>
+                    </div>
+                    <p className="mt-1 text-neutral-500">
+                      {section.slug} · позиция {section.position} ·{" "}
+                      {section.publishedMaterialCount}{" "}
+                      {section.publishedMaterialCount === 1
+                        ? "материал"
+                        : section.publishedMaterialCount >= 2 &&
+                            section.publishedMaterialCount <= 4
+                          ? "материала"
+                          : "материалов"}
+                    </p>
+                  </button>
+
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    {section.isVisibleOnSite ? (
+                      <Link
+                        href={`/sections/${section.slug}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                      >
+                        Открыть на сайте
+                        <ExternalLink className="size-3" aria-hidden />
+                      </Link>
+                    ) : null}
+                    {section.status === "published" ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        disabled={isPending}
+                        onClick={() => setSectionStatus(section.id, "hidden")}
+                      >
+                        Скрыть
+                      </Button>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        disabled={isPending}
+                        onClick={() => setSectionStatus(section.id, "published")}
+                      >
+                        {section.status === "draft" ? "Опубликовать" : "Показать"}
+                      </Button>
+                    )}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      disabled={isPending}
+                      onClick={() => {
+                        setEditingId(section.id);
+                        setShowCreate(false);
+                      }}
+                    >
+                      Редактировать
+                    </Button>
+                  </div>
+                </div>
               </li>
             ))}
           </ul>

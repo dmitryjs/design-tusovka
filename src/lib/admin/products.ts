@@ -527,7 +527,6 @@ export async function listAdminSectionOptions(): Promise<
     .from("products")
     .select("id, title")
     .eq("kind", "section")
-    .eq("status", "published")
     .order("title");
 
   if (error) {

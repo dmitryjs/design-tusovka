@@ -1,5 +1,6 @@
 import type { Database } from "@/types/database.types";
 import type { CatalogItemKind } from "@/lib/catalog/types";
+import type { SectionSiteVisibilityState } from "@/lib/catalog/section-visibility";
 import type { MaterialBlock } from "@/lib/content/material-blocks";
 
 export type ProductKind = Extract<
@@ -71,6 +72,9 @@ export type AdminSectionFormInput = {
 
 export type AdminSectionListItem = AdminSectionFormInput & {
   id: string;
+  publishedMaterialCount: number;
+  isVisibleOnSite: boolean;
+  siteVisibility: SectionSiteVisibilityState;
 };
 
 export type AdminTagFormInput = {

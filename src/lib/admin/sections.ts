@@ -1,6 +1,11 @@
 import "server-only";
 
+import {
+  getSectionSiteVisibility,
+  isSectionVisibleOnSite,
+} from "@/lib/catalog/section-visibility";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import type { Database } from "@/types/database.types";
 
 import type {
   AdminMutationResult,
@@ -9,8 +14,75 @@ import type {
 } from "./types";
 import { publishedAtForStatus, validateSectionInput } from "./validation";
 
+type ProductStatus = Database["public"]["Enums"]["product_status"];
+
+const STATUSES = new Set<ProductStatus>(["draft", "published", "hidden"]);
+
 function getAdminClient() {
   return createSupabaseAdminClient();
+}
+
+async function loadPublishedMaterialCountsBySection(
+  sectionIds: string[],
+): Promise<Map<string, number>> {
+  if (sectionIds.length === 0) {
+    return new Map();
+  }
+
+  const admin = getAdminClient();
+
+  const { data, error } = await admin
+    .from("materials")
+    .select("section_product_id, products!inner(status)")
+    .in("section_product_id", sectionIds)
+    .eq("products.status", "published");
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const counts = new Map<string, number>();
+
+  for (const row of data ?? []) {
+    if (!row.section_product_id) {
+      continue;
+    }
+
+    counts.set(
+      row.section_product_id,
+      (counts.get(row.section_product_id) ?? 0) + 1,
+    );
+  }
+
+  return counts;
+}
+
+function mapAdminSectionRow(
+  row: {
+    id: string;
+    title: string;
+    slug: string;
+    description: string;
+    status: ProductStatus;
+    cover_path: string | null;
+    sections: { position: number } | { position: number }[] | null;
+  },
+  publishedMaterialCount: number,
+): AdminSectionListItem {
+  const section = Array.isArray(row.sections) ? row.sections[0] : row.sections;
+
+  return {
+    id: row.id,
+    title: row.title,
+    slug: row.slug,
+    description: row.description,
+    status: row.status,
+    position: section?.position ?? 0,
+    coverPath: row.cover_path,
+    publishedMaterialCount,
+    isVisibleOnSite: isSectionVisibleOnSite(row.status, publishedMaterialCount),
+    siteVisibility: getSectionSiteVisibility(row.status, publishedMaterialCount),
+  };
 }
 
 export async function listAdminSections(): Promise<AdminSectionListItem[]> {
@@ -36,19 +108,14 @@ export async function listAdminSections(): Promise<AdminSectionListItem[]> {
     throw new Error(error.message);
   }
 
-  return (data ?? []).map((row) => {
-    const section = Array.isArray(row.sections) ? row.sections[0] : row.sections;
+  const rows = data ?? [];
+  const materialCounts = await loadPublishedMaterialCountsBySection(
+    rows.map((row) => row.id),
+  );
 
-    return {
-      id: row.id,
-      title: row.title,
-      slug: row.slug,
-      description: row.description,
-      status: row.status,
-      position: section?.position ?? 0,
-      coverPath: row.cover_path,
-    };
-  });
+  return rows.map((row) =>
+    mapAdminSectionRow(row, materialCounts.get(row.id) ?? 0),
+  );
 }
 
 export async function getAdminSectionDetail(
@@ -81,17 +148,9 @@ export async function getAdminSectionDetail(
     return null;
   }
 
-  const section = Array.isArray(data.sections) ? data.sections[0] : data.sections;
+  const materialCounts = await loadPublishedMaterialCountsBySection([data.id]);
 
-  return {
-    id: data.id,
-    title: data.title,
-    slug: data.slug,
-    description: data.description,
-    status: data.status,
-    position: section?.position ?? 0,
-    coverPath: data.cover_path,
-  };
+  return mapAdminSectionRow(data, materialCounts.get(data.id) ?? 0);
 }
 
 export async function createAdminSection(
@@ -181,6 +240,47 @@ export async function updateAdminSection(
   }
 
   return { ok: true, data: sectionProductId };
+}
+
+export async function updateAdminSectionStatus(
+  sectionProductId: string,
+  status: ProductStatus,
+): Promise<AdminMutationResult<string>> {
+  if (!STATUSES.has(status)) {
+    return { ok: false, error: "Недопустимый статус" };
+  }
+
+  const admin = getAdminClient();
+
+  const { data: existing, error: fetchError } = await admin
+    .from("products")
+    .select("slug")
+    .eq("id", sectionProductId)
+    .eq("kind", "section")
+    .maybeSingle();
+
+  if (fetchError) {
+    return { ok: false, error: fetchError.message };
+  }
+
+  if (!existing) {
+    return { ok: false, error: "Раздел не найден" };
+  }
+
+  const { error } = await admin
+    .from("products")
+    .update({
+      status,
+      published_at: publishedAtForStatus(status),
+    })
+    .eq("id", sectionProductId)
+    .eq("kind", "section");
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  return { ok: true, data: existing.slug };
 }
 
 export async function deleteAdminSection(

@@ -20,7 +20,7 @@ export default async function AdminSectionsPage() {
   return (
     <AdminShell
       title="Разделы"
-      description="Секции каталога для группировки материалов."
+      description="Создание, публикация и скрытие разделов каталога без правок в коде."
     >
       <SectionsManager sections={sections} />
     </AdminShell>
