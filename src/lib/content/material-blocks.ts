@@ -223,6 +223,10 @@ function isBlockType(value: unknown): value is MaterialBlockType {
 
 export function parseMaterialBlocks(value: Json | unknown): MaterialBlock[] {
   if (!Array.isArray(value)) {
+    if (isRecord(value) && Array.isArray(value.blocks)) {
+      return parseMaterialBlocks(value.blocks);
+    }
+
     return [];
   }
 

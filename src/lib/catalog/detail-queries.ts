@@ -1,6 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseAnonServerClient, createSupabaseServerClient } from "@/lib/supabase/server";
+import {
+  collectBlocksFromChapters,
+  extractHeadingAnchors,
+  type MaterialHeadingAnchor,
+} from "@/lib/content/material-reading";
 import type { Database, Json } from "@/types/database.types";
 
 import { jsonbToParagraphs, jsonbToStringList } from "./content";
@@ -113,6 +119,52 @@ function queryErrorMessage(error: unknown): string {
   return error instanceof Error
     ? error.message
     : "Не удалось загрузить данные из Supabase";
+}
+
+async function loadMaterialHeadingOutline(
+  productId: string,
+  supabase: SupabaseClient<Database>,
+): Promise<MaterialHeadingAnchor[]> {
+  const { data: h1Outline, error: h1OutlineError } = await supabase.rpc(
+    "get_material_h1_outline",
+    {
+      p_material_product_id: productId,
+    },
+  );
+
+  if (!h1OutlineError && h1Outline && h1Outline.length > 0) {
+    return h1Outline.map((row) => ({
+      id: row.anchor_id,
+      blockId: row.anchor_id.replace(/^block-/, ""),
+      level: (row.level === 2 ? 2 : row.level === 3 ? 3 : 1) as 1 | 2 | 3,
+      title: row.title,
+    }));
+  }
+
+  if (h1OutlineError) {
+    console.error("get_material_h1_outline failed:", h1OutlineError.message);
+  }
+
+  const admin = createSupabaseAdminClient();
+  const { data: chapterRows, error: chaptersError } = await admin
+    .from("material_chapters")
+    .select("id, content")
+    .eq("material_product_id", productId)
+    .order("position");
+
+  if (chaptersError || !chapterRows?.length) {
+    return [];
+  }
+
+  return extractHeadingAnchors(
+    collectBlocksFromChapters(
+      chapterRows.map((row) => ({
+        id: row.id,
+        contentJson: row.content as Json,
+        contentText: null,
+      })),
+    ),
+  );
 }
 
 export async function fetchTagsForProducts(
@@ -240,23 +292,7 @@ export async function getMaterialBySlug(
       }
     }
 
-    const { data: h1Outline, error: h1OutlineError } = await supabase.rpc(
-      "get_material_h1_outline",
-      {
-        p_material_product_id: product.id,
-      },
-    );
-
-    if (h1OutlineError) {
-      console.error("get_material_h1_outline failed:", h1OutlineError.message);
-    }
-
-    const h1Headings = (h1Outline ?? []).map((row) => ({
-      id: row.anchor_id,
-      blockId: row.anchor_id.replace(/^block-/, ""),
-      level: (row.level === 2 ? 2 : row.level === 3 ? 3 : 1) as 1 | 2 | 3,
-      title: row.title,
-    }));
+    const h1Headings = await loadMaterialHeadingOutline(product.id, supabase);
 
     const { data: toc, error: tocError } = await supabase.rpc("get_material_toc", {
       p_material_product_id: product.id,

@@ -82,13 +82,22 @@ function resolveHeadings(
   chapters: MaterialChapterView[],
   outlineHeadings?: MaterialHeadingAnchor[],
 ): MaterialHeadingAnchor[] {
-  const fromContent = extractHeadingAnchors(collectBlocksFromChapters(chapters));
+  const hasChapterContent = chapters.some(
+    (chapter) => chapter.contentJson != null || Boolean(chapter.contentText?.trim()),
+  );
 
-  if (fromContent.length > 0) {
-    return fromContent;
+  if (hasChapterContent) {
+    const fromContent = extractHeadingAnchors(collectBlocksFromChapters(chapters));
+    if (fromContent.length > 0) {
+      return fromContent;
+    }
   }
 
-  return outlineHeadings ?? [];
+  if (outlineHeadings && outlineHeadings.length > 0) {
+    return outlineHeadings;
+  }
+
+  return extractHeadingAnchors(collectBlocksFromChapters(chapters));
 }
 
 export function MaterialTableOfContents({
