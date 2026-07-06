@@ -4,6 +4,7 @@ import { CatalogErrorState } from "@/components/catalog/catalog-states";
 import { SectionDetailView } from "@/components/catalog/section/section-detail-view";
 import { getPaidProductCartState } from "@/lib/cart/access";
 import { getSectionBySlug } from "@/lib/catalog/detail-queries";
+import { calculateSectionCheckoutPriceKopecks } from "@/lib/catalog/section-pricing";
 import { hasProductAccess } from "@/lib/entitlements/access";
 import { getProductReviewsData } from "@/lib/reviews/queries";
 
@@ -39,11 +40,15 @@ export default async function SectionPage({ params }: SectionPageProps) {
     );
   }
 
-  const cartState = await getPaidProductCartState(data.id, data.priceKopecks);
+  const displayPriceKopecks = hasSectionAccess
+    ? data.priceKopecks
+    : calculateSectionCheckoutPriceKopecks(data.materials, accessibleMaterialIds);
+
+  const cartState = await getPaidProductCartState(data.id, displayPriceKopecks);
 
   return (
     <SectionDetailView
-      section={data}
+      section={{ ...data, priceKopecks: displayPriceKopecks }}
       reviewsData={reviewsData}
       cartState={cartState}
       hasSectionAccess={hasSectionAccess}

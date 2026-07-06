@@ -696,6 +696,10 @@ export type Database = {
           review_count: number
         }[]
       }
+      get_section_list_price_kopecks: {
+        Args: { p_section_product_id: string }
+        Returns: number
+      }
       has_product_access: { Args: { product_id: string }; Returns: boolean }
       is_valid_slug: { Args: { slug: string }; Returns: boolean }
       list_product_reviews: { Args: { p_product_id: string }; Returns: Json }

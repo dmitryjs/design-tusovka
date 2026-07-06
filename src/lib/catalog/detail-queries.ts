@@ -10,7 +10,9 @@ import {
 import type { Database, Json } from "@/types/database.types";
 
 import { jsonbToParagraphs, jsonbToStringList } from "./content";
-import { calculateSectionPriceKopecks } from "./section-pricing";
+import {
+  calculateSectionListPriceKopecks,
+} from "./section-pricing";
 import {
   resolveSectionCatalogSlug,
   resolveSectionDisplayTitle,
@@ -119,6 +121,22 @@ function queryErrorMessage(error: unknown): string {
   return error instanceof Error
     ? error.message
     : "Не удалось загрузить данные из Supabase";
+}
+
+async function resolveSectionListPriceKopecks(
+  supabase: SupabaseClient<Database>,
+  sectionProductId: string,
+  materials: SectionMaterialSummary[],
+): Promise<number> {
+  const { data, error } = await supabase.rpc("get_section_list_price_kopecks", {
+    p_section_product_id: sectionProductId,
+  });
+
+  if (!error && typeof data === "number" && data >= 0) {
+    return data;
+  }
+
+  return calculateSectionListPriceKopecks(materials);
 }
 
 async function loadMaterialHeadingOutline(
@@ -560,7 +578,8 @@ export async function getSectionBySlug(
       `,
       )
       .eq("section_product_id", product.id)
-      .eq("products.status", "published");
+      .eq("products.status", "published")
+      .eq("products.kind", "material");
 
     if (materialsError) {
       return { data: null, error: materialsError.message };
@@ -571,7 +590,7 @@ export async function getSectionBySlug(
         const linked = row.products;
         const productRow = Array.isArray(linked) ? linked[0] : linked;
 
-        if (!productRow) {
+        if (!productRow || productRow.kind !== "material") {
           return null;
         }
 
@@ -600,7 +619,11 @@ export async function getSectionBySlug(
       product.cover_path ??
       pageConfig?.coverPath ??
       getSectionCoverPath(product.slug);
-    const priceKopecks = calculateSectionPriceKopecks(materials);
+    const listPriceKopecks = await resolveSectionListPriceKopecks(
+      supabase,
+      product.id,
+      materials,
+    );
 
     const stats: SectionStats = {
       materialCount: materials.length,
@@ -619,7 +642,7 @@ export async function getSectionBySlug(
         slug: product.slug,
         title: displayTitle,
         description: displayDescription,
-        priceKopecks,
+        priceKopecks: listPriceKopecks,
         position: section.position,
         coverPath,
         forWhom: jsonbToStringList(section.for_whom as Json),

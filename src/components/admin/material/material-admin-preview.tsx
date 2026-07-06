@@ -83,7 +83,6 @@ export function MaterialAdminPreview({
                   chapters={material.chapters}
                   h1Headings={material.h1Headings}
                   isPreview={false}
-                  anchorBaseHref=""
                 />
                 <MaterialMeta material={material} />
               </aside>

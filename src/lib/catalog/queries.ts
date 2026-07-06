@@ -1,6 +1,7 @@
 import { createSupabaseAnonServerClient } from "@/lib/supabase/server";
 
 import type { CatalogItem, CatalogItemKind, CatalogTag } from "./types";
+import { buildSectionPricesBySectionId } from "./section-pricing";
 
 type CatalogQueryResult = {
   items: CatalogItem[];
@@ -142,6 +143,15 @@ export async function getCatalogItems(): Promise<CatalogQueryResult> {
       (tasksResult.data ?? []).map((task) => [task.product_id, task]),
     );
     const tagsByProductId = buildTagsByProductId(tagsResult.data ?? []);
+    const productPriceById = new Map(
+      products.map((product) => [product.id, product.price_kopecks]),
+    );
+    const sectionPricesById = buildSectionPricesBySectionId(
+      (materialsResult.data ?? []).map((material) => ({
+        sectionProductId: material.section_product_id,
+        priceKopecks: productPriceById.get(material.product_id) ?? 0,
+      })),
+    );
 
     const items: CatalogItem[] = [];
 
@@ -162,6 +172,7 @@ export async function getCatalogItems(): Promise<CatalogQueryResult> {
         const section = sectionsById.get(product.id);
         items.push({
           ...base,
+          priceKopecks: sectionPricesById.get(product.id) ?? 0,
           sectionPosition: section?.position ?? 0,
           materialCount: materialCountBySectionId.get(product.id) ?? 0,
         });

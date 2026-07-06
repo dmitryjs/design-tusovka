@@ -6,7 +6,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database.types";
 
 import type { CartItemView } from "./types";
-import { calculateSectionPriceKopecks } from "@/lib/catalog/section-pricing";
+import { calculateSectionListPriceKopecks } from "@/lib/catalog/section-pricing";
 
 type ServerSupabase = Awaited<ReturnType<typeof createSupabaseServerClient>>;
 
@@ -43,9 +43,10 @@ async function resolveSectionPricesForCart(
 
   const { data, error } = await client
     .from("materials")
-    .select("section_product_id, products!inner(price_kopecks, status)")
+    .select("section_product_id, products!inner(price_kopecks, status, kind)")
     .in("section_product_id", sectionProductIds)
-    .eq("products.status", "published");
+    .eq("products.status", "published")
+    .eq("products.kind", "material");
 
   if (error) {
     return new Map();
@@ -67,7 +68,7 @@ async function resolveSectionPricesForCart(
   const prices = new Map<string, number>();
 
   for (const [sectionProductId, materials] of materialsBySection) {
-    prices.set(sectionProductId, calculateSectionPriceKopecks(materials));
+    prices.set(sectionProductId, calculateSectionListPriceKopecks(materials));
   }
 
   return prices;
