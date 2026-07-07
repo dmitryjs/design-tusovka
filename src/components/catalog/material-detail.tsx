@@ -56,12 +56,12 @@ function MaterialSidebar({
   return (
     <>
       <MaterialAccessCard {...accessCardProps} />
+      <MaterialMeta material={material} />
       <MaterialTableOfContents
         chapters={material.chapters}
         h1Headings={material.h1Headings}
         isPreview={material.isPreview}
       />
-      <MaterialMeta material={material} />
     </>
   );
 }
@@ -140,12 +140,12 @@ export function MaterialDetailView({
         </div>
 
         <div className="flex flex-col gap-6 lg:hidden">
+          <MaterialMeta material={material} />
           <MaterialTableOfContents
             chapters={material.chapters}
             h1Headings={material.h1Headings}
             isPreview={material.isPreview}
           />
-          <MaterialMeta material={material} />
         </div>
       </div>
     </Container>
