@@ -1,10 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import {
   BookOpen,
   CheckCircle2,
   ClipboardList,
+  LogOut,
   Settings,
   ShoppingBag,
 } from "lucide-react";
@@ -13,6 +16,7 @@ import { ProfileAvatar } from "@/components/profile/profile-avatar";
 import { ProfileSectionCard } from "@/components/profile/profile-section-card";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { getMaterialFormatLabel } from "@/lib/catalog/format";
 import { getMaterialCoverPlaceholderClass } from "@/lib/catalog/material-cover";
 import {
@@ -153,6 +157,7 @@ export function ProfileDashboard({ data }: ProfileDashboardProps) {
                 label="Настройки профиля"
                 description="Имя, email, пароль, Telegram"
               />
+              <QuickActionSignOut />
             </nav>
           </ProfileSectionCard>
         </div>
@@ -271,6 +276,40 @@ function QuickActionLink({
         <p className="text-xs text-neutral-500">{description}</p>
       </div>
     </Link>
+  );
+}
+
+function QuickActionSignOut() {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+
+  async function handleSignOut() {
+    setIsLoading(true);
+
+    const supabase = createSupabaseBrowserClient();
+    await supabase.auth.signOut();
+
+    router.push("/");
+    router.refresh();
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={handleSignOut}
+      disabled={isLoading}
+      className="flex items-center gap-3 rounded-lg border border-neutral-200 px-4 py-3 text-left transition-colors hover:bg-neutral-50 disabled:opacity-60"
+    >
+      <div className="flex size-9 items-center justify-center rounded-lg bg-red-50 text-destructive">
+        <LogOut className="size-4" aria-hidden />
+      </div>
+      <div className="min-w-0">
+        <p className="text-sm font-medium text-foreground">
+          {isLoading ? "Выходим…" : "Выйти из аккаунта"}
+        </p>
+        <p className="text-xs text-neutral-500">Завершить текущую сессию</p>
+      </div>
+    </button>
   );
 }
 

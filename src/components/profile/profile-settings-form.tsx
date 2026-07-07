@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 
 import { updateProfileAction } from "@/app/profile/settings/actions";
+import { SignOutButton } from "@/components/auth/sign-out-button";
 import { ProfileAvatarUpload } from "@/components/profile/profile-avatar-upload";
 import {
   ProfileSettingsShell,
@@ -427,21 +428,35 @@ export function ProfileSettingsForm({ data, storageEnabled }: ProfileSettingsFor
         </form>
 
         <SettingsPanel title="Действия с аккаунтом">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-sm font-medium text-foreground">
-                Удалить аккаунт
-              </p>
-              <p className="text-xs text-neutral-500">
-                Запрос через поддержку. Заказы и чеки сохраняются.
-              </p>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium text-foreground">
+                  Выйти из аккаунта
+                </p>
+                <p className="text-xs text-neutral-500">
+                  Завершить текущую сессию на этом устройстве.
+                </p>
+              </div>
+              <SignOutButton variant="outline" size="sm" />
             </div>
-            <Link
-              href="/support"
-              className={buttonVariants({ variant: "outline", size: "sm" })}
-            >
-              Написать
-            </Link>
+
+            <div className="flex items-center justify-between gap-3 border-t border-neutral-200 pt-4">
+              <div>
+                <p className="text-sm font-medium text-foreground">
+                  Удалить аккаунт
+                </p>
+                <p className="text-xs text-neutral-500">
+                  Запрос через поддержку. Заказы и чеки сохраняются.
+                </p>
+              </div>
+              <Link
+                href="/support"
+                className={buttonVariants({ variant: "outline", size: "sm" })}
+              >
+                Написать
+              </Link>
+            </div>
           </div>
         </SettingsPanel>
       </div>
