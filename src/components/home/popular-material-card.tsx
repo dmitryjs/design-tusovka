@@ -3,6 +3,7 @@
 import { Eye, ShoppingCart, Star } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { addToCartAction } from "@/app/actions/cart";
@@ -65,6 +66,7 @@ export function PopularMaterialCard({
   className,
   variant = "catalog",
 }: PopularMaterialCardProps) {
+  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [ctaLabel, setCtaLabel] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -92,6 +94,7 @@ export function PopularMaterialCard({
 
         if (result.ok) {
           setCtaLabel("В библиотеке");
+          router.refresh();
           return;
         }
 
@@ -108,6 +111,7 @@ export function PopularMaterialCard({
 
       if (result.ok) {
         setCtaLabel("В корзине");
+        router.refresh();
         return;
       }
 

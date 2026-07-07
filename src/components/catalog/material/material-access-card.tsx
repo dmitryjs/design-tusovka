@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { BookOpen } from "lucide-react";
 import { useState, useTransition } from "react";
 
@@ -62,6 +63,7 @@ export function MaterialAccessCard({
   signInReturnPath,
   className,
 }: MaterialAccessCardProps) {
+  const router = useRouter();
   const [claimUiState, setClaimUiState] = useState(claimState);
   const [cartUiState, setCartUiState] = useState(cartState);
   const [error, setError] = useState<string | null>(null);
@@ -82,6 +84,7 @@ export function MaterialAccessCard({
 
       if (result.ok) {
         setClaimUiState("claimed");
+        router.refresh();
         return;
       }
 
@@ -100,6 +103,7 @@ export function MaterialAccessCard({
 
       if (result.ok) {
         setCartUiState("in_cart");
+        router.refresh();
         return;
       }
 

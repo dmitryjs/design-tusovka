@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { addToCartAction } from "@/app/actions/cart";
@@ -23,6 +24,7 @@ export function PaidProductCartCta({
   signInReturnPath,
   className,
 }: PaidProductCartCtaProps) {
+  const router = useRouter();
   const [state, setState] = useState(initialState);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -73,6 +75,7 @@ export function PaidProductCartCta({
 
             if (result.ok) {
               setState("in_cart");
+              router.refresh();
               return;
             }
 

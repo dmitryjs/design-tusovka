@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Play, ShieldCheck } from "lucide-react";
 import { useState, useTransition } from "react";
 
@@ -61,6 +62,7 @@ export function TaskAccessCard({
   signInReturnPath,
   className,
 }: TaskAccessCardProps) {
+  const router = useRouter();
   const [claimUiState, setClaimUiState] = useState(claimState);
   const [cartUiState, setCartUiState] = useState(cartState);
   const [error, setError] = useState<string | null>(null);
@@ -81,6 +83,7 @@ export function TaskAccessCard({
 
       if (result.ok) {
         setClaimUiState("claimed");
+        router.refresh();
         return;
       }
 
@@ -99,6 +102,7 @@ export function TaskAccessCard({
 
       if (result.ok) {
         setCartUiState("in_cart");
+        router.refresh();
         return;
       }
 

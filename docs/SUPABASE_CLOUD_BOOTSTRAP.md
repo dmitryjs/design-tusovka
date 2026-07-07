@@ -17,6 +17,7 @@
 | **9** | [`supabase/cloud_patch_product_reviews.sql`](../supabase/cloud_patch_product_reviews.sql) | Отзывы на страницах товаров и `/admin/reviews` |
 | **10** | [`supabase/cloud_patch_storage.sql`](../supabase/cloud_patch_storage.sql) | Storage: `public-media`, `private-files` (загрузка медиа в админке) |
 | **11** | [`supabase/cloud_patch_section_cart.sql`](../supabase/cloud_patch_section_cart.sql) | Разделы в корзине и checkout |
+| **12** | [`supabase/cloud_patch_cart_persist_until_paid.sql`](../supabase/cloud_patch_cart_persist_until_paid.sql) | Корзина сохраняется до оплаты (ORDER-04) |
 
 Оба обязательных файла (шаги 1–2) выполняются в **Supabase Dashboard → SQL Editor → New query → Run**.
 
@@ -112,8 +113,9 @@ where proname in ('add_to_cart', 'remove_from_cart', 'create_pending_order_from_
 Ручная проверка:
 
 1. Платный продукт → «Добавить в корзину» → `/cart`.
-2. «Перейти к оплате» → заказ `pending_payment`, корзина пустая.
+2. «Перейти к оплате» → заказ `pending_payment`; корзина **сохраняется** до подтверждения оплаты (ORDER-04).
 3. Entitlement **не** создаётся до реальной оплаты.
+4. После успешной оплаты (`fulfill_paid_order`) оплаченные товары удаляются из корзины; прерванная/отменённая оплата корзину не очищает.
 
 ### ЮKassa (шаг 8)
 
