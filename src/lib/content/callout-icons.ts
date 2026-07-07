@@ -268,6 +268,71 @@ export function resolveCalloutIcon(value: string | null | undefined): LucideIcon
   return CALLOUT_ICONS[value];
 }
 
+export const CALLOUT_EMOJI_PREFIX = "emoji:";
+
+export const CALLOUT_EMOJI_PRESETS = [
+  "🔥",
+  "💡",
+  "✅",
+  "⚠️",
+  "❗",
+  "❓",
+  "💬",
+  "📌",
+  "📝",
+  "🎯",
+  "🚀",
+  "💪",
+  "👀",
+  "✨",
+  "⭐",
+  "🎉",
+  "📚",
+  "🔑",
+  "💎",
+  "🛠️",
+  "📊",
+  "❤️",
+  "👍",
+  "🧠",
+] as const;
+
+export function encodeCalloutEmoji(emoji: string): string {
+  return `${CALLOUT_EMOJI_PREFIX}${emoji}`;
+}
+
+export function isCalloutEmojiValue(value: string): boolean {
+  return value.startsWith(CALLOUT_EMOJI_PREFIX);
+}
+
+export function getCalloutEmoji(value: string): string {
+  return value.slice(CALLOUT_EMOJI_PREFIX.length);
+}
+
+export type ParsedCalloutIcon =
+  | { kind: "none" }
+  | { kind: "lucide"; id: CalloutIconId }
+  | { kind: "emoji"; emoji: string };
+
+export function parseCalloutIconValue(
+  value: string | null | undefined,
+): ParsedCalloutIcon {
+  if (!value) {
+    return { kind: "none" };
+  }
+
+  if (isCalloutEmojiValue(value)) {
+    const emoji = getCalloutEmoji(value).trim();
+    return emoji ? { kind: "emoji", emoji } : { kind: "none" };
+  }
+
+  if (isCalloutIconId(value)) {
+    return { kind: "lucide", id: value };
+  }
+
+  return { kind: "none" };
+}
+
 export function filterCalloutIconOptions(query: string): CalloutIconOption[] {
   const normalized = query.trim().toLowerCase();
   if (!normalized) {

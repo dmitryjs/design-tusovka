@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 
 import { normalizeRichTextValue, richTextToPlainText, sanitizeRichHtml } from "@/lib/content/rich-text";
+import { replaceDoubleDashInEditable } from "@/lib/content/text-substitutions";
 import { RICH_TEXT_FORMAT_CLASS } from "@/lib/content/rich-text-content";
 import { cn } from "@/lib/utils";
 
@@ -109,7 +110,13 @@ export function RichTextField({
           }
         }}
         onInput={() => {
-          const html = ref.current?.innerHTML ?? "";
+          const node = ref.current;
+          if (!node) {
+            return;
+          }
+
+          replaceDoubleDashInEditable(node);
+          const html = node.innerHTML;
           lastHtmlRef.current = html;
           onChange(html);
         }}

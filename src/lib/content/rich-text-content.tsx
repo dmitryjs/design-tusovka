@@ -1,4 +1,4 @@
-import { sanitizeRichHtml } from "@/lib/content/rich-text";
+import { sanitizeRichHtml, stripInlineTextColors } from "@/lib/content/rich-text";
 import { cn } from "@/lib/utils";
 
 /** Сохраняет жирный, курсив и другие inline-форматы поверх цвета родительского блока. */
@@ -9,18 +9,33 @@ type RichTextContentProps = {
   html: string;
   className?: string;
   as?: "span" | "p" | "div";
+  /** Убирает inline-цвета — для чёрного текста материалов. */
+  monochrome?: boolean;
 };
 
-export function RichTextContent({ html, className, as: Tag = "span" }: RichTextContentProps) {
+export function RichTextContent({
+  html,
+  className,
+  as: Tag = "span",
+  monochrome = false,
+}: RichTextContentProps) {
   if (!html) {
     return null;
   }
 
   if (!html.includes("<")) {
-    return <Tag className={cn(RICH_TEXT_FORMAT_CLASS, className)}>{html}</Tag>;
+    return (
+      <Tag className={cn(RICH_TEXT_FORMAT_CLASS, monochrome && "text-neutral-900", className)}>
+        {html}
+      </Tag>
+    );
   }
 
-  const safe = sanitizeRichHtml(html);
+  let safe = sanitizeRichHtml(html);
+
+  if (monochrome) {
+    safe = stripInlineTextColors(safe);
+  }
 
   if (!safe) {
     return null;
@@ -31,7 +46,8 @@ export function RichTextContent({ html, className, as: Tag = "span" }: RichTextC
       className={cn(
         "rich-text-content",
         RICH_TEXT_FORMAT_CLASS,
-        "[&_a]:text-primary [&_a]:underline",
+        monochrome ? "[&_a]:text-neutral-900 [&_a]:underline" : "[&_a]:text-primary [&_a]:underline",
+        monochrome && "text-neutral-900",
         className,
       )}
       dangerouslySetInnerHTML={{ __html: safe }}

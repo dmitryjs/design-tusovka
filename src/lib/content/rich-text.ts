@@ -1,3 +1,5 @@
+import { substituteEmDashInPlainText } from "./text-substitutions";
+
 const ALLOWED_TAGS = new Set([
   "b",
   "strong",
@@ -280,8 +282,43 @@ export function normalizeRichTextValue(value: string): string {
     return value;
   }
 
-  return value
+  return substituteEmDashInPlainText(value)
     .split("\n")
     .map((line) => line || "<br>")
     .join("<br>");
 }
+
+export function stripInlineTextColors(html: string): string {
+  if (!html || !html.includes("style")) {
+    return html;
+  }
+
+  if (typeof DOMParser === "undefined") {
+    return html.replace(/\s*color\s*:\s*[^;"]+;?/gi, "");
+  }
+
+  const doc = new DOMParser().parseFromString(`<body>${html}</body>`, "text/html");
+  const spans = doc.body.querySelectorAll("span[style]");
+
+  for (const span of spans) {
+    const style = span.getAttribute("style");
+    if (!style) {
+      continue;
+    }
+
+    const cleaned = style
+      .split(";")
+      .map((part) => part.trim())
+      .filter((part) => part && !part.toLowerCase().startsWith("color:"))
+      .join("; ");
+
+    if (cleaned) {
+      span.setAttribute("style", cleaned);
+    } else {
+      span.removeAttribute("style");
+    }
+  }
+
+  return doc.body.innerHTML;
+}
+

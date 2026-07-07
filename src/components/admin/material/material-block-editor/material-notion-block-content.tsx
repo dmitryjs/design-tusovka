@@ -368,14 +368,10 @@ function CalloutEditor({
   disabled?: boolean;
   tone: "info" | "warning" | "success";
 }) {
-  const toneClass = {
-    info: "bg-blue-50",
-    warning: "bg-amber-50",
-    success: "bg-emerald-50",
-  }[tone];
+  const toneClass = "bg-neutral-100";
 
   return (
-    <div className={cn("flex gap-2 rounded-lg px-3 py-2", toneClass)}>
+    <div className={cn("flex gap-2 rounded-lg px-3 py-2 text-neutral-900", toneClass)}>
       <CalloutIconPicker
         value={block.data.icon ?? null}
         onChange={(icon) => onChange(updateData(block, { icon }))}
@@ -388,14 +384,14 @@ function CalloutEditor({
           onChange={(title) => onChange(updateData(block, { title }))}
           disabled={disabled}
           placeholder="Заголовок"
-          className="font-medium"
+          className="font-medium text-neutral-900"
         />
         <RichTextField
           value={block.data.text}
           onChange={(text) => onChange(updateData(block, { text }))}
           disabled={disabled}
           placeholder="Текст блока"
-          className="mt-1 text-sm leading-6"
+          className="mt-1 text-sm leading-6 text-neutral-900"
         />
       </div>
     </div>

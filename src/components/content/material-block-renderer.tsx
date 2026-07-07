@@ -1,7 +1,8 @@
 import { FileUp } from "lucide-react";
 
-import { CalloutIcon } from "@/components/content/callout-icon";
+import { CalloutGlyph } from "@/components/content/callout-icon";
 import { CheckedListMarker } from "@/components/content/checked-list-marker";
+import { InteractiveChecklist } from "@/components/content/interactive-checklist";
 
 import { MaterialCtaBanner } from "@/components/content/material-cta-banner";
 import type { MaterialBlock } from "@/lib/content/material-blocks";
@@ -15,6 +16,8 @@ import { cn } from "@/lib/utils";
 
 type RenderVariant = "default" | "reading";
 
+const materialTextClass = "text-neutral-900";
+
 type MaterialBlockRendererProps = {
   blocks: MaterialBlock[];
   className?: string;
@@ -22,36 +25,32 @@ type MaterialBlockRendererProps = {
 };
 
 function Callout({
-  variant,
   title,
   text,
   icon,
   renderVariant,
 }: {
-  variant: "info" | "warning" | "success";
   title?: string;
   text: string;
   icon?: string | null;
   renderVariant: RenderVariant;
 }) {
-  const styles = {
-    info: "bg-blue-50 text-blue-900",
-    warning: "bg-amber-50 text-amber-950",
-    success: "bg-emerald-50 text-emerald-950",
-  } as const;
-
-  const iconToneClass = {
-    info: "text-blue-600",
-    warning: "text-amber-700",
-    success: "text-emerald-700",
-  } as const;
+  const calloutSurfaceClass =
+    renderVariant === "reading"
+      ? "rounded-lg bg-neutral-100 text-neutral-900"
+      : "rounded-xl border border-neutral-200 bg-neutral-100 text-neutral-900";
 
   const body = (
     <div className={calloutLayout.body}>
-      <CalloutIcon icon={icon} className={cn("mt-0.5", iconToneClass[variant])} />
+      <CalloutGlyph icon={icon} className="mt-0.5 text-neutral-900" />
       <div className="min-w-0 flex-1">
         {title ? (
-          <p className={cn("text-sm", renderVariant === "reading" ? "font-medium" : "font-semibold")}>
+          <p
+            className={cn(
+              "text-sm text-neutral-900",
+              renderVariant === "reading" ? "font-medium" : "font-semibold",
+            )}
+          >
             {title}
           </p>
         ) : null}
@@ -59,7 +58,8 @@ function Callout({
           <RichTextContent
             as="p"
             html={text}
-            className={cn(materialBodyType, title && calloutLayout.titleToText)}
+            monochrome
+            className={cn(materialBodyType, materialTextClass, title && calloutLayout.titleToText)}
           />
         ) : null}
       </div>
@@ -67,10 +67,10 @@ function Callout({
   );
 
   if (renderVariant === "reading") {
-    return <div className={cn(calloutLayout.reading, styles[variant])}>{body}</div>;
+    return <div className={cn(calloutLayout.reading, calloutSurfaceClass)}>{body}</div>;
   }
 
-  return <div className={cn(calloutLayout.default, styles[variant])}>{body}</div>;
+  return <div className={cn(calloutLayout.default, calloutSurfaceClass)}>{body}</div>;
 }
 
 function MaterialBlockItem({
@@ -100,7 +100,7 @@ function MaterialBlockItem({
             headingAnchorProps.className,
           )}
         >
-          <RichTextContent html={block.data.text} />
+          <RichTextContent html={block.data.text} monochrome />
         </h2>
       );
     case "heading2":
@@ -112,7 +112,7 @@ function MaterialBlockItem({
             headingAnchorProps.className,
           )}
         >
-          <RichTextContent html={block.data.text} />
+          <RichTextContent html={block.data.text} monochrome />
         </h3>
       );
     case "heading3":
@@ -124,7 +124,7 @@ function MaterialBlockItem({
             headingAnchorProps.className,
           )}
         >
-          <RichTextContent html={block.data.text} />
+          <RichTextContent html={block.data.text} monochrome />
         </h4>
       );
     case "paragraph":
@@ -132,21 +132,22 @@ function MaterialBlockItem({
         <RichTextContent
           as="p"
           html={block.data.text}
-          className={cn("whitespace-pre-wrap text-neutral-700", materialBodyType)}
+          monochrome
+          className={cn("whitespace-pre-wrap", materialTextClass, materialBodyType)}
         />
       );
     case "bulleted_list":
       return (
         <ul
           className={cn(
-            "text-neutral-700",
+            materialTextClass,
             materialBodyType,
             isReading ? "space-y-1 pl-5" : "list-disc space-y-2 pl-5",
           )}
         >
           {block.data.items.filter(Boolean).map((item, index) => (
             <li key={index} className={isReading ? "list-disc" : undefined}>
-              <RichTextContent html={item} />
+              <RichTextContent html={item} monochrome />
             </li>
           ))}
         </ul>
@@ -155,34 +156,31 @@ function MaterialBlockItem({
       return (
         <ol
           className={cn(
-            "text-neutral-700",
+            materialTextClass,
             materialBodyType,
             isReading ? "space-y-1 pl-5" : "list-decimal space-y-2 pl-5",
           )}
         >
           {block.data.items.filter(Boolean).map((item, index) => (
             <li key={index} className={isReading ? "list-decimal" : undefined}>
-              <RichTextContent html={item} />
+              <RichTextContent html={item} monochrome />
             </li>
           ))}
         </ol>
       );
     case "checklist":
       return (
-        <ul className={cn("text-neutral-700", materialBodyType, isReading ? "space-y-1" : "space-y-2")}>
-          {block.data.items.map((item) => (
-            <li key={item.id} className="flex items-start gap-2">
-              <span aria-hidden>{item.checked ? "☑" : "☐"}</span>
-              <RichTextContent html={item.text} />
-            </li>
-          ))}
-        </ul>
+        <InteractiveChecklist
+          items={block.data.items}
+          bodyClassName={materialBodyType}
+          compact={isReading}
+        />
       );
     case "checked_list":
       return (
         <ul
           className={cn(
-            "text-neutral-700",
+            materialTextClass,
             materialBodyType,
             isReading ? "space-y-2" : "space-y-2.5",
           )}
@@ -190,7 +188,7 @@ function MaterialBlockItem({
           {block.data.items.filter(Boolean).map((item, index) => (
             <li key={index} className="flex items-start gap-2.5">
               <CheckedListMarker />
-              <RichTextContent html={item} className="min-w-0 flex-1" />
+              <RichTextContent html={item} monochrome className="min-w-0 flex-1" />
             </li>
           ))}
         </ul>
@@ -199,14 +197,14 @@ function MaterialBlockItem({
       return (
         <blockquote
           className={cn(
-            "border-l-4 border-primary bg-blue-50 px-4 py-3 text-primary",
+            "border-l-4 border-neutral-300 bg-neutral-100 px-4 py-3 text-neutral-900",
             materialBodyType,
             isReading ? "rounded-r-lg" : "rounded-r-xl py-4",
           )}
         >
-          <RichTextContent as="p" html={block.data.text} />
+          <RichTextContent as="p" html={block.data.text} monochrome />
           {block.data.author ? (
-            <footer className={cn("mt-2 text-primary/70", materialBodyType)}>
+            <footer className={cn("mt-2 text-neutral-700", materialBodyType)}>
               — {block.data.author}
             </footer>
           ) : null}
@@ -260,9 +258,12 @@ function MaterialBlockItem({
                   {row.map((cell, cellIndex) => (
                     <td
                       key={cellIndex}
-                      className="min-w-[80px] border border-neutral-200 px-3 py-2 align-top text-neutral-700"
+                      className={cn(
+                        "min-w-[80px] border border-neutral-200 px-3 py-2 align-top",
+                        materialTextClass,
+                      )}
                     >
-                      <RichTextContent html={cell} />
+                      <RichTextContent html={cell} monochrome />
                     </td>
                   ))}
                 </tr>
@@ -307,7 +308,6 @@ function MaterialBlockItem({
     case "callout_info":
       return (
         <Callout
-          variant="info"
           title={block.data.title}
           text={block.data.text}
           icon={block.data.icon}
@@ -317,7 +317,6 @@ function MaterialBlockItem({
     case "callout_warning":
       return (
         <Callout
-          variant="warning"
           title={block.data.title}
           text={block.data.text}
           icon={block.data.icon}
@@ -327,7 +326,6 @@ function MaterialBlockItem({
     case "callout_success":
       return (
         <Callout
-          variant="success"
           title={block.data.title}
           text={block.data.text}
           icon={block.data.icon}
@@ -349,7 +347,8 @@ function MaterialBlockItem({
           <RichTextContent
             as="p"
             html={block.data.text}
-            className="mt-3 text-sm leading-6 text-neutral-700"
+            monochrome
+            className={cn("mt-3 text-sm leading-6", materialTextClass)}
           />
         </details>
       );
