@@ -25,29 +25,54 @@ type MaterialBlockRendererProps = {
 };
 
 function Callout({
+  variant,
   title,
   text,
   icon,
   renderVariant,
 }: {
+  variant: "neutral" | "info" | "warning" | "success";
   title?: string;
   text: string;
   icon?: string | null;
   renderVariant: RenderVariant;
 }) {
-  const calloutSurfaceClass =
-    renderVariant === "reading"
-      ? "rounded-lg bg-neutral-100 text-neutral-900"
-      : "rounded-xl border border-neutral-200 bg-neutral-100 text-neutral-900";
+  const toneStyles = {
+    neutral: {
+      surface:
+        renderVariant === "reading"
+          ? "rounded-lg bg-neutral-100 text-neutral-900"
+          : "rounded-xl border border-neutral-200 bg-neutral-100 text-neutral-900",
+      icon: "text-neutral-900",
+      monochrome: true,
+    },
+    info: {
+      surface: "bg-blue-50 text-blue-900",
+      icon: "text-blue-600",
+      monochrome: false,
+    },
+    warning: {
+      surface: "bg-amber-50 text-amber-950",
+      icon: "text-amber-700",
+      monochrome: false,
+    },
+    success: {
+      surface: "bg-emerald-50 text-emerald-950",
+      icon: "text-emerald-700",
+      monochrome: false,
+    },
+  } as const;
+
+  const tone = toneStyles[variant];
 
   const body = (
     <div className={calloutLayout.body}>
-      <CalloutGlyph icon={icon} className="mt-0.5 text-neutral-900" />
+      <CalloutGlyph icon={icon} className={cn("mt-0.5", tone.icon)} />
       <div className="min-w-0 flex-1">
         {title ? (
           <p
             className={cn(
-              "text-sm text-neutral-900",
+              "text-sm",
               renderVariant === "reading" ? "font-medium" : "font-semibold",
             )}
           >
@@ -58,8 +83,12 @@ function Callout({
           <RichTextContent
             as="p"
             html={text}
-            monochrome
-            className={cn(materialBodyType, materialTextClass, title && calloutLayout.titleToText)}
+            monochrome={tone.monochrome}
+            className={cn(
+              materialBodyType,
+              tone.monochrome && materialTextClass,
+              title && calloutLayout.titleToText,
+            )}
           />
         ) : null}
       </div>
@@ -67,10 +96,14 @@ function Callout({
   );
 
   if (renderVariant === "reading") {
-    return <div className={cn(calloutLayout.reading, calloutSurfaceClass)}>{body}</div>;
+    return (
+      <div className={cn(calloutLayout.reading, tone.surface)}>
+        {body}
+      </div>
+    );
   }
 
-  return <div className={cn(calloutLayout.default, calloutSurfaceClass)}>{body}</div>;
+  return <div className={cn(calloutLayout.default, tone.surface)}>{body}</div>;
 }
 
 function MaterialBlockItem({
@@ -305,9 +338,20 @@ function MaterialBlockItem({
           ) : null}
         </a>
       ) : null;
+    case "callout":
+      return (
+        <Callout
+          variant="neutral"
+          title={block.data.title}
+          text={block.data.text}
+          icon={block.data.icon}
+          renderVariant={variant}
+        />
+      );
     case "callout_info":
       return (
         <Callout
+          variant="info"
           title={block.data.title}
           text={block.data.text}
           icon={block.data.icon}
@@ -317,6 +361,7 @@ function MaterialBlockItem({
     case "callout_warning":
       return (
         <Callout
+          variant="warning"
           title={block.data.title}
           text={block.data.text}
           icon={block.data.icon}
@@ -326,6 +371,7 @@ function MaterialBlockItem({
     case "callout_success":
       return (
         <Callout
+          variant="success"
           title={block.data.title}
           text={block.data.text}
           icon={block.data.icon}

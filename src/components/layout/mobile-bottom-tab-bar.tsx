@@ -4,7 +4,7 @@ import { BookOpen, ClipboardList, Library, UserRound } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { MOBILE_TAB_NAV, isNavItemActive } from "@/lib/navigation";
+import { MOBILE_TAB_NAV, isMaterialReadPage, isNavItemActive } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 
 const TAB_ICONS = {
@@ -17,7 +17,7 @@ const TAB_ICONS = {
 export function MobileBottomTabBar() {
   const pathname = usePathname();
 
-  if (pathname.startsWith("/admin")) {
+  if (pathname.startsWith("/admin") || isMaterialReadPage(pathname)) {
     return null;
   }
 

@@ -25,6 +25,10 @@ export const MOBILE_TAB_NAV: MobileTabItem[] = [
   { id: "profile", href: "/profile", label: "Профиль" },
 ];
 
+export function isMaterialReadPage(pathname: string): boolean {
+  return /^\/materials\/[^/]+\/read\/?$/.test(pathname);
+}
+
 export function isNavItemActive(href: string, pathname: string): boolean {
   if (href === "/") {
     return (

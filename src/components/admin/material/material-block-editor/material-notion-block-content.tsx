@@ -283,6 +283,8 @@ export function MaterialNotionBlockContent({
           />
         </div>
       );
+    case "callout":
+      return <CalloutEditor block={block} onChange={onChange} disabled={disabled} tone="neutral" />;
     case "callout_info":
       return <CalloutEditor block={block} onChange={onChange} disabled={disabled} tone="info" />;
     case "callout_warning":
@@ -363,20 +365,28 @@ function CalloutEditor({
   disabled,
   tone,
 }: {
-  block: Extract<MaterialBlock, { type: "callout_info" | "callout_warning" | "callout_success" }>;
+  block: Extract<
+    MaterialBlock,
+    { type: "callout" | "callout_info" | "callout_warning" | "callout_success" }
+  >;
   onChange: (block: MaterialBlock) => void;
   disabled?: boolean;
-  tone: "info" | "warning" | "success";
+  tone: "neutral" | "info" | "warning" | "success";
 }) {
-  const toneClass = "bg-neutral-100";
+  const toneSurfaceClass = {
+    neutral: "bg-neutral-100 text-neutral-900",
+    info: "bg-blue-50 text-blue-900",
+    warning: "bg-amber-50 text-amber-950",
+    success: "bg-emerald-50 text-emerald-950",
+  } as const;
 
   return (
-    <div className={cn("flex gap-2 rounded-lg px-3 py-2 text-neutral-900", toneClass)}>
+    <div className={cn("flex gap-2 rounded-lg px-3 py-2", toneSurfaceClass[tone])}>
       <CalloutIconPicker
         value={block.data.icon ?? null}
         onChange={(icon) => onChange(updateData(block, { icon }))}
         disabled={disabled}
-        tone={tone}
+        tone={tone === "neutral" ? undefined : tone}
       />
       <div className="min-w-0 flex-1">
         <GhostInput
@@ -384,14 +394,14 @@ function CalloutEditor({
           onChange={(title) => onChange(updateData(block, { title }))}
           disabled={disabled}
           placeholder="Заголовок"
-          className="font-medium text-neutral-900"
+          className="font-medium"
         />
         <RichTextField
           value={block.data.text}
           onChange={(text) => onChange(updateData(block, { text }))}
           disabled={disabled}
           placeholder="Текст блока"
-          className="mt-1 text-sm leading-6 text-neutral-900"
+          className="mt-1 text-sm leading-6"
         />
       </div>
     </div>

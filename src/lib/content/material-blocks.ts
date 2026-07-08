@@ -21,6 +21,7 @@ export const MATERIAL_BLOCK_TYPES = [
   "table",
   "file",
   "embed",
+  "callout",
   "callout_info",
   "callout_warning",
   "callout_success",
@@ -52,6 +53,7 @@ export type MaterialBlockData = {
   table: { headers: string[]; rows: string[][] };
   file: { name: string; url: string; sizeLabel: string };
   embed: { url: string; title: string; description: string };
+  callout: { title: string; text: string; icon?: string | null };
   callout_info: { title: string; text: string; icon?: string | null };
   callout_warning: { title: string; text: string; icon?: string | null };
   callout_success: { title: string; text: string; icon?: string | null };
@@ -97,6 +99,7 @@ export const MATERIAL_BLOCK_DEFINITIONS: MaterialBlockDefinition[] = [
   { type: "table", label: "Таблица", description: "Сетка 3×3", category: "media", icon: "▦" },
   { type: "file", label: "Файл / PDF", description: "Ссылка на файл", category: "media", icon: "📎" },
   { type: "embed", label: "Встраивание", description: "Ссылка с превью", category: "media", icon: "🔗" },
+  { type: "callout", label: "Call out", description: "Нейтральный акцент", category: "layout", icon: "◆" },
   { type: "callout_info", label: "Инфо-блок", description: "Подсказка", category: "layout", icon: "ⓘ" },
   { type: "callout_warning", label: "Предупреждение", description: "Важное замечание", category: "layout", icon: "⚠" },
   { type: "callout_success", label: "Успех", description: "Позитивный акцент", category: "layout", icon: "✓" },
@@ -163,6 +166,7 @@ export function defaultBlockData(type: MaterialBlockType): MaterialBlockData[typ
       return { name: "", url: "", sizeLabel: "" };
     case "embed":
       return { url: "", title: "", description: "" };
+    case "callout":
     case "callout_info":
     case "callout_warning":
     case "callout_success":

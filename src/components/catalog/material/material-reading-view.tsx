@@ -10,6 +10,7 @@ import { MaterialMeta } from "@/components/catalog/material/material-meta";
 import { MaterialReadingActions } from "@/components/catalog/material/material-reading-actions";
 import { MaterialReadingContent } from "@/components/catalog/material/material-reading-content";
 import { MaterialReadingToc } from "@/components/catalog/material/material-reading-toc";
+import { MaterialReadingTocFab } from "@/components/catalog/material/material-reading-toc-fab";
 import { ProductReviewsSection } from "@/components/reviews/product-reviews-section";
 import type { MaterialDetail } from "@/lib/catalog/detail-queries";
 import { getCatalogItemHref } from "@/lib/catalog/paths";
@@ -87,7 +88,7 @@ export function MaterialReadingView({
   return (
     <Container className="py-6 md:py-8 lg:py-10">
       <div className="mx-auto flex max-w-[1280px] flex-col gap-6 md:gap-8">
-        <Breadcrumbs items={buildBreadcrumbs(material)} />
+        <Breadcrumbs items={buildBreadcrumbs(material)} className="hidden xl:flex" />
 
         <div className="grid items-start gap-8 xl:grid-cols-[220px_minmax(0,1fr)_300px]">
           <aside className="hidden xl:block">
@@ -105,7 +106,7 @@ export function MaterialReadingView({
 
           <main className="min-w-0">
             <div className="mx-auto max-w-3xl">
-              <div className="mb-6 space-y-4 xl:hidden">
+              <div className="mb-6 xl:hidden">
                 <Link
                   href={getCatalogItemHref("material", material.slug)}
                   className="inline-flex items-center gap-1.5 text-sm text-neutral-500 transition-colors hover:text-foreground"
@@ -113,22 +114,11 @@ export function MaterialReadingView({
                   <ArrowLeft className="size-4" aria-hidden />
                   К материалу
                 </Link>
-                <MaterialReadingToc
-                  headings={headings}
-                  className="rounded-xl border border-neutral-200 bg-white p-4"
-                />
               </div>
 
               <h1 className="mb-6 text-3xl leading-tight font-bold text-foreground sm:text-4xl">
                 {material.title}
               </h1>
-
-              <div className="mb-8 xl:hidden">
-                {showActions ? (
-                  <MaterialReadingActions pdfAttachment={pdfAttachment} className="mb-4" />
-                ) : null}
-                <MaterialMeta material={material} />
-              </div>
 
               <MaterialReadingContent chapters={material.chapters} />
 
@@ -153,6 +143,8 @@ export function MaterialReadingView({
             </div>
           </aside>
         </div>
+
+        <MaterialReadingTocFab headings={headings} />
       </div>
     </Container>
   );

@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 type MaterialReadingTocProps = {
   headings: MaterialHeadingAnchor[];
   className?: string;
+  onNavigate?: () => void;
 };
 
 function scrollToHeading(id: string) {
@@ -19,7 +20,11 @@ function scrollToHeading(id: string) {
   element.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-export function MaterialReadingToc({ headings, className }: MaterialReadingTocProps) {
+export function MaterialReadingToc({
+  headings,
+  className,
+  onNavigate,
+}: MaterialReadingTocProps) {
   const [activeId, setActiveId] = useState<string | null>(headings[0]?.id ?? null);
 
   useEffect(() => {
@@ -76,7 +81,10 @@ export function MaterialReadingToc({ headings, className }: MaterialReadingTocPr
             <li key={heading.id}>
               <button
                 type="button"
-                onClick={() => scrollToHeading(heading.id)}
+                onClick={() => {
+                  scrollToHeading(heading.id);
+                  onNavigate?.();
+                }}
                 className={cn(
                   "w-full rounded-md px-2 py-1.5 text-left text-sm leading-5 transition-colors",
                   heading.level === 2 && "pl-4",
