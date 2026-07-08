@@ -69,7 +69,7 @@ export function MaterialReadingTocFab({ headings }: MaterialReadingTocFabProps) 
             aria-modal="true"
             aria-label="Содержание"
             className={cn(
-              "absolute inset-x-0 bottom-0 max-h-[min(70vh,28rem)] rounded-t-2xl bg-white",
+              "absolute inset-x-0 bottom-0 top-0 max-h-[100dvh] rounded-t-2xl bg-white",
               "pb-[max(env(safe-area-inset-bottom),0.75rem)] shadow-[0_-8px_30px_rgba(0,0,0,0.12)]",
             )}
           >
@@ -80,6 +80,7 @@ export function MaterialReadingTocFab({ headings }: MaterialReadingTocFabProps) 
               <MaterialReadingToc
                 headings={headings}
                 onNavigate={() => setOpen(false)}
+                forceBlackText
               />
             </div>
           </div>

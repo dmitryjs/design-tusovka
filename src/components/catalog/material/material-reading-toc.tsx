@@ -9,6 +9,7 @@ type MaterialReadingTocProps = {
   headings: MaterialHeadingAnchor[];
   className?: string;
   onNavigate?: () => void;
+  forceBlackText?: boolean;
 };
 
 function scrollToHeading(id: string) {
@@ -24,6 +25,7 @@ export function MaterialReadingToc({
   headings,
   className,
   onNavigate,
+  forceBlackText = false,
 }: MaterialReadingTocProps) {
   const [activeId, setActiveId] = useState<string | null>(headings[0]?.id ?? null);
 
@@ -70,7 +72,12 @@ export function MaterialReadingToc({
 
   return (
     <nav aria-label="Содержание" className={className}>
-      <p className="mb-3 text-xs font-semibold tracking-wide text-neutral-500 uppercase">
+      <p
+        className={cn(
+          "mb-3 text-xs font-semibold tracking-wide uppercase",
+          forceBlackText ? "text-neutral-900" : "text-neutral-500",
+        )}
+      >
         Содержание
       </p>
       <ul className="flex flex-col gap-0.5">
@@ -89,9 +96,13 @@ export function MaterialReadingToc({
                   "w-full rounded-md px-2 py-1.5 text-left text-sm leading-5 transition-colors",
                   heading.level === 2 && "pl-4",
                   heading.level === 3 && "pl-6",
-                  isActive
-                    ? "bg-blue-50 font-medium text-primary"
-                    : "text-neutral-600 hover:bg-neutral-50 hover:text-foreground",
+                  forceBlackText
+                    ? isActive
+                      ? "bg-neutral-100 font-medium text-neutral-900"
+                      : "text-neutral-900 hover:bg-neutral-100 hover:text-neutral-900"
+                    : isActive
+                      ? "bg-blue-50 font-medium text-primary"
+                      : "text-neutral-600 hover:bg-neutral-50 hover:text-foreground",
                 )}
               >
                 {heading.title}
