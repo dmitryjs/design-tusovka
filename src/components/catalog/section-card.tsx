@@ -9,6 +9,7 @@ import {
   getSectionCoverPath,
 } from "@/lib/catalog/section-covers";
 import { isVisibleCatalogSection } from "@/lib/catalog/section-visibility";
+import { PUBLIC_REVIEWS_UI_ENABLED } from "@/lib/reviews/feature";
 import type { CatalogItem } from "@/lib/catalog/types";
 import { cn } from "@/lib/utils";
 
@@ -26,7 +27,9 @@ export function SectionCard({ section, coverPath, className }: SectionCardProps)
   const resolvedCoverPath = coverPath ?? getSectionCoverPath(section.slug);
   const materialCount = section.materialCount ?? 0;
   const hasRating =
-    section.averageRating != null && section.averageRating > 0;
+    PUBLIC_REVIEWS_UI_ENABLED &&
+    section.averageRating != null &&
+    section.averageRating > 0;
 
   return (
     <Link

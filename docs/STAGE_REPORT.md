@@ -2,6 +2,79 @@
 
 ## Этап
 
+**Мобильный UX: хедер, bottom tabs, отзывы выключены, без горизонтального скролла**
+
+**Статус: завершён**
+
+## Результат
+
+Мобильная оболочка приближена к приложению:
+
+1. **Поиск** — fullscreen client overlay (не отдельный route `/search`): иконка в хедере открывается мгновенно без нового RSC-fetch; submit ведёт на `/?q=` или `/tasks?q=` как раньше. На `lg+` остаётся инлайн-поле.
+2. **Хедер (mobile)** — только иконки: поиск, уведомления, корзина. Топ-меню и аватар убраны с мобилки.
+3. **Bottom tab bar** — Материалы `/`, Задания `/tasks`, Библиотека `/profile/library`, Профиль `/profile` (иконка + подпись).
+4. **Отзывы/оценки** временно скрыты везде флагом `PUBLIC_REVIEWS_UI_ENABLED = false` (`src/lib/reviews/feature.ts`): бейджи, секции отзывов, звёзды на карточках. Админка отзывов не тронута.
+5. **Overflow** — `overflow-x: clip` на `html`/`body`, `max-w-[100vw]` на body, padding под tab bar; убраны `min-w` у карточек материалов.
+
+## Изменённые файлы
+
+| Файл | Изменение |
+|------|-----------|
+| `src/lib/navigation.ts` | `MAIN_NAV` + `MOBILE_TAB_NAV`, active states |
+| `src/components/layout/header-search.tsx` | Mobile fullscreen search overlay |
+| `src/components/layout/site-header-nav.tsx` | Desktop nav; mobile icons only |
+| `src/components/layout/site-header.tsx` | Упрощённый mobile header |
+| `src/components/layout/mobile-bottom-tab-bar.tsx` | Новый bottom tab bar |
+| `src/components/layout/conditional-site-chrome.tsx` | Tab bar + padding; footer desktop-only |
+| `src/components/layout/cart-preview-dropdown.tsx` | Hover-dropdown только desktop |
+| `src/lib/reviews/feature.ts` | Флаг выключения публичных отзывов |
+| `src/components/reviews/*`, cards, heroes consumers | Скрытие через флаг |
+| `src/app/globals.css`, `layout.tsx` | Anti horizontal scroll |
+
+## Проверки
+
+- `npm run typecheck` — OK
+
+---
+
+## Этап
+
+**ЮKassa: назначение платежа, metadata и позиции чека**
+
+**Статус: завершён**
+
+## Результат
+
+Обогащены данные платежа ЮKassa без изменения payment flow, webhook, RLS и cart/order логики. Введён стабильный публичный номер заказа `DT-XXXXXXXX` (первые 8 символов `order.id`, primary key не меняется). Все данные берутся server-side из `order_items` / `products`, клиент не участвует.
+
+- **`description`**: `Оплата заказа DT-XXXXXXXX` (формируется в `create-payment.ts`).
+- **`metadata`**: `order_id`, `order_number`, `user_id` (server-only), `source: "design-tusovka"`.
+- **Чек (`receipt.items`)**: по позиции на каждый `order_item` — «Доступ к материалу/разделу/заданию: {title}», для неизвестного типа «Доступ к цифровому материалу: {title}». Описание безопасно обрезается до 128 символов; `vat_code` по умолчанию `1` (без НДС, НПД). Чек включается флагом `YOOKASSA_SEND_RECEIPT` и только при наличии email покупателя (иначе не отправляется — платёж не ломается).
+
+Webhook не менялся: связь по `provider_payment_id`, `metadata.order_id` — дополнительная проверка, идемпотентность сохранена.
+
+## Изменённые файлы
+
+| Файл | Изменение |
+|------|-----------|
+| `src/lib/payments/yookassa/order-number.ts` | Новый: `buildPublicOrderNumber` (`DT-XXXXXXXX`) |
+| `src/lib/payments/yookassa/receipt.ts` | Новый: описания позиций чека, обрезка до 128, `buildReceipt` (env-gated) |
+| `src/lib/payments/yookassa/create-payment.ts` | `description`, `metadata`, `receipt`; выборка `title`/`kind` из `order_items`/`products` |
+| `src/lib/payments/yookassa/client.ts` | Проброс опционального `receipt` в `POST /v3/payments` |
+| `src/lib/payments/yookassa/types.ts` | Типы `YookassaReceipt`, `YookassaReceiptItem`, `YookassaReceiptCustomer` |
+| `.env.example` | `YOOKASSA_SEND_RECEIPT`, `YOOKASSA_VAT_CODE` (только имена) |
+| `docs/YOOKASSA_INTEGRATION.md` | Описание назначения, metadata, чека и env |
+
+## Проверки
+
+- `npm run typecheck` — OK
+- `npm run lint` — см. ниже
+- `npm run build` — см. ниже
+
+---
+
+## Этап
+
 **Юридические данные: переход с ИП на продавца-самозанятого (НПД)**
 
 **Статус: завершён**
@@ -169,7 +242,7 @@
 
 ## Вердикт по модерации ЮKassa
 
-**Можно отправлять на модерацию** при условии, что в Vercel заданы `NEXT_PUBLIC_SITE_URL=https://design-tusovka.vercel.app` и ключи ЮKassa, а в ЛК ЮKassa указаны URL из таблицы ниже.
+**Можно отправлять на модерацию** при условии, что в Vercel заданы `NEXT_PUBLIC_SITE_URL=https://designtusovka.ru` и ключи ЮKassa, а в ЛК ЮKassa указаны URL из таблицы ниже.
 
 Рекомендуется до долгосрочной эксплуатации (не блокер модерации):
 
@@ -193,23 +266,23 @@
 | `SELLER_INFO.supportResponseNote` (`null`) | TODO в коде | Задать срок, напр. «до 3 рабочих дней» |
 | `you@example.com` в auth-формах | UI placeholder поля email | Не влияет на модерацию |
 | `Google — скоро` на sign-in/sign-up | Функция не подключена | Не блокер ЮKassa |
-| `docs/VERCEL_DEPLOY.md` — `<your-domain>` | Шаблон в документации | Заменить при custom domain |
-| `.env.example` — `your-project.vercel.app` | Шаблон env | Только для новых окружений |
+| `docs/VERCEL_DEPLOY.md` — домены | Указан `designtusovka.ru` | Обновить, если сменится домен |
+| `.env.example` — `designtusovka.ru` | Шаблон env | Обновить, если сменится домен |
 
 **Не найдено** на сайте: `ФИО_ПРЕДПРИНИМАТЕЛЯ`, `ИНН_ПРЕДПРИНИМАТЕЛЯ`, `ОГРНИП_ПРЕДПРИНИМАТЕЛЯ`, `support@example.com`, `your-domain` в пользовательском UI.
 
 ## Production URLs
 
-Источник: `src/lib/legal/seller-info.ts` → `PRODUCTION_URLS` (при `NEXT_PUBLIC_SITE_URL=https://design-tusovka.vercel.app`):
+Источник: `src/lib/legal/seller-info.ts` → `PRODUCTION_URLS` (при `NEXT_PUBLIC_SITE_URL=https://designtusovka.ru`):
 
 | Назначение | URL |
 |------------|-----|
-| Site | `https://design-tusovka.vercel.app` |
-| Auth callback | `https://design-tusovka.vercel.app/auth/callback` |
-| Checkout success | `https://design-tusovka.vercel.app/checkout/success` |
-| Checkout fail | `https://design-tusovka.vercel.app/checkout/fail` |
-| Webhook ЮKassa | `https://design-tusovka.vercel.app/api/webhooks/yookassa` |
-| Реквизиты | `https://design-tusovka.vercel.app/requisites` |
+| Site | `https://designtusovka.ru` |
+| Auth callback | `https://designtusovka.ru/auth/callback` |
+| Checkout success | `https://designtusovka.ru/checkout/success` |
+| Checkout fail | `https://designtusovka.ru/checkout/fail` |
+| Webhook ЮKassa | `https://designtusovka.ru/api/webhooks/yookassa` |
+| Реквизиты | `https://designtusovka.ru/requisites` |
 
 ## Футер
 

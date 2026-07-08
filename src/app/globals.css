@@ -170,12 +170,15 @@
     @apply border-border outline-ring/50;
   }
 
-  body {
-    @apply bg-background text-foreground antialiased;
-  }
-
   html {
     @apply font-sans;
+    overflow-x: clip;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    overflow-x: clip;
+    overscroll-behavior-x: none;
   }
 
   .home-section-card-title {

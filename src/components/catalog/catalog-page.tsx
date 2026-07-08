@@ -110,7 +110,7 @@ export function CatalogPage({
       <Separator className="bg-neutral-200" />
 
       <section aria-label="Материалы" className="space-y-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+        <div className="flex items-center gap-2 sm:gap-3">
           <CatalogSearchField
             value={filters.query}
             onChange={(query) => setFilters((current) => ({ ...current, query }))}

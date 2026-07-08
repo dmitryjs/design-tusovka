@@ -8,6 +8,7 @@ import {
 import { MaterialAccessCard } from "@/components/catalog/material/material-access-card";
 import { MaterialCover } from "@/components/catalog/material/material-cover";
 import { MaterialHero } from "@/components/catalog/material/material-hero";
+import { MaterialInfoTabs } from "@/components/catalog/material/material-info-tabs";
 import { MaterialMeta } from "@/components/catalog/material/material-meta";
 import { MaterialPreviewNotice } from "@/components/catalog/material/material-preview-notice";
 import { MaterialTableOfContents } from "@/components/catalog/material/material-table-of-contents";
@@ -82,34 +83,57 @@ export function MaterialDetailView({
     signInReturnPath,
   };
 
+  const cover = (
+    <MaterialCover
+      title={material.title}
+      format={material.format}
+      coverPath={material.coverPath}
+    />
+  );
+
   return (
     <Container className="py-6 md:py-8 lg:py-10">
       <div className="mx-auto flex max-w-6xl flex-col gap-6 md:gap-8">
-        <Breadcrumbs items={buildBreadcrumbs(material)} />
+        <Breadcrumbs
+          items={buildBreadcrumbs(material)}
+          className="hidden md:block"
+        />
 
         <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_360px]">
           <div className="flex min-w-0 flex-col gap-6 md:gap-8">
-            <MaterialHero
-              material={material}
-              claimState={claimState}
-              cartState={cartState}
-              reviewStats={reviewsData.stats}
-            />
+            {/* Mobile: title + cover + meta, без оценки */}
+            <div className="md:hidden">
+              <MaterialHero
+                material={material}
+                claimState={claimState}
+                cartState={cartState}
+                reviewStats={reviewsData.stats}
+                showBackButton
+                hideRating
+                cover={cover}
+              />
+            </div>
+
+            {/* Desktop: прежний порядок hero → cover отдельно */}
+            <div className="hidden md:block">
+              <MaterialHero
+                material={material}
+                claimState={claimState}
+                cartState={cartState}
+                reviewStats={reviewsData.stats}
+              />
+            </div>
 
             <div className="flex flex-col gap-6 md:gap-8 lg:hidden">
               <MaterialAccessCard {...accessCardProps} />
             </div>
 
-            <MaterialCover
-              title={material.title}
-              format={material.format}
-              coverPath={material.coverPath}
-            />
+            <div className="hidden md:block">{cover}</div>
 
             {material.isPreview ? <MaterialPreviewNotice /> : null}
 
             {material.hasFullAccess ? (
-              <section className="rounded-xl border border-neutral-200 bg-white px-5 py-5">
+              <section className="hidden rounded-xl border border-neutral-200 bg-white px-5 py-5 md:block">
                 <h2 className="text-lg font-semibold text-foreground">Чтение материала</h2>
                 <p className="mt-2 text-sm leading-6 text-neutral-600">
                   {material.priceKopecks === 0
@@ -125,13 +149,17 @@ export function MaterialDetailView({
               </section>
             ) : null}
 
-            <ProductReviewsSection
-              productId={material.id}
-              productKind="material"
-              productSlug={material.slug}
-              signInReturnPath={signInReturnPath}
-              reviewsData={reviewsData}
-            />
+            <MaterialInfoTabs material={material} className="md:hidden" />
+
+            <div className="hidden md:block">
+              <ProductReviewsSection
+                productId={material.id}
+                productKind="material"
+                productSlug={material.slug}
+                signInReturnPath={signInReturnPath}
+                reviewsData={reviewsData}
+              />
+            </div>
           </div>
 
           <aside className="hidden flex-col gap-6 lg:sticky lg:top-20 lg:flex lg:self-start">
@@ -139,7 +167,8 @@ export function MaterialDetailView({
           </aside>
         </div>
 
-        <div className="flex flex-col gap-6 lg:hidden">
+        {/* Tablet: meta + toc below (desktop lg имеет sidebar; mobile — tabs) */}
+        <div className="hidden flex-col gap-6 md:flex lg:hidden">
           <MaterialMeta material={material} />
           <MaterialTableOfContents
             chapters={material.chapters}

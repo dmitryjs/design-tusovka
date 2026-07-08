@@ -49,7 +49,7 @@ export function CartPreviewDropdown({ items, itemCount }: CartPreviewDropdownPro
 
       <div
         className={cn(
-          "pointer-events-none invisible absolute top-full right-0 z-50 mt-2 w-[min(20rem,calc(100vw-2rem))] translate-y-1 opacity-0 transition-all duration-150",
+          "pointer-events-none invisible absolute top-full right-0 z-50 mt-2 hidden w-[min(20rem,calc(100vw-2rem))] translate-y-1 opacity-0 transition-all duration-150 lg:block",
           "group-hover:pointer-events-auto group-hover:visible group-hover:translate-y-0 group-hover:opacity-100",
           "group-focus-within:pointer-events-auto group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100",
         )}

@@ -17,6 +17,7 @@ import {
 } from "@/lib/catalog/material-cover";
 import { resolveMaterialRating } from "@/lib/catalog/material-rating";
 import { getCatalogItemHref } from "@/lib/catalog/paths";
+import { PUBLIC_REVIEWS_UI_ENABLED } from "@/lib/reviews/feature";
 import type { Database } from "@/types/database.types";
 import { cn } from "@/lib/utils";
 
@@ -42,18 +43,22 @@ function MaterialCardFooter({
   rating,
   priceKopecks,
 }: {
-  rating: { averageRating: number; reviewCount: number };
+  rating: { averageRating: number; reviewCount: number } | null;
   priceKopecks: number;
 }) {
   return (
     <div className="mt-auto flex h-14 shrink-0 items-center justify-between border-t border-neutral-200 px-4">
-      <div className="flex items-center gap-1 text-sm text-neutral-700">
-        <Star className="size-4 fill-amber-400 text-amber-400" aria-hidden />
-        <span className="font-medium">{rating.averageRating.toFixed(1)}</span>
-        {rating.reviewCount > 0 ? (
-          <span className="text-neutral-500">({rating.reviewCount})</span>
-        ) : null}
-      </div>
+      {rating && PUBLIC_REVIEWS_UI_ENABLED ? (
+        <div className="flex items-center gap-1 text-sm text-neutral-700">
+          <Star className="size-4 fill-amber-400 text-amber-400" aria-hidden />
+          <span className="font-medium">{rating.averageRating.toFixed(1)}</span>
+          {rating.reviewCount > 0 ? (
+            <span className="text-neutral-500">({rating.reviewCount})</span>
+          ) : null}
+        </div>
+      ) : (
+        <span />
+      )}
       <span className="text-sm leading-5 font-semibold text-primary">
         {formatPrice(priceKopecks)}
       </span>
@@ -76,11 +81,9 @@ export function PopularMaterialCard({
   const coverUrl = resolveMaterialCoverUrl(material.coverPath);
   const placeholderClass = getMaterialCoverPlaceholderClass(material.format);
   const formatLabel = getMaterialFormatLabel(material.format);
-  const rating = resolveMaterialRating(
-    material.slug,
-    material.averageRating,
-    material.reviewCount,
-  );
+  const rating = PUBLIC_REVIEWS_UI_ENABLED
+    ? resolveMaterialRating(material.slug, material.averageRating, material.reviewCount)
+    : null;
 
   const primaryLabel =
     ctaLabel ??
@@ -134,7 +137,7 @@ export function PopularMaterialCard({
   }
 
   const articleClassName = cn(
-    "group/card relative flex h-full min-w-[240px] flex-col overflow-hidden rounded-lg border border-neutral-200 bg-white transition-colors sm:min-w-[260px] lg:min-w-0",
+    "group/card relative flex h-full min-w-0 flex-col overflow-hidden rounded-lg border border-neutral-200 bg-white transition-colors",
     "hover:border-primary/20",
   );
 
@@ -180,13 +183,17 @@ export function PopularMaterialCard({
       ) : (
         <div className="relative mt-auto h-14 shrink-0">
           <div className="absolute inset-0 flex items-center justify-between px-4 transition-opacity duration-150 group-hover/card:pointer-events-none group-hover/card:opacity-0 group-focus-within/card:pointer-events-none group-focus-within/card:opacity-0">
-            <div className="flex items-center gap-1 text-sm text-neutral-700">
-              <Star className="size-4 fill-amber-400 text-amber-400" aria-hidden />
-              <span className="font-medium">{rating.averageRating.toFixed(1)}</span>
-              {rating.reviewCount > 0 ? (
-                <span className="text-neutral-500">({rating.reviewCount})</span>
-              ) : null}
-            </div>
+            {rating ? (
+              <div className="flex items-center gap-1 text-sm text-neutral-700">
+                <Star className="size-4 fill-amber-400 text-amber-400" aria-hidden />
+                <span className="font-medium">{rating.averageRating.toFixed(1)}</span>
+                {rating.reviewCount > 0 ? (
+                  <span className="text-neutral-500">({rating.reviewCount})</span>
+                ) : null}
+              </div>
+            ) : (
+              <span />
+            )}
             <span className="text-sm leading-5 font-semibold text-primary">
               {formatPrice(material.priceKopecks)}
             </span>

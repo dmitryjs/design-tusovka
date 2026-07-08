@@ -11,6 +11,25 @@ export type YookassaConfirmation = {
   return_url?: string;
 };
 
+export type YookassaReceiptItem = {
+  description: string;
+  quantity: string;
+  amount: YookassaAmount;
+  vat_code: number;
+  payment_mode: string;
+  payment_subject: string;
+};
+
+export type YookassaReceiptCustomer = {
+  email?: string;
+  phone?: string;
+};
+
+export type YookassaReceipt = {
+  customer: YookassaReceiptCustomer;
+  items: YookassaReceiptItem[];
+};
+
 export type YookassaPayment = {
   id: string;
   status: string;

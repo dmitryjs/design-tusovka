@@ -8,6 +8,7 @@ import {
   ProductReviewGuestPrompt,
 } from "@/components/reviews/product-review-form";
 import { PRODUCT_REVIEWS_SECTION_ID } from "@/components/reviews/product-rating-badge";
+import { PUBLIC_REVIEWS_UI_ENABLED } from "@/lib/reviews/feature";
 import { reviewCountLabel } from "@/lib/reviews/messages";
 import type { ProductReviewsData } from "@/lib/reviews/types";
 import { formatProfileDate } from "@/lib/profile/format";
@@ -34,6 +35,10 @@ export function ProductReviewsSection({
   const { stats, reviews, viewer } = reviewsData;
   const showEditForm = Boolean(viewer.ownReview && isEditing);
   const visibleReviews = showEditForm ? reviews.filter((review) => !review.isOwn) : reviews;
+
+  if (!PUBLIC_REVIEWS_UI_ENABLED) {
+    return null;
+  }
 
   return (
     <section

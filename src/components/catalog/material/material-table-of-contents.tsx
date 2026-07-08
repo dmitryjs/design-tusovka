@@ -12,6 +12,8 @@ type MaterialTableOfContentsProps = {
   h1Headings?: MaterialHeadingAnchor[];
   isPreview: boolean;
   className?: string;
+  /** false — без рамки списка и заголовка секции (для табов на мобилке). */
+  framed?: boolean;
 };
 
 function headingIndentClass(level: MaterialHeadingAnchor["level"]): string {
@@ -66,13 +68,16 @@ export function MaterialTableOfContents({
   h1Headings,
   isPreview,
   className,
+  framed = true,
 }: MaterialTableOfContentsProps) {
   const headings = resolveHeadings(chapters, h1Headings);
 
   if (chapters.length === 0) {
     return (
       <section className={cn("space-y-3", className)} aria-label="Содержание">
-        <h2 className="text-base font-semibold text-foreground">Содержание</h2>
+        {framed ? (
+          <h2 className="text-base font-semibold text-foreground">Содержание</h2>
+        ) : null}
         <CatalogEmptyPanel
           title="Содержание пока не добавлено"
           description="Добавьте блоки H1–H3 в контент материала."
@@ -84,8 +89,20 @@ export function MaterialTableOfContents({
   if (headings.length > 0) {
     return (
       <section className={cn("space-y-3", className)} aria-label="Содержание">
-        <div className="space-y-1">
-          <h2 className="text-base font-semibold text-foreground">Содержание</h2>
+        {framed ? (
+          <div className="space-y-1">
+            <h2 className="text-base font-semibold text-foreground">Содержание</h2>
+            <p className="text-sm text-neutral-500">
+              {headings.length}{" "}
+              {headings.length === 1
+                ? "заголовок"
+                : headings.length < 5
+                  ? "заголовка"
+                  : "заголовков"}
+              {isPreview ? " · доступны только названия" : null}
+            </p>
+          </div>
+        ) : (
           <p className="text-sm text-neutral-500">
             {headings.length}{" "}
             {headings.length === 1
@@ -95,9 +112,14 @@ export function MaterialTableOfContents({
                 : "заголовков"}
             {isPreview ? " · доступны только названия" : null}
           </p>
-        </div>
+        )}
 
-        <ul className="flex flex-col gap-1 rounded-xl border border-neutral-200 bg-white p-2">
+        <ul
+          className={cn(
+            "flex flex-col gap-1",
+            framed && "rounded-xl border border-neutral-200 bg-white p-2",
+          )}
+        >
           {headings.map((heading) => (
             <li key={heading.blockId}>
               <HeadingTocItem heading={heading} />
@@ -110,12 +132,18 @@ export function MaterialTableOfContents({
 
   return (
     <section className={cn("space-y-3", className)} aria-label="Содержание">
-      <div className="space-y-1">
-        <h2 className="text-base font-semibold text-foreground">Содержание</h2>
+      {framed ? (
+        <div className="space-y-1">
+          <h2 className="text-base font-semibold text-foreground">Содержание</h2>
+          <p className="text-sm text-neutral-500">
+            {isPreview ? "Доступны только названия" : "Заголовки H1–H3 пока не добавлены"}
+          </p>
+        </div>
+      ) : (
         <p className="text-sm text-neutral-500">
           {isPreview ? "Доступны только названия" : "Заголовки H1–H3 пока не добавлены"}
         </p>
-      </div>
+      )}
 
       <CatalogEmptyPanel
         title="Заголовки не найдены"

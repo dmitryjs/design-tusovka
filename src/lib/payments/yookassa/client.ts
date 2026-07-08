@@ -1,7 +1,11 @@
 import "server-only";
 
 import { YOOKASSA_API_BASE, getYookassaConfig } from "./config";
-import type { YookassaPayment, YookassaPaymentMethod } from "./types";
+import type {
+  YookassaPayment,
+  YookassaPaymentMethod,
+  YookassaReceipt,
+} from "./types";
 
 type CreatePaymentInput = {
   amountKopecks: number;
@@ -10,6 +14,7 @@ type CreatePaymentInput = {
   idempotenceKey: string;
   metadata: Record<string, string>;
   paymentMethod?: YookassaPaymentMethod;
+  receipt?: YookassaReceipt | null;
 };
 
 function getAuthHeader(shopId: string, secretKey: string): string {
@@ -57,6 +62,7 @@ export async function createYookassaPaymentRequest(
       ...(input.paymentMethod
         ? { payment_method_data: { type: input.paymentMethod } }
         : {}),
+      ...(input.receipt ? { receipt: input.receipt } : {}),
       description: input.description,
       metadata: input.metadata,
     }),

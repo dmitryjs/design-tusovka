@@ -78,15 +78,16 @@ export function CatalogFiltersPanel({
       <Button
         type="button"
         variant="secondary"
-        className="gap-2"
+        className="relative size-12 shrink-0 gap-0 px-0 sm:h-11 sm:w-auto sm:gap-2 sm:px-3"
+        aria-label="Фильтры и сортировка"
         aria-expanded={open}
         aria-controls="catalog-filters-panel"
         onClick={() => onOpenChange(!open)}
       >
-        <SlidersHorizontal className="size-4" aria-hidden />
-        Фильтры и сортировка
+        <SlidersHorizontal className="size-5 sm:size-4" aria-hidden />
+        <span className="hidden sm:inline">Фильтры и сортировка</span>
         {activeCount > 0 ? (
-          <span className="flex size-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
+          <span className="absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground sm:static sm:top-auto sm:right-auto">
             {activeCount}
           </span>
         ) : null}

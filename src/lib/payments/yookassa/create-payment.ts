@@ -3,11 +3,27 @@ import "server-only";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
+import type { Database } from "@/types/database.types";
+
 import { sumOrderItemsKopecks } from "../order-amount";
 import { createYookassaPaymentRequest, getYookassaPayment } from "./client";
 import { getYookassaConfig, isYookassaConfigured } from "./config";
 import { kopecksToRublesValue } from "./money";
+import { buildPublicOrderNumber } from "./order-number";
+import { buildReceipt, type ReceiptItemInput } from "./receipt";
 import type { CreateYookassaPaymentResult, YookassaPaymentMethod } from "./types";
+
+type OrderItemProduct = {
+  price_kopecks: number;
+  title: string | null;
+  kind: Database["public"]["Enums"]["product_kind"];
+};
+
+type OrderItemRow = {
+  price_kopecks: number;
+  title: string | null;
+  products: OrderItemProduct | OrderItemProduct[] | null;
+};
 
 type OrderRow = {
   id: string;
@@ -18,21 +34,33 @@ type OrderRow = {
   payment_confirmation_url: string | null;
   payment_status: string | null;
   idempotency_key: string | null;
-  order_items: Array<{
-    price_kopecks: number;
-    products: { price_kopecks: number } | { price_kopecks: number }[] | null;
-  }>;
+  order_items: OrderItemRow[];
 };
 
-function normalizeProductPrice(
-  products: OrderRow["order_items"][number]["products"],
-): number | null {
+function normalizeProduct(
+  products: OrderItemRow["products"],
+): OrderItemProduct | null {
   if (!products) {
     return null;
   }
 
-  const product = Array.isArray(products) ? products[0] : products;
-  return product?.price_kopecks ?? null;
+  return Array.isArray(products) ? (products[0] ?? null) : products;
+}
+
+function normalizeProductPrice(products: OrderItemRow["products"]): number | null {
+  return normalizeProduct(products)?.price_kopecks ?? null;
+}
+
+function buildReceiptItemsInput(items: OrderItemRow[]): ReceiptItemInput[] {
+  return items.map((item) => {
+    const product = normalizeProduct(item.products);
+
+    return {
+      kind: product?.kind,
+      title: product?.title ?? item.title,
+      priceKopecks: item.price_kopecks,
+    };
+  });
 }
 
 function recalculateTotalKopecks(
@@ -111,7 +139,7 @@ export async function createYookassaPayment(
       payment_confirmation_url,
       payment_status,
       idempotency_key,
-      order_items ( price_kopecks, products ( price_kopecks ) )
+      order_items ( price_kopecks, title, products ( price_kopecks, title, kind ) )
     `,
     )
     .eq("id", orderId)
@@ -177,6 +205,8 @@ export async function createYookassaPayment(
 
   const idempotenceKey = orderRow.idempotency_key ?? orderId;
   const returnUrl = buildReturnUrl(config.returnUrl, orderId);
+  const orderNumber = buildPublicOrderNumber(orderId);
+  const receipt = buildReceipt(user.email, buildReceiptItemsInput(items));
 
   const admin = createSupabaseAdminClient();
   const { error: keyError } = await admin
@@ -196,11 +226,17 @@ export async function createYookassaPayment(
 
   const paymentResult = await createYookassaPaymentRequest({
     amountKopecks,
-    description: `Заказ ${orderId.slice(0, 8)}`,
+    description: `Оплата заказа ${orderNumber}`,
     returnUrl,
     idempotenceKey,
-    metadata: { order_id: orderId },
+    metadata: {
+      order_id: orderId,
+      order_number: orderNumber,
+      user_id: user.id,
+      source: "design-tusovka",
+    },
     paymentMethod,
+    receipt,
   });
 
   if ("error" in paymentResult) {

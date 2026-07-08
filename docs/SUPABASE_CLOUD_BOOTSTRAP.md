@@ -46,8 +46,8 @@
 
 1. **Providers → Email** — включён Email provider.
 2. **URL Configuration**:
-   - Site URL: `http://localhost:3000` (dev) или production URL
-   - Redirect URLs: `http://localhost:3000/auth/callback` (+ production URL)
+   - Site URL: `http://localhost:3000` (dev) или `https://designtusovka.ru` (production)
+   - Redirect URLs: `http://localhost:3000/auth/callback` + `https://designtusovka.ru/auth/callback` (и `https://design-tusovka.vercel.app/auth/callback`, пока vercel-адрес рабочий)
 3. **Email confirmations** — по желанию команды (если включены, после sign-up нужно подтвердить email).
 
 #### Env для auth

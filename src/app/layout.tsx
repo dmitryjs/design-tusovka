@@ -37,6 +37,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  viewportFit: "cover",
   themeColor: "#094BF5",
 };
 
@@ -47,7 +48,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ru">
-      <body className="flex min-h-svh flex-col">
+      <body className="flex min-h-svh max-w-[100vw] flex-col overflow-x-clip">
         <ConditionalSiteChrome
           siteHeader={<SiteHeader />}
           siteFooter={<SiteFooter />}

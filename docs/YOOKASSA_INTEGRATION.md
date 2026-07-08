@@ -15,6 +15,8 @@
 | `YOOKASSA_SHOP_ID` | server | shopId из ЛК ЮKassa |
 | `YOOKASSA_SECRET_KEY` | server | секретный ключ API |
 | `YOOKASSA_RETURN_URL` | server | URL возврата после оплаты (опционально; иначе `{NEXT_PUBLIC_SITE_URL}/checkout/success`) |
+| `YOOKASSA_SEND_RECEIPT` | server | `true`/`1`/`yes` — включить фискальный чек (54-ФЗ). Требует настроенной фискализации магазина. По умолчанию выключено |
+| `YOOKASSA_VAT_CODE` | server | код НДС позиций чека (1..6). По умолчанию `1` — «Без НДС» (НПД) |
 
 `YOOKASSA_WEBHOOK_SECRET` **не используется**: по документации ЮKassa подлинность webhook проверяется через GET статуса платежа и/или IP-адрес отправителя.
 
@@ -44,8 +46,26 @@ Production deploy: [`docs/VERCEL_DEPLOY.md`](VERCEL_DEPLOY.md).
 2. Server action `startYookassaPaymentAction(orderId)`:
    - проверяет владельца и статус;
    - пересчитывает сумму по `order_items`;
+   - формирует публичный номер заказа `DT-XXXXXXXX` (первые 8 символов `order.id`, primary key не меняется);
    - создаёт платёж `POST /v3/payments` с `Idempotence-Key`;
    - сохраняет `provider_payment_id`, `payment_confirmation_url`.
+
+### Назначение платежа, metadata и чек
+
+Формируется в `src/lib/payments/yookassa/create-payment.ts` (все данные — только server-side из `order_items` / `products`, ничего с клиента):
+
+- **`description`**: `Оплата заказа DT-XXXXXXXX`.
+- **`metadata`**: `order_id`, `order_number` (`DT-XXXXXXXX`), `user_id` (server-only, клиенту не отдаётся), `source: "design-tusovka"`.
+- **`receipt.items`** (при `YOOKASSA_SEND_RECEIPT=true` и наличии email покупателя, см. `receipt.ts`) — по позиции на каждый `order_item`:
+  - материал → `Доступ к материалу: {title}`;
+  - раздел → `Доступ к разделу: {title}`;
+  - задание → `Доступ к заданию: {title}`;
+  - неизвестный тип → `Доступ к цифровому материалу: {title}`.
+  - Описание обрезается до 128 символов; сумма позиций равна сумме платежа; `vat_code` по умолчанию `1` (без НДС), `payment_mode: full_payment`, `payment_subject: service`.
+
+Публичный номер и хелперы чека: `order-number.ts`, `receipt.ts`.
+
+Связь webhook с заказом — по `provider_payment_id`; `metadata.order_id` используется как **дополнительная** проверка (при несовпадении заказ помечается `failed`). Идемпотентность выдачи прав не меняется.
 3. Редирект на `confirmation_url` ЮKassa.
 4. После оплаты пользователь возвращается на `/checkout/success` — **без выдачи доступа**.
 5. Webhook `payment.succeeded`:

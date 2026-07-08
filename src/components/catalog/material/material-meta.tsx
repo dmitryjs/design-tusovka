@@ -10,6 +10,8 @@ import { cn } from "@/lib/utils";
 type MaterialMetaProps = {
   material: MaterialDetail;
   className?: string;
+  /** false — без рамки и заголовка (для табов на мобилке). */
+  framed?: boolean;
 };
 
 type MetaRowProps = {
@@ -35,7 +37,11 @@ function MetaRow({ icon, label, children, valueClassName }: MetaRowProps) {
   );
 }
 
-export function MaterialMeta({ material, className }: MaterialMetaProps) {
+export function MaterialMeta({
+  material,
+  className,
+  framed = true,
+}: MaterialMetaProps) {
   const updatedLabel = formatMaterialUpdatedAt(material.updatedAt);
   const themesLabel = material.tags.map((tag) => tag.name).join(", ");
 
@@ -43,11 +49,13 @@ export function MaterialMeta({ material, className }: MaterialMetaProps) {
     <section
       aria-label="О материале"
       className={cn(
-        "rounded-xl border border-neutral-200 bg-white px-4 py-5 sm:px-5",
+        framed && "rounded-xl border border-neutral-200 bg-white px-4 py-5 sm:px-5",
         className,
       )}
     >
-      <h2 className="mb-4 text-base font-semibold text-foreground">О материале</h2>
+      {framed ? (
+        <h2 className="mb-4 text-base font-semibold text-foreground">О материале</h2>
+      ) : null}
       <dl className="flex flex-col gap-4">
         <MetaRow icon={<FileText className="size-4" />} label="Формат">
           {getMaterialFormatLabel(material.format)}

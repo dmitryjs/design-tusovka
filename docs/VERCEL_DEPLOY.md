@@ -19,7 +19,7 @@
 7. Перед первым деплоем добавьте Environment Variables (раздел 2).
 8. **Deploy**.
 
-После деплоя запишите production URL, например `https://design-tusovka.vercel.app`.
+После деплоя привяжите домен **`designtusovka.ru`** (Vercel → Settings → Domains). Vercel-адрес `design-tusovka.vercel.app` остаётся рабочим, но канонический публичный домен — `designtusovka.ru`.
 
 ## 2. Environment Variables на Vercel
 
@@ -32,15 +32,15 @@
 | `NEXT_PUBLIC_SUPABASE_URL` | Production, Preview | `https://<ref>.supabase.co` | то же |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Production, Preview | anon key из Supabase | то же |
 | `SUPABASE_SERVICE_ROLE_KEY` | Production, Preview | service role key | то же |
-| `NEXT_PUBLIC_SITE_URL` | Production | `http://localhost:3000` | `https://<your-domain>` |
+| `NEXT_PUBLIC_SITE_URL` | Production | `http://localhost:3000` | `https://designtusovka.ru` |
 | `YOOKASSA_SHOP_ID` | Production, Preview | test shopId (опционально) | shopId магазина |
 | `YOOKASSA_SECRET_KEY` | Production, Preview | test secret (опционально) | secret key |
-| `YOOKASSA_RETURN_URL` | Production, Preview | пусто или local tunnel URL | `https://<your-domain>/checkout/success` |
+| `YOOKASSA_RETURN_URL` | Production, Preview | пусто или local tunnel URL | `https://designtusovka.ru/checkout/success` |
 
 ### Важно
 
 - **`SUPABASE_SERVICE_ROLE_KEY`**, **`YOOKASSA_SECRET_KEY`**, **`YOOKASSA_SHOP_ID`** — только server-side, **без** префикса `NEXT_PUBLIC_`.
-- `NEXT_PUBLIC_SITE_URL` на Production должен совпадать с публичным URL сайта (включая custom domain).
+- `NEXT_PUBLIC_SITE_URL` на Production должен совпадать с публичным URL сайта (`https://designtusovka.ru`), с которого реально открывают сайт. Если значение не совпадает с доменом захода — подтверждение email и возврат из оплаты уведут не туда.
 - После изменения `NEXT_PUBLIC_*` переменных нужен **redeploy** (они встраиваются при build).
 - Локально скопируйте значения в `.env.local` (не коммитить). Шаблон: [`.env.example`](../.env.example).
 
@@ -50,16 +50,21 @@
 
 | Поле | Local | Production |
 |------|-------|------------|
-| **Site URL** | `http://localhost:3000` | `https://<your-domain>` |
-| **Redirect URLs** | `http://localhost:3000/auth/callback` | `https://<your-domain>/auth/callback` |
+| **Site URL** | `http://localhost:3000` | `https://designtusovka.ru` |
+| **Redirect URLs** | `http://localhost:3000/auth/callback` | `https://designtusovka.ru/auth/callback` |
 
-Для Vercel Preview добавьте также:
+**Site URL** — единственный, он же дефолт для email-редиректов; ставьте канонический `https://designtusovka.ru`.
+
+В **Redirect URLs** (allow-list, можно несколько) добавьте все домены, с которых реально заходят:
 
 ```
-https://<project>-<branch>-<team>.vercel.app/auth/callback
+https://designtusovka.ru/auth/callback
+https://www.designtusovka.ru/auth/callback      # если www используется
+https://design-tusovka.vercel.app/auth/callback # пока vercel-адрес рабочий
+http://localhost:3000/auth/callback             # локальная разработка
 ```
 
-или wildcard по политике команды (если используете preview).
+Для Vercel Preview можно добавить wildcard `https://design-tusovka-*.vercel.app/auth/callback` по политике команды.
 
 Auth redirect в коде:
 
@@ -74,13 +79,13 @@ Auth redirect в коде:
 
 | Параметр | Значение |
 |----------|----------|
-| URL | `https://<your-domain>/api/webhooks/yookassa` |
+| URL | `https://designtusovka.ru/api/webhooks/yookassa` |
 | События | `payment.succeeded`, `payment.canceled` |
 
 **return_url** (в env или автоматически):
 
 ```
-https://<your-domain>/checkout/success
+https://designtusovka.ru/checkout/success
 ```
 
 Параметр `order_id` добавляется сервером при создании платежа.
@@ -91,15 +96,15 @@ https://<your-domain>/checkout/success
 
 | Поле в ЛК ЮKassa | Значение (production) |
 |------------------|------------------------|
-| **Адрес сайта** | `https://design-tusovka.vercel.app` |
-| **Ссылка на страницу с реквизитами** | `https://design-tusovka.vercel.app/requisites` |
-| Публичная оферта | `https://design-tusovka.vercel.app/offer` |
-| Политика конфиденциальности | `https://design-tusovka.vercel.app/privacy` |
-| Оплата и возврат | `https://design-tusovka.vercel.app/payment-and-refund` |
-| Поддержка | `https://design-tusovka.vercel.app/support` |
-| Webhook | `https://design-tusovka.vercel.app/api/webhooks/yookassa` |
-| Auth callback (Supabase) | `https://design-tusovka.vercel.app/auth/callback` |
-| Return URL (оплата) | `https://design-tusovka.vercel.app/checkout/success` |
+| **Адрес сайта** | `https://designtusovka.ru` |
+| **Ссылка на страницу с реквизитами** | `https://designtusovka.ru/requisites` |
+| Публичная оферта | `https://designtusovka.ru/offer` |
+| Политика конфиденциальности | `https://designtusovka.ru/privacy` |
+| Оплата и возврат | `https://designtusovka.ru/payment-and-refund` |
+| Поддержка | `https://designtusovka.ru/support` |
+| Webhook | `https://designtusovka.ru/api/webhooks/yookassa` |
+| Auth callback (Supabase) | `https://designtusovka.ru/auth/callback` |
+| Return URL (оплата) | `https://designtusovka.ru/checkout/success` |
 
 `NEXT_PUBLIC_SITE_URL` на Vercel должен совпадать с адресом сайта в ЮKassa.
 

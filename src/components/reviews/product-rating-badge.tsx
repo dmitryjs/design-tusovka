@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Star } from "lucide-react";
 
+import { PUBLIC_REVIEWS_UI_ENABLED } from "@/lib/reviews/feature";
 import { reviewCountLabel } from "@/lib/reviews/messages";
 import type { ProductReviewStats } from "@/lib/reviews/types";
 import { cn } from "@/lib/utils";
@@ -13,6 +14,10 @@ type ProductRatingBadgeProps = {
 };
 
 export function ProductRatingBadge({ stats, className }: ProductRatingBadgeProps) {
+  if (!PUBLIC_REVIEWS_UI_ENABLED) {
+    return null;
+  }
+
   const hasReviews = stats.reviewCount > 0;
 
   return (

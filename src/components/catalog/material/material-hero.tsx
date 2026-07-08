@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
+import { MaterialBackButton } from "@/components/catalog/material/material-back-button";
 import {
   formatPrice,
   getLevelLabel,
@@ -24,6 +25,12 @@ type MaterialHeroProps = {
   reviewStats: ProductReviewStats;
   /** Админский предпросмотр: цена как в каталоге, без «Куплено». */
   adminPreview?: boolean;
+  /** Показать шеврон «назад» слева от названия (мобилка). */
+  showBackButton?: boolean;
+  /** Скрыть оценку и отзывы. */
+  hideRating?: boolean;
+  /** Обложка сразу после названия (мобильный порядок). */
+  cover?: React.ReactNode;
 };
 
 function resolveOwnedBadge(
@@ -57,12 +64,51 @@ function resolvePriceBadgeLabel(
   return formatPrice(priceKopecks);
 }
 
+function MaterialBadges({
+  material,
+  priceBadgeKind,
+  priceKopecks,
+}: {
+  material: MaterialDetail;
+  priceBadgeKind: ReturnType<typeof resolveMaterialPriceBadgeKind>;
+  priceKopecks: number;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <Badge variant="outline">{getMaterialFormatLabel(material.format)}</Badge>
+      {material.level !== "all" ? (
+        <Badge variant="outline">{getLevelLabel(material.level)}</Badge>
+      ) : null}
+      {material.section ? (
+        <Badge
+          variant="secondary"
+          render={<Link href={getPreferredSectionPageHref(material.section.slug)} />}
+        >
+          {material.section.title}
+        </Badge>
+      ) : null}
+      <Badge
+        variant={priceBadgeKind === "paid" ? "outline" : "default"}
+        className={cn(
+          priceBadgeKind !== "paid" && "bg-primary text-primary-foreground",
+          priceBadgeKind === "owned" && "bg-emerald-600 text-white hover:bg-emerald-600",
+        )}
+      >
+        {resolvePriceBadgeLabel(priceBadgeKind, priceKopecks)}
+      </Badge>
+    </div>
+  );
+}
+
 export function MaterialHero({
   material,
   claimState,
   cartState,
   reviewStats,
   adminPreview = false,
+  showBackButton = false,
+  hideRating = false,
+  cover,
 }: MaterialHeroProps) {
   const isOwned = adminPreview
     ? false
@@ -77,39 +123,57 @@ export function MaterialHero({
         isOwned,
       );
 
+  const titleBlock = (
+    <div className={cn(showBackButton && "flex items-start gap-2")}>
+      {showBackButton ? <MaterialBackButton className="-ml-1 mt-1" /> : null}
+      <h1 className="min-w-0 flex-1 text-[28px] leading-[36px] font-semibold tracking-tight text-foreground sm:text-[32px] sm:leading-[40px] md:text-[36px] md:leading-[44px]">
+        {material.title}
+      </h1>
+    </div>
+  );
+
+  const descriptionBlock = material.description ? (
+    <p className="max-w-3xl text-base leading-6 text-neutral-600">
+      {material.description}
+    </p>
+  ) : null;
+
+  // Mobile layout: title → cover → badges → description
+  if (cover) {
+    return (
+      <header className="space-y-4">
+        <div className="space-y-4">
+          {titleBlock}
+          {cover}
+        </div>
+
+        <MaterialBadges
+          material={material}
+          priceBadgeKind={priceBadgeKind}
+          priceKopecks={material.priceKopecks}
+        />
+
+        <div className="space-y-3">
+          {hideRating ? null : <ProductRatingBadge stats={reviewStats} />}
+          {descriptionBlock}
+        </div>
+      </header>
+    );
+  }
+
+  // Desktop / default: badges → title → rating → description
   return (
     <header className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <Badge variant="outline">{getMaterialFormatLabel(material.format)}</Badge>
-        {material.level !== "all" ? (
-          <Badge variant="outline">{getLevelLabel(material.level)}</Badge>
-        ) : null}
-        {material.section ? (
-          <Badge variant="secondary" render={<Link href={getPreferredSectionPageHref(material.section.slug)} />}>
-            {material.section.title}
-          </Badge>
-        ) : null}
-        <Badge
-          variant={priceBadgeKind === "paid" ? "outline" : "default"}
-          className={cn(
-            priceBadgeKind !== "paid" && "bg-primary text-primary-foreground",
-            priceBadgeKind === "owned" && "bg-emerald-600 text-white hover:bg-emerald-600",
-          )}
-        >
-          {resolvePriceBadgeLabel(priceBadgeKind, material.priceKopecks)}
-        </Badge>
-      </div>
+      <MaterialBadges
+        material={material}
+        priceBadgeKind={priceBadgeKind}
+        priceKopecks={material.priceKopecks}
+      />
 
       <div className="space-y-3">
-        <h1 className="text-[28px] leading-[36px] font-semibold tracking-tight text-foreground sm:text-[32px] sm:leading-[40px] md:text-[36px] md:leading-[44px]">
-          {material.title}
-        </h1>
-        <ProductRatingBadge stats={reviewStats} />
-        {material.description ? (
-          <p className="max-w-3xl text-base leading-6 text-neutral-600">
-            {material.description}
-          </p>
-        ) : null}
+        {titleBlock}
+        {hideRating ? null : <ProductRatingBadge stats={reviewStats} />}
+        {descriptionBlock}
       </div>
     </header>
   );

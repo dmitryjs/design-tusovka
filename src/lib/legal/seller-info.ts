@@ -1,5 +1,5 @@
 /** Fallback URL, если `NEXT_PUBLIC_SITE_URL` не задан. */
-const FALLBACK_SITE_URL = "https://design-tusovka.vercel.app";
+const FALLBACK_SITE_URL = "https://designtusovka.ru";
 
 export const SELLER_INFO = {
   sellerName: "Галкина Александра Германовна",
