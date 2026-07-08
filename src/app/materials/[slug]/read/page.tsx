@@ -12,10 +12,24 @@ export const dynamic = "force-dynamic";
 
 type MaterialReadPageProps = {
   params: Promise<{ slug: string }>;
+  searchParams?: Promise<{ from?: string }>;
 };
 
-export default async function MaterialReadPage({ params }: MaterialReadPageProps) {
+function sanitizeFrom(value: string | undefined): string | null {
+  if (!value) {
+    return null;
+  }
+
+  if (!value.startsWith("/") || value.startsWith("//")) {
+    return null;
+  }
+
+  return value;
+}
+
+export default async function MaterialReadPage({ params, searchParams }: MaterialReadPageProps) {
   const { slug } = await params;
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const { data, error } = await getMaterialBySlug(slug, { includeChapterContent: true });
 
   if (error) {
@@ -33,6 +47,7 @@ export default async function MaterialReadPage({ params }: MaterialReadPageProps
   const claimState = await getFreeProductClaimState(data.id, data.priceKopecks);
   const cartState = await getPaidProductCartState(data.id, data.priceKopecks);
   const reviewsData = await getProductReviewsData(data.id);
+  const fromHref = sanitizeFrom(resolvedSearchParams?.from);
 
   return (
     <MaterialReadingView
@@ -40,6 +55,7 @@ export default async function MaterialReadPage({ params }: MaterialReadPageProps
       claimState={claimState}
       cartState={cartState}
       reviewsData={reviewsData}
+      fromHref={fromHref}
     />
   );
 }

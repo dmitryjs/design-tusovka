@@ -27,6 +27,8 @@ type MaterialHeroProps = {
   adminPreview?: boolean;
   /** Показать шеврон «назад» слева от названия (мобилка). */
   showBackButton?: boolean;
+  /** Куда вести шеврон, если нужно переопределить историю. */
+  backHref?: string;
   /** Скрыть оценку и отзывы. */
   hideRating?: boolean;
   /** Обложка сразу после названия (мобильный порядок). */
@@ -107,6 +109,7 @@ export function MaterialHero({
   reviewStats,
   adminPreview = false,
   showBackButton = false,
+  backHref,
   hideRating = false,
   cover,
 }: MaterialHeroProps) {
@@ -125,7 +128,7 @@ export function MaterialHero({
 
   const titleBlock = (
     <div className={cn(showBackButton && "flex items-start gap-2")}>
-      {showBackButton ? <MaterialBackButton className="-ml-1 mt-1" /> : null}
+      {showBackButton ? <MaterialBackButton fallbackHref={backHref} className="-ml-1 mt-1" /> : null}
       <h1 className="min-w-0 flex-1 text-[28px] leading-[36px] font-semibold tracking-tight text-foreground sm:text-[32px] sm:leading-[40px] md:text-[36px] md:leading-[44px]">
         {material.title}
       </h1>

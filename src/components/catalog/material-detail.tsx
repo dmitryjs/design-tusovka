@@ -15,7 +15,7 @@ import { MaterialTableOfContents } from "@/components/catalog/material/material-
 import { ProductReviewsSection } from "@/components/reviews/product-reviews-section";
 import { buttonVariants } from "@/components/ui/button";
 import type { MaterialDetail } from "@/lib/catalog/detail-queries";
-import { getCatalogItemHref, getMaterialReadHref } from "@/lib/catalog/paths";
+import { getCatalogItemHref, getMaterialReadHrefWithFrom } from "@/lib/catalog/paths";
 import { getPreferredSectionPageHref } from "@/lib/catalog/section-pages";
 import type { FreeProductClaimState } from "@/lib/entitlements/types";
 import type { PaidProductCartState } from "@/lib/cart/types";
@@ -27,6 +27,7 @@ type MaterialDetailViewProps = {
   claimState: FreeProductClaimState;
   cartState: PaidProductCartState;
   reviewsData: ProductReviewsData;
+  fromHref: string | null;
 };
 
 function buildBreadcrumbs(material: MaterialDetail): BreadcrumbItem[] {
@@ -72,8 +73,12 @@ export function MaterialDetailView({
   claimState,
   cartState,
   reviewsData,
+  fromHref,
 }: MaterialDetailViewProps) {
   const signInReturnPath = getCatalogItemHref("material", material.slug);
+  const materialPageHref = getCatalogItemHref("material", material.slug);
+  const resolvedFromHref = fromHref ?? "/#materials";
+  const readHref = getMaterialReadHrefWithFrom(material.slug, resolvedFromHref);
   const accessCardProps = {
     slug: material.slug,
     priceKopecks: material.priceKopecks,
@@ -81,6 +86,7 @@ export function MaterialDetailView({
     claimState,
     cartState,
     signInReturnPath,
+    readHref,
   };
 
   const cover = (
@@ -109,6 +115,7 @@ export function MaterialDetailView({
                 cartState={cartState}
                 reviewStats={reviewsData.stats}
                 showBackButton
+                backHref={fromHref ?? materialPageHref}
                 hideRating
                 cover={cover}
               />
@@ -141,7 +148,7 @@ export function MaterialDetailView({
                     : "Полный контент открыт в режиме чтения с навигацией по заголовкам."}
                 </p>
                 <Link
-                  href={getMaterialReadHref(material.slug)}
+                  href={readHref}
                   className={cn(buttonVariants(), "mt-4 inline-flex")}
                 >
                   Читать материал

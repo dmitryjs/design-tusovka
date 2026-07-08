@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -15,8 +16,22 @@ export function MaterialBackButton({
   className,
 }: MaterialBackButtonProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const fromHref = searchParams.get("from");
+  const isSafeFromHref =
+    typeof fromHref === "string" &&
+    fromHref.startsWith("/") &&
+    !fromHref.startsWith("//");
+  const isMaterialDetailPath = /^\/materials\/[^/]+\/?$/.test(pathname);
 
   function handleClick() {
+    if (isMaterialDetailPath && isSafeFromHref) {
+      router.push(fromHref);
+      return;
+    }
+
     if (typeof window !== "undefined" && window.history.length > 1) {
       router.back();
       return;

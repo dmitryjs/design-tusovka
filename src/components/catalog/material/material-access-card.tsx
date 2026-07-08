@@ -10,7 +10,6 @@ import { claimFreeProductAction } from "@/app/actions/entitlements";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { formatPrice } from "@/lib/catalog/format";
-import { getMaterialReadHref } from "@/lib/catalog/paths";
 import type { PaidProductCartState } from "@/lib/cart/types";
 import type { FreeProductClaimState } from "@/lib/entitlements/types";
 import { cn } from "@/lib/utils";
@@ -22,6 +21,7 @@ type MaterialAccessCardProps = {
   claimState: FreeProductClaimState;
   cartState: PaidProductCartState;
   signInReturnPath: string;
+  readHref: string;
   className?: string;
 };
 
@@ -61,6 +61,7 @@ export function MaterialAccessCard({
   claimState,
   cartState,
   signInReturnPath,
+  readHref,
   className,
 }: MaterialAccessCardProps) {
   const router = useRouter();
@@ -122,7 +123,7 @@ export function MaterialAccessCard({
   function renderPrimaryAction() {
     if (hasFullAccess && !isFree) {
       return (
-        <Link href={getMaterialReadHref(slug)} className={cn(buttonVariants(), "w-full")}>
+        <Link href={readHref} className={cn(buttonVariants(), "w-full")}>
           <BookOpen className="size-4 shrink-0" aria-hidden />
           Читать материал
         </Link>
@@ -174,7 +175,7 @@ export function MaterialAccessCard({
 
     if (cartUiState === "in_library") {
       return (
-        <Link href={getMaterialReadHref(slug)} className={cn(buttonVariants(), "w-full")}>
+        <Link href={readHref} className={cn(buttonVariants(), "w-full")}>
           <BookOpen className="size-4 shrink-0" aria-hidden />
           Читать материал
         </Link>
@@ -208,7 +209,7 @@ export function MaterialAccessCard({
       actions.push(
         <Link
           key="read"
-          href={getMaterialReadHref(slug)}
+          href={readHref}
           className={cn(buttonVariants({ variant: "outline" }), "w-full")}
         >
           <BookOpen className="size-4 shrink-0" aria-hidden />

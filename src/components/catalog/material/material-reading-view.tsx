@@ -29,7 +29,17 @@ type MaterialReadingViewProps = {
   claimState: FreeProductClaimState;
   cartState: PaidProductCartState;
   reviewsData: ProductReviewsData;
+  fromHref: string | null;
 };
+
+function getMaterialReturnHref(materialSlug: string, fromHref: string | null): string {
+  const materialHref = getCatalogItemHref("material", materialSlug);
+  if (!fromHref) {
+    return materialHref;
+  }
+
+  return `${materialHref}?from=${encodeURIComponent(fromHref)}`;
+}
 
 export function canShowMaterialReadingActions(
   priceKopecks: number,
@@ -71,6 +81,7 @@ export function MaterialReadingView({
   claimState,
   cartState,
   reviewsData,
+  fromHref,
 }: MaterialReadingViewProps) {
   const signInReturnPath = `${getCatalogItemHref("material", material.slug)}/read`;
   const blocks = collectBlocksFromChapters(material.chapters);
@@ -84,6 +95,7 @@ export function MaterialReadingView({
     claimState,
     cartState,
   );
+  const materialReturnHref = getMaterialReturnHref(material.slug, fromHref);
 
   return (
     <Container className="py-6 md:py-8 lg:py-10">
@@ -94,7 +106,7 @@ export function MaterialReadingView({
           <aside className="hidden xl:block">
             <div className="sticky top-20 space-y-6">
               <Link
-                href={getCatalogItemHref("material", material.slug)}
+                href={materialReturnHref}
                 className="inline-flex items-center gap-1.5 text-sm text-neutral-500 transition-colors hover:text-foreground"
               >
                 <ArrowLeft className="size-4" aria-hidden />
@@ -108,7 +120,7 @@ export function MaterialReadingView({
             <div className="mx-auto max-w-3xl">
               <div className="mb-6 xl:hidden">
                 <Link
-                  href={getCatalogItemHref("material", material.slug)}
+                  href={materialReturnHref}
                   className="inline-flex items-center gap-1.5 text-sm text-neutral-500 transition-colors hover:text-foreground"
                 >
                   <ArrowLeft className="size-4" aria-hidden />
