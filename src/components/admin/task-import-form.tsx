@@ -14,6 +14,35 @@ import {
   type TaskImportPreview,
   type TaskImportResult,
 } from "@/lib/admin/task-import-types";
+import { cn } from "@/lib/utils";
+
+function OperationProgress({
+  label,
+  value,
+  indeterminate = false,
+}: {
+  label: string;
+  value?: number;
+  indeterminate?: boolean;
+}) {
+  return (
+    <div className="space-y-2" role="status" aria-live="polite">
+      <div className="flex items-center justify-between gap-3 text-sm text-neutral-600">
+        <span>{label}</span>
+        {!indeterminate && typeof value === "number" ? <span>{value}%</span> : null}
+      </div>
+      <div className="h-2 overflow-hidden rounded-full bg-neutral-100">
+        <div
+          className={cn(
+            "h-full rounded-full bg-primary",
+            indeterminate ? "w-full animate-pulse opacity-80" : "transition-[width] duration-150",
+          )}
+          style={indeterminate ? undefined : { width: `${value ?? 0}%` }}
+        />
+      </div>
+    </div>
+  );
+}
 
 function PreviewPanel({ preview }: { preview: TaskImportPreview }) {
   return (
@@ -150,6 +179,9 @@ export function TaskImportForm() {
   const [preview, setPreview] = useState<TaskImportPreview | null>(null);
   const [result, setResult] = useState<TaskImportResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isFileLoading, setIsFileLoading] = useState(false);
+  const [fileLoadProgress, setFileLoadProgress] = useState(0);
+  const [fileName, setFileName] = useState<string | null>(null);
   const [isPreviewPending, startPreviewTransition] = useTransition();
   const [isImportPending, startImportTransition] = useTransition();
 
@@ -159,15 +191,50 @@ export function TaskImportForm() {
       return;
     }
 
+    setIsFileLoading(true);
+    setFileLoadProgress(0);
+    setFileName(file.name);
+    setPreview(null);
+    setResult(null);
+    setError(null);
+
     const reader = new FileReader();
+
+    reader.onprogress = (progressEvent) => {
+      if (progressEvent.lengthComputable) {
+        setFileLoadProgress(
+          Math.min(100, Math.round((progressEvent.loaded / progressEvent.total) * 100)),
+        );
+        return;
+      }
+
+      setFileLoadProgress((current) => (current < 90 ? current + 8 : current));
+    };
+
     reader.onload = () => {
       if (typeof reader.result === "string") {
         setJsonText(reader.result);
-        setPreview(null);
-        setResult(null);
-        setError(null);
+        setFileLoadProgress(100);
+      } else {
+        setError("Не удалось прочитать файл");
       }
+
+      setIsFileLoading(false);
     };
+
+    reader.onerror = () => {
+      setError("Не удалось загрузить файл");
+      setIsFileLoading(false);
+      setFileLoadProgress(0);
+      setFileName(null);
+    };
+
+    reader.onabort = () => {
+      setIsFileLoading(false);
+      setFileLoadProgress(0);
+      setFileName(null);
+    };
+
     reader.readAsText(file);
     event.target.value = "";
   }
@@ -224,9 +291,10 @@ export function TaskImportForm() {
             <Button
               type="button"
               variant="secondary"
+              disabled={isFileLoading}
               onClick={() => fileInputRef.current?.click()}
             >
-              Загрузить .json
+              {isFileLoading ? "Загружаем…" : "Загрузить .json"}
             </Button>
             <Button
               type="button"
@@ -238,6 +306,14 @@ export function TaskImportForm() {
           </div>
         </div>
 
+        {isFileLoading ? (
+          <OperationProgress
+            label={fileName ? `Читаем файл «${fileName}»` : "Читаем файл…"}
+            value={fileLoadProgress}
+            indeterminate={fileLoadProgress === 0}
+          />
+        ) : null}
+
         <textarea
           value={jsonText}
           onChange={(event) => {
@@ -245,9 +321,11 @@ export function TaskImportForm() {
             setPreview(null);
             setResult(null);
             setError(null);
+            setFileName(null);
           }}
           rows={18}
           spellCheck={false}
+          disabled={isFileLoading}
           className="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 font-mono text-sm leading-6 text-foreground outline-none focus:border-primary"
           aria-label="JSON задач"
         />
@@ -260,17 +338,27 @@ export function TaskImportForm() {
         </pre>
       </section>
 
-      <div className="flex flex-wrap gap-2">
-        <Button type="button" onClick={handlePreview} disabled={isPreviewPending}>
-          {isPreviewPending ? "Проверяем…" : "Проверить"}
-        </Button>
-        <Button
-          type="button"
-          onClick={handleImport}
-          disabled={!preview?.canImport || isImportPending}
-        >
-          {isImportPending ? "Импортируем…" : "Импортировать"}
-        </Button>
+      <div className="space-y-3">
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" onClick={handlePreview} disabled={isPreviewPending || isFileLoading}>
+            {isPreviewPending ? "Проверяем…" : "Проверить"}
+          </Button>
+          <Button
+            type="button"
+            onClick={handleImport}
+            disabled={!preview?.canImport || isImportPending || isFileLoading}
+          >
+            {isImportPending ? "Импортируем…" : "Импортировать"}
+          </Button>
+        </div>
+
+        {isPreviewPending ? (
+          <OperationProgress label="Проверяем JSON на сервере…" indeterminate />
+        ) : null}
+
+        {isImportPending ? (
+          <OperationProgress label="Импортируем задачи…" indeterminate />
+        ) : null}
       </div>
 
       {error ? <AdminAlert variant="error">{error}</AdminAlert> : null}
