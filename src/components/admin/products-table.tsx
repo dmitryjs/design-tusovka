@@ -9,6 +9,7 @@ import { Trash2 } from "lucide-react";
 import {
   deleteProductAction,
   deleteProductsBulkAction,
+  updateProductsStatusBulkAction,
 } from "@/app/actions/admin/products";
 import { AdminAlert } from "@/components/admin/admin-shell";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -28,6 +29,12 @@ import { cn } from "@/lib/utils";
 
 const checkboxClassName =
   "size-4 shrink-0 rounded border border-neutral-300 text-primary focus:ring-2 focus:ring-primary/20";
+
+const STATUS_OPTIONS = [
+  { value: "draft", label: "draft" },
+  { value: "published", label: "published" },
+  { value: "hidden", label: "hidden" },
+] as const;
 
 function ProductCoverThumb({ item }: { item: AdminProductListItem }) {
   const coverUrl = resolveMaterialCoverUrl(item.coverPath);
@@ -83,6 +90,7 @@ export function ProductsTable({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [bulkStatus, setBulkStatus] = useState<(typeof STATUS_OPTIONS)[number]["value"]>("draft");
   const [isPending, startTransition] = useTransition();
   const selectAllRef = useRef<HTMLInputElement>(null);
 
@@ -201,6 +209,46 @@ export function ProductsTable({
     });
   }
 
+  function handleBulkStatusUpdate() {
+    const ids = [...selectedIds];
+
+    if (ids.length === 0) {
+      return;
+    }
+
+    setMessage(null);
+    setError(null);
+
+    startTransition(async () => {
+      const result = await updateProductsStatusBulkAction(ids, bulkStatus);
+
+      if (!result.ok) {
+        setError(result.error ?? "Не удалось обновить статус у выбранных продуктов");
+        return;
+      }
+
+      const updatedCount = result.data?.updated.length ?? 0;
+      const failureCount = result.data?.failures.length ?? 0;
+
+      setSelectedIds(new Set(result.data?.failures.map((item) => item.id) ?? []));
+
+      if (failureCount > 0) {
+        const failureMessages = result.data?.failures
+          .map((item) => item.message)
+          .filter((value, index, array) => array.indexOf(value) === index)
+          .join(" ");
+
+        setError(
+          `Статус обновлён: ${updatedCount}. Не удалось: ${failureCount}. ${failureMessages}`,
+        );
+      } else {
+        setMessage(`Статус обновлён у ${updatedCount} элементов`);
+      }
+
+      router.refresh();
+    });
+  }
+
   return (
     <div className="space-y-3">
       {message ? <AdminAlert variant="success">{message}</AdminAlert> : null}
@@ -211,6 +259,30 @@ export function ProductsTable({
           <span className="text-sm text-neutral-700">
             Выбрано: <span className="font-medium text-foreground">{selectedCount}</span>
           </span>
+          <select
+            value={bulkStatus}
+            disabled={isPending}
+            onChange={(event) =>
+              setBulkStatus(event.target.value as (typeof STATUS_OPTIONS)[number]["value"])
+            }
+            className="h-8 rounded-md border border-neutral-300 bg-white px-2 text-sm text-foreground"
+            aria-label="Новый статус для выбранных"
+          >
+            {STATUS_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            disabled={isPending}
+            onClick={handleBulkStatusUpdate}
+          >
+            Применить статус
+          </Button>
           <Button
             type="button"
             variant="destructive"

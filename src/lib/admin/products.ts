@@ -561,6 +561,16 @@ export type AdminBulkDeleteProductsResult = {
   failures: Array<{ id: string; message: string }>;
 };
 
+export type AdminBulkStatusUpdateProductsResult = {
+  updated: Array<{
+    id: string;
+    slug: string;
+    kind: "material" | "task";
+    status: "draft" | "published" | "hidden";
+  }>;
+  failures: Array<{ id: string; message: string }>;
+};
+
 async function getAdminProductForDeletion(
   admin: ReturnType<typeof getAdminClient>,
   productId: string,
@@ -671,5 +681,72 @@ export async function deleteAdminProductsBulk(
   return {
     ok: true,
     data: { deleted, failures },
+  };
+}
+
+export async function updateAdminProductsStatusBulk(
+  productIds: string[],
+  status: "draft" | "published" | "hidden",
+): Promise<AdminMutationResult<AdminBulkStatusUpdateProductsResult>> {
+  const uniqueIds = [...new Set(productIds.map((id) => id.trim()).filter(Boolean))];
+
+  if (uniqueIds.length === 0) {
+    return { ok: false, error: "Не выбрано ни одного продукта" };
+  }
+
+  const admin = getAdminClient();
+  const updated: AdminBulkStatusUpdateProductsResult["updated"] = [];
+  const failures: AdminBulkStatusUpdateProductsResult["failures"] = [];
+
+  for (const productId of uniqueIds) {
+    const { data: product, error: productError } = await admin
+      .from("products")
+      .select("id, slug, kind")
+      .eq("id", productId)
+      .in("kind", ["material", "task"])
+      .maybeSingle();
+
+    if (productError) {
+      failures.push({ id: productId, message: productError.message });
+      continue;
+    }
+
+    if (!product || (product.kind !== "material" && product.kind !== "task")) {
+      failures.push({ id: productId, message: "Продукт не найден" });
+      continue;
+    }
+
+    const { error: updateError } = await admin
+      .from("products")
+      .update({
+        status,
+        published_at: publishedAtForStatus(status),
+      })
+      .eq("id", productId);
+
+    if (updateError) {
+      failures.push({ id: productId, message: updateError.message });
+      continue;
+    }
+
+    updated.push({
+      id: productId,
+      slug: product.slug,
+      kind: product.kind,
+      status,
+    });
+  }
+
+  if (updated.length === 0) {
+    return {
+      ok: false,
+      error: failures[0]?.message ?? "Не удалось обновить статус у выбранных продуктов",
+      data: { updated, failures },
+    };
+  }
+
+  return {
+    ok: true,
+    data: { updated, failures },
   };
 }

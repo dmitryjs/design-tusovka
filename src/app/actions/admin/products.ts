@@ -9,7 +9,9 @@ import {
   deleteAdminProduct,
   deleteAdminProductsBulk,
   listAdminPromoTargets,
+  updateAdminProductsStatusBulk,
   updateAdminProduct,
+  type AdminBulkStatusUpdateProductsResult,
   type AdminBulkDeleteProductsResult,
 } from "@/lib/admin/products";
 import type {
@@ -129,6 +131,35 @@ export async function deleteProductsBulkAction(
 
   if (result.ok && result.data) {
     for (const item of result.data.deleted) {
+      revalidateCatalogPaths(item.kind, item.slug);
+    }
+    revalidatePath("/admin/products");
+    revalidatePath("/admin");
+  }
+
+  return result;
+}
+
+export async function updateProductsStatusBulkAction(
+  productIds: string[],
+  status: "draft" | "published" | "hidden",
+): Promise<AdminMutationResult<AdminBulkStatusUpdateProductsResult>> {
+  try {
+    await assertAdmin();
+  } catch (error) {
+    return {
+      ok: false,
+      error:
+        error instanceof Error && error.message === "FORBIDDEN"
+          ? "Нет прав администратора"
+          : "Требуется вход",
+    };
+  }
+
+  const result = await updateAdminProductsStatusBulk(productIds, status);
+
+  if (result.ok && result.data) {
+    for (const item of result.data.updated) {
       revalidateCatalogPaths(item.kind, item.slug);
     }
     revalidatePath("/admin/products");
