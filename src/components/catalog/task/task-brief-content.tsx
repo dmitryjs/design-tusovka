@@ -1,25 +1,119 @@
-import {
-  AlertCircle,
-  CheckSquare,
-  ClipboardList,
-  FileText,
-  Layers,
-  Upload,
-} from "lucide-react";
-
 import type { TaskDetail } from "@/lib/catalog/detail-queries";
 
 import type { BriefSection } from "./task-brief-sections";
 
-function renderList(items: string[]) {
-  if (!items.length) {
+type ParsedBriefBlock = {
+  id: string;
+  title: string;
+  items: string[];
+};
+
+function renderInlineMarkdown(text: string): React.ReactNode {
+  const normalized = text.trim();
+  if (!normalized) {
+    return null;
+  }
+
+  const chunks = normalized.split(/(\*\*[^*]+\*\*)/g);
+
+  return chunks.map((chunk, index) => {
+    if (chunk.startsWith("**") && chunk.endsWith("**") && chunk.length > 4) {
+      return <strong key={index}>{chunk.slice(2, -2)}</strong>;
+    }
+
+    return <span key={index}>{chunk}</span>;
+  });
+}
+
+function normalizeLine(raw: string): string {
+  return raw.trim().replace(/^[-*]\s+/, "");
+}
+
+function toIdPart(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 48);
+}
+
+function parseBriefBlocks(lines: string[]): ParsedBriefBlock[] {
+  const blocks: ParsedBriefBlock[] = [];
+  let current: ParsedBriefBlock | null = null;
+
+  for (const rawLine of lines) {
+    const line = normalizeLine(rawLine);
+    if (!line) {
+      continue;
+    }
+
+    const headingMatch = line.match(/^##\s+(.+)$/);
+    if (headingMatch) {
+      const title = headingMatch[1].trim();
+      current = {
+        id: `task-brief-${toIdPart(title) || "section"}`,
+        title,
+        items: [],
+      };
+      blocks.push(current);
+      continue;
+    }
+
+    if (!current) {
+      current = {
+        id: "task-brief-details",
+        title: "Детали",
+        items: [],
+      };
+      blocks.push(current);
+    }
+
+    current.items.push(line);
+  }
+
+  return blocks;
+}
+
+function renderParsedBrief(lines: string[]): React.ReactNode {
+  const blocks = parseBriefBlocks(lines);
+
+  if (!blocks.length) {
     return <p className="text-neutral-500">Информация будет добавлена позже.</p>;
   }
 
   return (
-    <ul className="list-disc space-y-2 pl-4">
-      {items.map((item, index) => (
-        <li key={index}>{item}</li>
+    <div className="space-y-6">
+      {blocks.map((block) => (
+        <section key={block.id} id={block.id} className="space-y-3">
+          <h3 className="text-lg font-semibold text-foreground">{block.title}</h3>
+          {block.items.length ? (
+            <ul className="list-disc space-y-2 pl-5">
+              {block.items.map((item, index) => (
+                <li key={`${block.id}-${index}`}>{renderInlineMarkdown(item)}</li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-neutral-500">Раздел будет дополнен позже.</p>
+          )}
+        </section>
+      ))}
+    </div>
+  );
+}
+
+function renderSimpleList(items: string[]) {
+  const normalized = items
+    .map((item) => normalizeLine(item))
+    .filter((item) => item.length > 0);
+
+  if (!normalized.length) {
+    return <p className="text-neutral-500">Информация будет добавлена позже.</p>;
+  }
+
+  return (
+    <ul className="list-disc space-y-2 pl-5">
+      {normalized.map((item, index) => (
+        <li key={index}>{renderInlineMarkdown(item)}</li>
       ))}
     </ul>
   );
@@ -28,40 +122,17 @@ function renderList(items: string[]) {
 export function buildTaskBriefSections(task: TaskDetail): BriefSection[] {
   const sections: BriefSection[] = [];
 
-  if (task.description) {
-    sections.push({
-      id: "task-brief-context",
-      title: "Контекст",
-      icon: <FileText className="size-4" aria-hidden />,
-      content: <p>{task.description}</p>,
-    });
-  }
-
-  sections.push({
-    id: "task-brief-problem",
-    title: "Проблема",
-    icon: <AlertCircle className="size-4" aria-hidden />,
-    content: (
-      <p>
-        {task.description ||
-          "Определите пользовательскую проблему, которую нужно решить в рамках задания."}
-      </p>
-    ),
-  });
-
   sections.push({
     id: "task-brief-steps",
     title: "Что нужно сделать",
-    icon: <ClipboardList className="size-4" aria-hidden />,
-    content: renderList(task.brief),
+    content: renderParsedBrief(task.brief),
   });
 
   sections.push({
     id: "task-brief-constraints",
     title: "Ограничения",
-    icon: <Layers className="size-4" aria-hidden />,
     content: (
-      <ul className="list-disc space-y-2 pl-4">
+      <ul className="list-disc space-y-2 pl-5">
         <li>Работайте самостоятельно и опирайтесь на материалы брифа.</li>
         <li>Соблюдайте указанные форматы и объём сдачи.</li>
         <li>Черновики решения на платформе не сохраняются.</li>
@@ -72,15 +143,13 @@ export function buildTaskBriefSections(task: TaskDetail): BriefSection[] {
   sections.push({
     id: "task-brief-submit",
     title: "Что сдавать",
-    icon: <Upload className="size-4" aria-hidden />,
-    content: renderList(task.submissionRequirements),
+    content: renderSimpleList(task.submissionRequirements),
   });
 
   if (task.aiCriteria.length > 0) {
     sections.push({
       id: "task-brief-criteria",
       title: "Критерии оценки",
-      icon: <CheckSquare className="size-4" aria-hidden />,
       content: (
         <ul className="space-y-3">
           {task.aiCriteria.map((criterion) => (

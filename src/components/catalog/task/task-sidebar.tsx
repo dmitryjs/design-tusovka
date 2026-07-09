@@ -24,8 +24,6 @@ import {
 } from "@/lib/catalog/task-detail-utils";
 import { cn } from "@/lib/utils";
 
-import { TaskActions } from "./task-actions";
-
 type TaskSidebarProps = {
   task: TaskDetail;
   claimState: FreeProductClaimState;
@@ -165,12 +163,6 @@ export function TaskSidebar({
           >
             Смотреть полные критерии
           </Link>
-        </SidebarCard>
-      ) : null}
-
-      {task.hasFullAccess ? (
-        <SidebarCard title="Действия">
-          <TaskActions hasFullAccess compact />
         </SidebarCard>
       ) : null}
     </div>
