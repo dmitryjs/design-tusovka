@@ -9,7 +9,6 @@ import {
   FileText,
   Layers,
   Star,
-  Upload,
   Users,
 } from "lucide-react";
 
@@ -35,7 +34,7 @@ type QuickLink = {
 
 const QUICK_LINKS: QuickLink[] = [
   {
-    href: "/admin/products",
+    href: "/admin/products?kind=material",
     label: "Материалы",
     description: "Создание, цена, публикация",
     Icon: FileText,
@@ -43,14 +42,8 @@ const QUICK_LINKS: QuickLink[] = [
   {
     href: "/admin/products?kind=task",
     label: "Задания",
-    description: "Бриф, критерии AI, цены",
+    description: "Бриф, критерии AI, импорт JSON",
     Icon: Briefcase,
-  },
-  {
-    href: "/admin/import/tasks",
-    label: "Импорт заданий",
-    description: "Массовая загрузка из JSON",
-    Icon: Upload,
   },
   {
     href: "/admin/sections",
@@ -179,7 +172,7 @@ export function AdminDashboard({ data }: AdminDashboardProps) {
           <dl className="grid gap-4 sm:grid-cols-2">
             <ContentStatBlock
               title="Материалы"
-              href="/admin/products"
+              href="/admin/products?kind=material"
               published={content.materialsPublished}
               draft={content.materialsDraft}
               hidden={content.materialsHidden}

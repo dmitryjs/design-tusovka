@@ -72,7 +72,13 @@ function ProductCoverThumb({ item }: { item: AdminProductListItem }) {
   );
 }
 
-export function ProductsTable({ items }: { items: AdminProductListItem[] }) {
+export function ProductsTable({
+  items,
+  kind,
+}: {
+  items: AdminProductListItem[];
+  kind: "material" | "task";
+}) {
   const router = useRouter();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [message, setMessage] = useState<string | null>(null);
@@ -114,9 +120,12 @@ export function ProductsTable({ items }: { items: AdminProductListItem[] }) {
     setSelectedIds(checked ? new Set(items.map((item) => item.id)) : new Set());
   }
 
+  const itemLabel = kind === "task" ? "задание" : "материал";
+  const itemsLabel = kind === "task" ? "задания" : "материалы";
+
   function handleDeleteOne(item: AdminProductListItem) {
     const confirmed = window.confirm(
-      `Удалить «${item.title}»? Это действие нельзя отменить.`,
+      `Удалить ${itemLabel} «${item.title}»? Это действие нельзя отменить.`,
     );
 
     if (!confirmed) {
@@ -139,7 +148,7 @@ export function ProductsTable({ items }: { items: AdminProductListItem[] }) {
         next.delete(item.id);
         return next;
       });
-      setMessage("Продукт удалён");
+      setMessage(`${kind === "task" ? "Задание" : "Материал"} удалён`);
       router.refresh();
     });
   }
@@ -152,7 +161,7 @@ export function ProductsTable({ items }: { items: AdminProductListItem[] }) {
     }
 
     const confirmed = window.confirm(
-      `Удалить выбранные продукты (${ids.length})? Это действие нельзя отменить.`,
+      `Удалить выбранные ${itemsLabel} (${ids.length})? Это действие нельзя отменить.`,
     );
 
     if (!confirmed) {
@@ -185,7 +194,7 @@ export function ProductsTable({ items }: { items: AdminProductListItem[] }) {
           `Удалено: ${deletedCount}. Не удалось: ${failureCount}. ${failureMessages}`,
         );
       } else {
-        setMessage(`Удалено продуктов: ${deletedCount}`);
+        setMessage(`Удалено: ${deletedCount}`);
       }
 
       router.refresh();

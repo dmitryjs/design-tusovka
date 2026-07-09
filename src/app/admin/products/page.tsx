@@ -1,16 +1,20 @@
-import Link from "next/link";
-
 import {
   AdminEmptyState,
   AdminForbidden,
   AdminShell,
 } from "@/components/admin/admin-shell";
+import { AdminProductsToolbar } from "@/components/admin/admin-products-toolbar";
 import { ProductsTable } from "@/components/admin/products-table";
 import { requireAdmin } from "@/lib/auth/admin";
 import { listAdminProducts } from "@/lib/admin/products";
-import { buttonVariants } from "@/components/ui/button";
 
 export const dynamic = "force-dynamic";
+
+type AdminProductsKind = "material" | "task";
+
+function resolveKindFilter(kindParam: string | undefined): AdminProductsKind {
+  return kindParam === "task" ? "task" : "material";
+}
 
 export default async function AdminProductsPage({
   searchParams,
@@ -18,10 +22,11 @@ export default async function AdminProductsPage({
   searchParams: Promise<{ kind?: string }>;
 }) {
   const { kind: kindParam } = await searchParams;
-  const kindFilter =
-    kindParam === "material" || kindParam === "task" ? kindParam : null;
+  const kindFilter = resolveKindFilter(kindParam);
 
-  const ctx = await requireAdmin("/admin/products");
+  const ctx = await requireAdmin(
+    kindFilter === "task" ? "/admin/products?kind=task" : "/admin/products?kind=material",
+  );
 
   if (ctx.role !== "admin") {
     return <AdminForbidden />;
@@ -31,10 +36,8 @@ export default async function AdminProductsPage({
   let error: string | null = null;
 
   try {
-    items = await listAdminProducts();
-    if (kindFilter) {
-      items = items.filter((item) => item.kind === kindFilter);
-    }
+    const allItems = await listAdminProducts();
+    items = allItems.filter((item) => item.kind === kindFilter);
   } catch (loadError) {
     error =
       loadError instanceof Error
@@ -42,36 +45,31 @@ export default async function AdminProductsPage({
         : "Не удалось загрузить продукты";
   }
 
-  const pageTitle =
-    kindFilter === "task" ? "Задания" : "Материалы";
-
+  const pageTitle = kindFilter === "task" ? "Задания" : "Материалы";
   const pageDescription =
     kindFilter === "task"
-      ? "Задания каталога."
-      : "Материалы и задания каталога.";
+      ? "Задания каталога: создание, редактирование и импорт из JSON."
+      : "Материалы каталога.";
 
   return (
     <AdminShell
       title={pageTitle}
       description={pageDescription}
-      actions={
-        <Link href="/admin/products/new" className={buttonVariants()}>
-          Создать продукт
-        </Link>
-      }
+      actions={<AdminProductsToolbar kind={kindFilter} />}
     >
       {error ? (
-        <AdminEmptyState
-          title="Ошибка загрузки"
-          description={error}
-        />
+        <AdminEmptyState title="Ошибка загрузки" description={error} />
       ) : items.length === 0 ? (
         <AdminEmptyState
-          title="Продуктов пока нет"
-          description="Создайте первый материал или задание."
+          title={kindFilter === "task" ? "Заданий пока нет" : "Материалов пока нет"}
+          description={
+            kindFilter === "task"
+              ? "Создайте первое задание или импортируйте JSON."
+              : "Создайте первый материал."
+          }
         />
       ) : (
-        <ProductsTable items={items} />
+        <ProductsTable items={items} kind={kindFilter} />
       )}
     </AdminShell>
   );

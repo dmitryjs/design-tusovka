@@ -12,8 +12,14 @@ import {
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminNewProductPage() {
-  const ctx = await requireAdmin("/admin/products/new");
+export default async function AdminNewProductPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ kind?: string }>;
+}) {
+  const { kind: kindParam } = await searchParams;
+  const kind = kindParam === "task" ? "task" : "material";
+  const ctx = await requireAdmin(`/admin/products/new?kind=${kind}`);
 
   if (ctx.role !== "admin") {
     return <AdminForbidden />;
@@ -25,7 +31,10 @@ export default async function AdminNewProductPage() {
   ]);
 
   return (
-    <AdminShell title="Новый продукт" description="Материал или задание.">
+    <AdminShell
+      title={kind === "task" ? "Новое задание" : "Новый материал"}
+      description={kind === "task" ? "Задание каталога." : "Материал каталога."}
+    >
       <ProductForm
         mode="create"
         sections={sections.map((section) => ({
@@ -40,16 +49,16 @@ export default async function AdminNewProductPage() {
           title: "",
           slug: "",
           description: "",
-          kind: "material",
+          kind,
           level: "all",
-          format: "mini_guide",
+          format: kind === "material" ? "mini_guide" : undefined,
           priceRubles: 0,
           status: "draft",
-          sectionProductId: sections[0]?.id ?? "",
+          sectionProductId: kind === "material" ? sections[0]?.id ?? "" : "",
           coverPath: null,
           tagIds: [],
           chapters: [],
-          contentBlocks: [createMaterialBlock("paragraph")],
+          contentBlocks: kind === "material" ? [createMaterialBlock("paragraph")] : [],
           taskBriefText: "",
           taskSubmissionText: "",
         }}

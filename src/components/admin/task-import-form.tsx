@@ -173,7 +173,13 @@ function ResultPanel({ result }: { result: TaskImportResult }) {
   );
 }
 
-export function TaskImportForm() {
+export function TaskImportForm({
+  variant = "page",
+  onImported,
+}: {
+  variant?: "page" | "modal";
+  onImported?: () => void;
+}) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [jsonText, setJsonText] = useState(TASK_IMPORT_EXAMPLE_JSON);
   const [preview, setPreview] = useState<TaskImportPreview | null>(null);
@@ -267,20 +273,38 @@ export function TaskImportForm() {
 
       setResult(response.result);
       setPreview(null);
+
+      if (
+        response.result.created.length > 0 ||
+        response.result.updated.length > 0
+      ) {
+        onImported?.();
+      }
     });
   }
 
+  const isModal = variant === "modal";
+
   return (
-    <div className="space-y-6">
-      <section className="space-y-3 rounded-xl border border-neutral-200 bg-white p-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 className="text-base font-semibold text-foreground">JSON</h2>
-            <p className="text-sm text-neutral-600">
-              Вставьте массив задач или загрузите файл `.json`.
-            </p>
+    <div className={cn("space-y-6", isModal && "space-y-4")}>
+      <section
+        className={cn(
+          "space-y-3",
+          !isModal && "rounded-xl border border-neutral-200 bg-white p-4",
+        )}
+      >
+        {!isModal ? (
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-base font-semibold text-foreground">JSON</h2>
+              <p className="text-sm text-neutral-600">
+                Вставьте массив задач или загрузите файл `.json`.
+              </p>
+            </div>
           </div>
-          <div className="flex flex-wrap gap-2">
+        ) : null}
+
+        <div className="flex flex-wrap gap-2">
             <input
               ref={fileInputRef}
               type="file"
@@ -304,7 +328,6 @@ export function TaskImportForm() {
               Подставить пример
             </Button>
           </div>
-        </div>
 
         {isFileLoading ? (
           <OperationProgress
@@ -323,7 +346,7 @@ export function TaskImportForm() {
             setError(null);
             setFileName(null);
           }}
-          rows={18}
+          rows={isModal ? 12 : 18}
           spellCheck={false}
           disabled={isFileLoading}
           className="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 font-mono text-sm leading-6 text-foreground outline-none focus:border-primary"
@@ -331,12 +354,14 @@ export function TaskImportForm() {
         />
       </section>
 
-      <section className="rounded-xl border border-dashed border-neutral-300 bg-neutral-50 p-4">
-        <h2 className="text-sm font-semibold text-foreground">Пример формата</h2>
-        <pre className="mt-2 overflow-x-auto text-xs leading-5 text-neutral-700">
-          {TASK_IMPORT_EXAMPLE_JSON}
-        </pre>
-      </section>
+      {!isModal ? (
+        <section className="rounded-xl border border-dashed border-neutral-300 bg-neutral-50 p-4">
+          <h2 className="text-sm font-semibold text-foreground">Пример формата</h2>
+          <pre className="mt-2 overflow-x-auto text-xs leading-5 text-neutral-700">
+            {TASK_IMPORT_EXAMPLE_JSON}
+          </pre>
+        </section>
+      ) : null}
 
       <div className="space-y-3">
         <div className="flex flex-wrap gap-2">
