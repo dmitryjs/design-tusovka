@@ -1,8 +1,13 @@
+import { Clock } from "lucide-react";
 import Link from "next/link";
 
-import { formatPrice } from "@/lib/catalog/format";
 import { resolveLevelStyle } from "@/lib/catalog/level-style";
 import { getCatalogItemHref } from "@/lib/catalog/paths";
+import {
+  resolveTaskCardEstimatedHours,
+  resolveTaskSphere,
+  resolveTaskType,
+} from "@/lib/catalog/task-card-meta";
 import { resolveTaskCardVisual } from "@/lib/catalog/task-card-visual";
 import type { CatalogItem } from "@/lib/catalog/types";
 import { cn } from "@/lib/utils";
@@ -15,6 +20,9 @@ type TaskCardProps = {
 export function TaskCard({ task, className }: TaskCardProps) {
   const visual = resolveTaskCardVisual(task.slug, task.title);
   const levelStyle = resolveLevelStyle(task.level);
+  const estimatedHours = resolveTaskCardEstimatedHours(task.level);
+  const sphere = resolveTaskSphere(task.tags, task.title, task.description);
+  const taskType = resolveTaskType(task.tags, task.title, task.description);
   const TaskIcon = visual.Icon;
   const LevelIcon = levelStyle?.Icon;
 
@@ -47,24 +55,32 @@ export function TaskCard({ task, className }: TaskCardProps) {
           ) : null}
         </div>
 
-        <div className="mt-3 flex min-h-5 items-center justify-between gap-3 pt-1">
-          {levelStyle && LevelIcon ? (
-            <div
-              className={cn(
-                "flex items-center gap-1.5 text-sm font-medium",
-                levelStyle.className,
-              )}
-            >
-              <LevelIcon className="size-4 shrink-0" aria-hidden />
-              <span>{levelStyle.label}</span>
-            </div>
-          ) : (
-            <span />
-          )}
-          <span className="shrink-0 text-sm leading-5 font-semibold text-primary">
-            {formatPrice(task.priceKopecks)}
+        <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm leading-5 text-neutral-600">
+          <span className="inline-flex items-center gap-1.5">
+            <Clock className="size-4 shrink-0 text-neutral-400" aria-hidden />
+            <span>{estimatedHours}</span>
           </span>
+          <span className="text-neutral-300" aria-hidden>
+            ·
+          </span>
+          <span>{sphere}</span>
+          <span className="text-neutral-300" aria-hidden>
+            ·
+          </span>
+          <span>{taskType}</span>
         </div>
+
+        {levelStyle && LevelIcon ? (
+          <div
+            className={cn(
+              "mt-2 flex min-h-5 items-center gap-1.5 text-sm font-medium",
+              levelStyle.className,
+            )}
+          >
+            <LevelIcon className="size-4 shrink-0" aria-hidden />
+            <span>{levelStyle.label}</span>
+          </div>
+        ) : null}
       </article>
     </Link>
   );
