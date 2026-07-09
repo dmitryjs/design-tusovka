@@ -1,4 +1,4 @@
-import { Container } from "@/components/layout/container";
+﻿import { Container } from "@/components/layout/container";
 import {
   Breadcrumbs,
   type BreadcrumbItem,
@@ -62,6 +62,8 @@ export function TaskDetailView({
               cartState={cartState}
               reviewStats={reviewsData.stats}
             />
+
+            <div className="h-px w-full bg-neutral-200" />
 
             {!task.hasFullAccess ? (
               <div className="flex flex-col gap-6 lg:hidden">
