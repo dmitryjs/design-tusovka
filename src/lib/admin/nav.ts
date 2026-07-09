@@ -8,6 +8,7 @@ import {
   Home,
   Layers,
   Star,
+  Upload,
   Users,
 } from "lucide-react";
 
@@ -54,6 +55,12 @@ export const ADMIN_NAV: AdminNavSection[] = [
         Icon: Briefcase,
         isActive: (pathname, searchParams) =>
           productsActive(pathname) && searchParams?.get("kind") === "task",
+      },
+      {
+        label: "Импорт заданий",
+        href: "/admin/import/tasks",
+        Icon: Upload,
+        isActive: (pathname) => pathname.startsWith("/admin/import/tasks"),
       },
       {
         label: "Разделы",

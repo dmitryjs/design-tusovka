@@ -2,6 +2,81 @@
 
 ## Этап
 
+**Admin-lite: bulk import заданий через JSON**
+
+**Статус: завершён**
+
+## Результат
+
+Добавлен MVP-импорт заданий для администратора:
+
+1. **Маршрут** — `/admin/import/tasks` (ссылка в сайдбаре админки и на дашборде).
+2. **Доступ** — только `admin`; страница и server actions проверяют роль на сервере.
+3. **UI** — textarea для JSON, upload `.json`, пример формата, кнопки «Проверить» и «Импортировать», preview и result screen.
+4. **Preview / dry-run** — всего задач, создать / обновить / ошибки, список slug и ошибок по индексу. Импорт доступен только без критичных ошибок.
+5. **Импорт** — server-only через service role в `src/lib/admin/task-import.ts`; клиент не пишет в Supabase.
+
+### Формат JSON
+
+Массив объектов:
+
+- обязательные: `title`, `slug`, `description`, `level`, `price_kopecks`, `status`, `brief`;
+- опциональные: `tags` (массив строк), `criteria` (массив строк).
+
+### Таблицы
+
+| Таблица | Операция |
+|---------|----------|
+| `products` | insert / update (`kind = task`) |
+| `tasks` | insert / update |
+| `task_content` | insert / upsert (`brief`, пустые `submission_requirements`) |
+| `task_ai_criteria` | replace по `task_product_id` (из `criteria`) |
+| `tags` | find-or-create по имени |
+| `product_tags` | replace связей задачи с тегами |
+
+### Update по slug
+
+Если `products.slug` уже существует и `kind = task` — обновляются product, task, task_content, критерии и теги. Если slug занят материалом/разделом — ошибка. Новый slug создаёт product + task + task_content.
+
+### Ограничения
+
+- `criteria` сохраняются в `task_ai_criteria` (title, без description).
+- `submission_requirements` при импорте не задаются (пустой массив).
+- Схема БД и RLS не менялись.
+
+## Изменённые файлы
+
+| Файл | Изменение |
+|------|-----------|
+| `src/lib/admin/task-import.ts` | Парсинг, валидация, preview, import |
+| `src/app/actions/admin/task-import.ts` | Server actions с `assertAdmin` |
+| `src/components/admin/task-import-form.tsx` | MVP UI |
+| `src/app/admin/import/tasks/page.tsx` | Страница импорта |
+| `src/lib/admin/nav.ts` | Ссылка в сайдбаре |
+| `src/components/admin/admin-dashboard.tsx` | Quick link |
+
+## Проверки
+
+- `npm run typecheck` — OK
+- `npm run lint` — OK для новых файлов импорта; в проекте остаются ранее существовавшие ошибки в admin editor / header-search
+- `npm run build` — OK
+
+## Ручная проверка
+
+1. Не-admin → `/admin/import/tasks` показывает «Нет доступа».
+2. Admin видит страницу импорта.
+3. Валидный JSON → preview с create/update.
+4. Невалидный JSON / не массив → ошибка.
+5. Новая задача создаётся в каталоге `/tasks`.
+6. Повторный импорт с тем же slug обновляет задачу.
+7. Теги создаются и связываются.
+8. Страница задачи открывается.
+9. Бесплатная задача (`price_kopecks: 0`, `published`) показывает бриф.
+
+---
+
+## Этап
+
 **Мобильный UX: хедер, bottom tabs, отзывы выключены, без горизонтального скролла**
 
 **Статус: завершён**

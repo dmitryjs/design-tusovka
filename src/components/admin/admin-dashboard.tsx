@@ -9,6 +9,7 @@ import {
   FileText,
   Layers,
   Star,
+  Upload,
   Users,
 } from "lucide-react";
 
@@ -44,6 +45,12 @@ const QUICK_LINKS: QuickLink[] = [
     label: "Задания",
     description: "Бриф, критерии AI, цены",
     Icon: Briefcase,
+  },
+  {
+    href: "/admin/import/tasks",
+    label: "Импорт заданий",
+    description: "Массовая загрузка из JSON",
+    Icon: Upload,
   },
   {
     href: "/admin/sections",
