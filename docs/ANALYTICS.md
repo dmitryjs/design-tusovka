@@ -44,11 +44,15 @@
 
 ## Env
 
-- `NEXT_PUBLIC_YANDEX_METRICA_ID`
+- `NEXT_PUBLIC_ANALYTICS_ENABLED` — `true` / `1` / `yes` для включения внешней аналитики (иначе Метрика не грузится)
+- `NEXT_PUBLIC_YANDEX_METRIKA_ID` — ID счётчика (например `96622077`)
+
+Подключение: `src/components/analytics/analytics.tsx` в root layout (не hardcoded script).
 
 ## Cookie consent
 
-- Метрика и Вебвизор не загружаются до согласия.
+- Метрика и Вебвизор не загружаются до согласия на аналитические cookies.
+- Баннер: `src/components/analytics/cookie-banner.tsx`; выбор хранится в `localStorage` (`dt_cookie_consent`).
 - Тексты баннера — в рамках юридических страниц (**юридические тексты TBD**).
 
 ## Не отслеживается в MVP

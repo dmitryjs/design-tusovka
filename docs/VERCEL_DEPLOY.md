@@ -36,6 +36,8 @@
 | `YOOKASSA_SHOP_ID` | Production, Preview | test shopId (опционально) | shopId магазина |
 | `YOOKASSA_SECRET_KEY` | Production, Preview | test secret (опционально) | secret key |
 | `YOOKASSA_RETURN_URL` | Production, Preview | пусто или local tunnel URL | `https://designtusovka.ru/checkout/success` |
+| `NEXT_PUBLIC_ANALYTICS_ENABLED` | Production | пусто / `false` | `true` (чтобы включить Метрику) |
+| `NEXT_PUBLIC_YANDEX_METRIKA_ID` | Production, Preview | `96622077` | `96622077` |
 
 ### Важно
 

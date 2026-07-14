@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 
+import { Analytics } from "@/components/analytics/analytics";
 import { ConditionalSiteChrome } from "@/components/layout/conditional-site-chrome";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
@@ -55,6 +56,7 @@ export default function RootLayout({
         >
           {children}
         </ConditionalSiteChrome>
+        <Analytics />
       </body>
     </html>
   );

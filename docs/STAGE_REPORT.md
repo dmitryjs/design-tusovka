@@ -2,6 +2,32 @@
 
 ## Этап
 
+**17 (подэтап): Яндекс.Метрика через Analytics + cookie consent**
+
+**Статус: завершён**
+
+## Результат
+
+1. Счётчик подключается только через `src/components/analytics/analytics.tsx` в root layout (без hardcoded script в layout).
+2. ID читается из `NEXT_PUBLIC_YANDEX_METRIKA_ID` (в `.env.example` — `96622077`).
+3. Метрика грузится только если `NEXT_PUBLIC_ANALYTICS_ENABLED=true` **и** пользователь принял аналитические cookies.
+4. Cookie-баннер сохраняет выбор в `localStorage` (`dt_cookie_consent`); Вебвизор включён в init после согласия.
+
+## Env
+
+| Переменная | Назначение |
+|------------|------------|
+| `NEXT_PUBLIC_ANALYTICS_ENABLED` | `true` / `1` / `yes` — включить внешнюю аналитику |
+| `NEXT_PUBLIC_YANDEX_METRIKA_ID` | ID счётчика |
+
+## Проверки
+
+- `npm run typecheck` — OK
+
+---
+
+## Этап
+
 **Admin-lite: bulk import заданий через JSON**
 
 **Статус: завершён**

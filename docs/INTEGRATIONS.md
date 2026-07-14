@@ -143,7 +143,10 @@
 - Ecommerce: purchase после серверного подтверждения.
 - События: см. `ANALYTICS.md`.
 
-- `NEXT_PUBLIC_YANDEX_METRICA_ID`
+- Загрузка через `Analytics` + `NEXT_PUBLIC_ANALYTICS_ENABLED` и cookie consent.
+
+- `NEXT_PUBLIC_YANDEX_METRIKA_ID`
+- `NEXT_PUBLIC_ANALYTICS_ENABLED`
 
 ## Webhooks
 
