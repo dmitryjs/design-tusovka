@@ -11,12 +11,14 @@ import { ProductReviewsSection } from "@/components/reviews/product-reviews-sect
 import type { SectionDetail } from "@/lib/catalog/detail-queries";
 import { getSectionPageHref } from "@/lib/catalog/section-pages";
 import type { PaidProductCartState } from "@/lib/cart/types";
+import type { FreeProductClaimState } from "@/lib/entitlements/types";
 import type { ProductReviewsData } from "@/lib/reviews/types";
 
 type SectionDetailViewProps = {
   section: SectionDetail;
   reviewsData: ProductReviewsData;
   cartState: PaidProductCartState;
+  claimState?: FreeProductClaimState;
   hasSectionAccess?: boolean;
   accessibleMaterialIds?: string[];
 };
@@ -33,6 +35,7 @@ export function SectionDetailView({
   section,
   reviewsData,
   cartState,
+  claimState = "hidden",
   hasSectionAccess = false,
   accessibleMaterialIds = [],
 }: SectionDetailViewProps) {
@@ -50,6 +53,7 @@ export function SectionDetailView({
               section={section}
               reviewStats={reviewsData.stats}
               cartState={cartState}
+              claimState={claimState}
               signInReturnPath={signInReturnPath}
             />
 
@@ -57,6 +61,7 @@ export function SectionDetailView({
               <SectionSidebar
                 section={section}
                 cartState={cartState}
+                claimState={claimState}
                 signInReturnPath={signInReturnPath}
               />
             </div>
@@ -81,6 +86,7 @@ export function SectionDetailView({
             <SectionSidebar
               section={section}
               cartState={cartState}
+              claimState={claimState}
               signInReturnPath={signInReturnPath}
             />
           </aside>

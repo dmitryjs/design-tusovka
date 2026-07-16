@@ -39,6 +39,39 @@ export async function getFreeProductClaimState(
   return hasAccess ? "claimed" : "available";
 }
 
+/** Free section: claimed when section or all its free materials are in library. */
+export async function getFreeSectionClaimState(
+  sectionProductId: string,
+  priceKopecks: number,
+  materialIds: readonly string[],
+): Promise<FreeProductClaimState> {
+  if (priceKopecks !== 0) {
+    return "hidden";
+  }
+
+  const sectionState = await getFreeProductClaimState(sectionProductId, priceKopecks);
+
+  if (sectionState !== "available") {
+    return sectionState;
+  }
+
+  if (materialIds.length === 0) {
+    return "available";
+  }
+
+  const supabase = await getAuthedClient();
+  const accessFlags = await Promise.all(
+    materialIds.map(async (materialId) => {
+      const { data: hasAccess } = await supabase.rpc("has_product_access", {
+        product_id: materialId,
+      });
+      return Boolean(hasAccess);
+    }),
+  );
+
+  return accessFlags.every(Boolean) ? "claimed" : "available";
+}
+
 export async function hasProductAccess(productId: string): Promise<boolean> {
   const supabase = await getAuthedClient();
   const {

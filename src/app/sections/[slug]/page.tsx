@@ -5,7 +5,7 @@ import { SectionDetailView } from "@/components/catalog/section/section-detail-v
 import { getPaidProductCartState } from "@/lib/cart/access";
 import { getSectionBySlug } from "@/lib/catalog/detail-queries";
 import { calculateSectionCheckoutPriceKopecks } from "@/lib/catalog/section-pricing";
-import { hasProductAccess } from "@/lib/entitlements/access";
+import { getFreeSectionClaimState, hasProductAccess } from "@/lib/entitlements/access";
 import { getProductReviewsData } from "@/lib/reviews/queries";
 
 export const dynamic = "force-dynamic";
@@ -45,12 +45,18 @@ export default async function SectionPage({ params }: SectionPageProps) {
     : calculateSectionCheckoutPriceKopecks(data.materials, accessibleMaterialIds);
 
   const cartState = await getPaidProductCartState(data.id, displayPriceKopecks);
+  const claimState = await getFreeSectionClaimState(
+    data.id,
+    data.priceKopecks,
+    data.materials.map((material) => material.id),
+  );
 
   return (
     <SectionDetailView
       section={{ ...data, priceKopecks: displayPriceKopecks }}
       reviewsData={reviewsData}
       cartState={cartState}
+      claimState={claimState}
       hasSectionAccess={hasSectionAccess}
       accessibleMaterialIds={[...accessibleMaterialIds]}
     />

@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { BookOpen, FileText, Layers } from "lucide-react";
 
+import { SectionClaimCta } from "@/components/catalog/section/section-claim-cta";
 import { SectionPurchaseCta } from "@/components/catalog/section/section-purchase-cta";
 import { resolveMaterialCoverUrl } from "@/lib/catalog/material-cover";
 import {
@@ -11,11 +12,13 @@ import type { SectionDetail } from "@/lib/catalog/detail-queries";
 import { ProductRatingBadge } from "@/components/reviews/product-rating-badge";
 import type { ProductReviewStats } from "@/lib/reviews/types";
 import type { PaidProductCartState } from "@/lib/cart/types";
+import type { FreeProductClaimState } from "@/lib/entitlements/types";
 
 type SectionHeroProps = {
   section: SectionDetail;
   reviewStats: ProductReviewStats;
   cartState: PaidProductCartState;
+  claimState?: FreeProductClaimState;
   signInReturnPath: string;
 };
 
@@ -23,9 +26,13 @@ export function SectionHero({
   section,
   reviewStats,
   cartState,
+  claimState = "hidden",
   signInReturnPath,
 }: SectionHeroProps) {
   const coverUrl = resolveMaterialCoverUrl(section.coverPath);
+  const isFree = section.priceKopecks === 0;
+  const freeClaimState =
+    claimState === "hidden" ? null : (claimState as Exclude<FreeProductClaimState, "hidden">);
 
   return (
     <header className="flex flex-col gap-6 md:gap-8">
@@ -80,12 +87,21 @@ export function SectionHero({
           ) : null}
         </div>
 
-        <SectionPurchaseCta
-          catalogSlug={section.catalogSlug}
-          priceKopecks={section.priceKopecks}
-          cartState={cartState}
-          signInReturnPath={signInReturnPath}
-        />
+        {isFree && freeClaimState ? (
+          <SectionClaimCta
+            slug={section.catalogSlug}
+            initialState={freeClaimState}
+            signInReturnPath={signInReturnPath}
+            className="max-w-sm"
+          />
+        ) : (
+          <SectionPurchaseCta
+            catalogSlug={section.catalogSlug}
+            priceKopecks={section.priceKopecks}
+            cartState={cartState}
+            signInReturnPath={signInReturnPath}
+          />
+        )}
       </div>
     </header>
   );

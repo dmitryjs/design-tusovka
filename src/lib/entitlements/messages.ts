@@ -1,12 +1,12 @@
 import type { ClaimFreeProductCode } from "./types";
 
 const CLAIM_MESSAGES: Record<ClaimFreeProductCode, string> = {
-  claimed: "Материал добавлен в библиотеку.",
+  claimed: "Добавлено в библиотеку.",
   already_claimed: "Уже в вашей библиотеке.",
   unauthenticated: "Войдите в аккаунт, чтобы сохранить продукт.",
   not_found: "Продукт не найден или снят с публикации.",
   not_free: "Этот продукт нельзя получить бесплатно.",
-  unsupported_kind: "Бесплатное получение доступно только для материалов и заданий.",
+  unsupported_kind: "Бесплатное получение доступно для материалов, заданий и разделов.",
   rpc_error: "Не удалось сохранить продукт. Попробуйте позже.",
 };
 

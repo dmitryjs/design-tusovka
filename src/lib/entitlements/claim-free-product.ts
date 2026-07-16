@@ -15,6 +15,8 @@ type RpcClaimResult = {
   slug?: string;
 };
 
+type ServerSupabase = SupabaseClient<Database>;
+
 function parseClaimCode(value: string | undefined): ClaimFreeProductCode {
   switch (value) {
     case "claimed":
@@ -27,6 +29,98 @@ function parseClaimCode(value: string | undefined): ClaimFreeProductCode {
     default:
       return "rpc_error";
   }
+}
+
+async function claimFreeSectionViaMaterials(
+  supabase: ServerSupabase,
+  sectionId: string,
+  sectionSlug: string,
+): Promise<ClaimFreeProductResult> {
+  const { data: materialRows, error: materialsError } = await supabase
+    .from("materials")
+    .select(
+      `
+      product_id,
+      products!inner (
+        id,
+        slug,
+        kind,
+        status,
+        price_kopecks
+      )
+    `,
+    )
+    .eq("section_product_id", sectionId)
+    .eq("products.status", "published")
+    .eq("products.kind", "material");
+
+  if (materialsError) {
+    return {
+      ok: false,
+      code: "rpc_error",
+      message: getClaimFreeProductMessage("rpc_error"),
+    };
+  }
+
+  const freeMaterials = (materialRows ?? [])
+    .map((row) => {
+      const linked = row.products;
+      const product = Array.isArray(linked) ? linked[0] : linked;
+      if (!product || product.price_kopecks !== 0) {
+        return null;
+      }
+      return product;
+    })
+    .filter((item): item is NonNullable<typeof item> => item !== null);
+
+  if (freeMaterials.length === 0) {
+    return {
+      ok: false,
+      code: "not_free",
+      message: getClaimFreeProductMessage("not_free"),
+    };
+  }
+
+  let claimedNew = false;
+
+  for (const material of freeMaterials) {
+    const { data, error } = await supabase.rpc("claim_free_product", {
+      p_slug: material.slug,
+    });
+
+    if (error) {
+      return {
+        ok: false,
+        code: "rpc_error",
+        message: getClaimFreeProductMessage("rpc_error"),
+      };
+    }
+
+    const payload = data as RpcClaimResult | null;
+    const code = parseClaimCode(payload?.code);
+
+    if (!payload?.ok && code !== "already_claimed") {
+      return {
+        ok: false,
+        code,
+        productId: sectionId,
+        slug: sectionSlug,
+        message: getClaimFreeProductMessage(code),
+      };
+    }
+
+    if (code === "claimed") {
+      claimedNew = true;
+    }
+  }
+
+  return {
+    ok: true,
+    code: claimedNew ? "claimed" : "already_claimed",
+    productId: sectionId,
+    slug: sectionSlug,
+    message: getClaimFreeProductMessage(claimedNew ? "claimed" : "already_claimed"),
+  };
 }
 
 export async function claimFreeProduct(
@@ -42,7 +136,7 @@ export async function claimFreeProduct(
     };
   }
 
-  const supabase = (await createSupabaseServerClient()) as unknown as SupabaseClient<Database>;
+  const supabase = (await createSupabaseServerClient()) as unknown as ServerSupabase;
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -64,7 +158,7 @@ export async function claimFreeProduct(
       error.code === "PGRST202" ||
       error.message.includes("claim_free_product") ||
       error.message.includes("schema cache")
-        ? "Функция claim_free_product не найдена в Supabase. Откройте проект из .env.local → SQL Editor → выполните supabase/cloud_patch_free_entitlements.sql целиком → Run."
+        ? "Функция claim_free_product не найдена в Supabase. Откройте проект из .env.local → SQL Editor → выполните supabase/cloud_patch_claim_free_section.sql целиком → Run."
         : getClaimFreeProductMessage("rpc_error");
 
     return {
@@ -76,6 +170,20 @@ export async function claimFreeProduct(
 
   const payload = data as RpcClaimResult | null;
   const code = parseClaimCode(payload?.code);
+
+  if (code === "unsupported_kind") {
+    const { data: product } = await supabase
+      .from("products")
+      .select("id, slug, kind, price_kopecks, status")
+      .eq("slug", trimmedSlug)
+      .eq("status", "published")
+      .maybeSingle();
+
+    if (product?.kind === "section" && product.price_kopecks === 0) {
+      return claimFreeSectionViaMaterials(supabase, product.id, product.slug);
+    }
+  }
+
   const ok = Boolean(payload?.ok) && code !== "rpc_error";
 
   return {

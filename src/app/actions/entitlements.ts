@@ -8,13 +8,14 @@ import { getCatalogItemHref } from "@/lib/catalog/paths";
 
 export async function claimFreeProductAction(
   slug: string,
-  kind: "material" | "task",
+  kind: "material" | "task" | "section",
 ): Promise<ClaimFreeProductResult> {
   const result = await claimFreeProduct(slug);
 
   if (result.ok) {
     revalidatePath(getCatalogItemHref(kind, slug));
     revalidatePath("/profile");
+    revalidatePath("/profile/library");
   }
 
   return result;
